@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { User } from '@/types';
+import { fetchApi } from '@/lib/api';
 
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
@@ -23,21 +24,27 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // Mock API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await fetchApi('/api/Login/Acesso', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      });
 
-      if (email === 'admin@admin.com' || email === 'user@user.com') {
-        const mockUser: User = type === 'cliente' 
-          ? { id: '1', nome: 'João Silva', email, tipo: 'cliente' }
-          : { id: 1, nome: 'Barbearia do João', email, endereco: 'Rua 1', imagem: '', avaliacao: 5, totalAvaliacoes: 10, horarioFuncionamento: '09:00 - 18:00', tipo: 'estabelecimento' };
-        
-        login(mockUser, 'mock-jwt-token', type);
-        navigate(type === 'cliente' ? '/app' : '/estabelecimento/dashboard');
-      } else {
-        setError('Credenciais inválidas. Use user@user.com ou admin@admin.com');
-      }
-    } catch (err) {
-      setError('Ocorreu um erro ao fazer login.');
+      // A API retorna o token e possivelmente os dados do usuário.
+      // Vamos assumir que a resposta tem um formato { token: string, user: any } ou similar.
+      // Se a API retornar apenas o token como string ou num objeto, adaptamos.
+      const token = response.token || response.accessToken || (typeof response === 'string' ? response : 'mock-jwt-token');
+      
+      // Criar um usuário mockado baseado no tipo para manter a compatibilidade com o AuthContext
+      // Idealmente, a API deve retornar os dados do usuário ou devemos buscar em /api/Usuario/Me
+      const mockUser: User = type === 'cliente' 
+        ? { id: '1', nome: response.nome || 'Usuário', email, tipo: 'cliente' }
+        : { id: 1, nome: response.nome || 'Estabelecimento', email, endereco: '', imagem: '', avaliacao: 5, totalAvaliacoes: 0, horarioFuncionamento: '', tipo: 'estabelecimento' };
+      
+      login(mockUser, token, type);
+      navigate(type === 'cliente' ? '/app' : '/estabelecimento/dashboard');
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Credenciais inválidas ou erro no servidor.');
     } finally {
       setIsLoading(false);
     }

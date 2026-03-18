@@ -51,7 +51,7 @@ export default function App() {
         <Routes>
           {/* Public Routes */}
           <Route element={<PublicLayout />}>
-            <Route path="/" element={<LandingPage />} />
+            <Route path="/" element={<Navigate to="/login-selection" replace />} />
             <Route path="/login-selection" element={<LoginSelectionPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/cadastro/:type" element={<CadastroPage />} />
