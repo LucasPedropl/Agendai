@@ -254,16 +254,14 @@ export default function CadastroPage() {
             </Button>
             
             {/* DEVELOPMENT ONLY: Remove this button before production */}
-            {import.meta.env.DEV && (
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="w-full border-dashed border-gray-400 text-gray-500 hover:text-gray-700" 
-                onClick={handleFillRandomData}
-              >
-                Preencher Dados Aleatórios (Dev)
-              </Button>
-            )}
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="w-full border-dashed border-gray-400 text-gray-500 hover:text-gray-700" 
+              onClick={handleFillRandomData}
+            >
+              Preencher Dados Aleatórios (Dev)
+            </Button>
           </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4 text-center text-sm text-gray-500">
