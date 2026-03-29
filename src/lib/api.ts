@@ -1,4 +1,4 @@
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+export const API_URL = import.meta.env.VITE_API_URL || '';
 
 export async function fetchApi(endpoint: string, options: RequestInit = {}) {
   const token = localStorage.getItem('token');
@@ -30,5 +30,10 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
     return null;
   }
 
-  return response.json();
+  const text = await response.text();
+  try {
+    return text ? JSON.parse(text) : null;
+  } catch (e) {
+    return text;
+  }
 }

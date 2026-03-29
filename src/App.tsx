@@ -14,6 +14,7 @@ import LandingPage from '@/app/(public)/page';
 import LoginSelectionPage from '@/app/(public)/login-selection/page';
 import LoginPage from '@/app/(public)/login/page';
 import CadastroPage from '@/app/(public)/cadastro/page';
+import AtivarContaPage from '@/app/(public)/ativar-conta/page';
 import ClientDashboardPage from '@/app/(client)/agendamentos/page';
 import ClientHistoryPage from '@/app/(client)/historico/page';
 import ClientProfilePage from '@/app/(client)/perfil/page';
@@ -55,6 +56,7 @@ export default function App() {
             <Route path="/login-selection" element={<LoginSelectionPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/cadastro/:type" element={<CadastroPage />} />
+            <Route path="/ativar-conta" element={<AtivarContaPage />} />
           </Route>
 
           {/* Client Routes */}
