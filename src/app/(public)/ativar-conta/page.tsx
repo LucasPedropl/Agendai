@@ -8,7 +8,10 @@ import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 export default function AtivarContaPage() {
   const [searchParams] = useSearchParams();
   const userId = searchParams.get('userId');
-  const token = searchParams.get('token');
+  // URLSearchParams converte '+' em ' ' (espaço). Como tokens Base64 não têm espaços, 
+  // mas podem ter '+', precisamos reverter essa conversão para evitar falhas na API.
+  const rawToken = searchParams.get('token');
+  const token = rawToken ? rawToken.replace(/ /g, '+') : null;
   const navigate = useNavigate();
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
