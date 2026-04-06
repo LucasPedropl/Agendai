@@ -1,4 +1,6 @@
-export const API_URL = import.meta.env.VITE_API_URL || '';
+// O Vite exige que as variáveis de ambiente comecem com VITE_ para serem expostas no frontend.
+// Se VITE_API_URL não estiver definida, usamos a URL de produção por padrão.
+export const API_URL = import.meta.env.VITE_API_URL || 'https://agendaai.bixs.com.br';
 
 export async function fetchApi(endpoint: string, options: RequestInit = {}) {
   const token = localStorage.getItem('token');
