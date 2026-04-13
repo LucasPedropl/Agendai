@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { fetchApi } from '@/lib/api';
-import { CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { CheckCircle2, Eye, EyeOff, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export default function CadastroPage() {
   const { type } = useParams<{ type: string }>();
@@ -14,8 +14,19 @@ export default function CadastroPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  const [step, setStep] = useState(1);
 
   const isCliente = type === 'cliente';
+  const isProfissional = type === 'profissional';
+  const isEstabelecimento = type === 'estabelecimento';
+
+  const getTipoPermissao = () => {
+    if (isCliente) return 0;
+    if (isProfissional) return 1;
+    if (isEstabelecimento) return 2;
+    return 0;
+  };
 
   const [formData, setFormData] = useState({
     nome: '',
@@ -37,9 +48,25 @@ export default function CadastroPage() {
       .replace(/(-\d{2})\d+?$/, '$1');
   };
 
-  const formatTelefone = (value: string) => {
+  const formatCNPJ = (value: string) => {
     return value
       .replace(/\D/g, '')
+      .replace(/(\d{2})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1/$2')
+      .replace(/(\d{4})(\d{1,2})/, '$1-$2')
+      .replace(/(-\d{2})\d+?$/, '$1');
+  };
+
+  const formatTelefone = (value: string) => {
+    const v = value.replace(/\D/g, '');
+    if (v.length <= 10) {
+      return v
+        .replace(/(\d{2})(\d)/, '($1) $2')
+        .replace(/(\d{4})(\d)/, '$1-$2')
+        .replace(/(-\d{4})\d+?$/, '$1');
+    }
+    return v
       .replace(/(\d{2})(\d)/, '($1) $2')
       .replace(/(\d{5})(\d)/, '$1-$2')
       .replace(/(-\d{4})\d+?$/, '$1');
@@ -73,18 +100,16 @@ export default function CadastroPage() {
   const handleFillRandomData = () => {
     const randomString = Math.random().toString(36).substring(2, 8);
     
-    // Generate a random date that makes the user at least 18 years old
     const today = new Date();
     const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
-    const randomPastDate = new Date(minAgeDate.getTime() - Math.random() * (10 * 365 * 24 * 60 * 60 * 1000)); // Up to 10 years older than 18
+    const randomPastDate = new Date(minAgeDate.getTime() - Math.random() * (10 * 365 * 24 * 60 * 60 * 1000));
     const formattedRandomDate = randomPastDate.toISOString().split('T')[0];
 
     const validCpf = generateValidCPF();
-    
-    // Generate a random 11-digit phone number
     const randomPhone = `279${Array.from({ length: 8 }, () => Math.floor(Math.random() * 10)).join('')}`;
 
     setFormData({
+      ...formData,
       nome: `User${randomString}`,
       sobrenome: 'Test',
       cpf: formatCPF(validCpf),
@@ -96,13 +121,46 @@ export default function CadastroPage() {
     });
   };
 
+  const handleNextStep = () => {
+    setError('');
+    // Basic validation before moving to next step
+    if (step === 1 && (!formData.nome || !formData.sobrenome || !formData.cpf)) {
+      setError('Preencha todos os campos para continuar.');
+      return;
+    }
+    if (step === 2 && (!formData.telefone || !formData.dataNascimento)) {
+      setError('Preencha todos os campos para continuar.');
+      return;
+    }
+    if (step === 3 && (!formData.email || !formData.password || !formData.confirmPassword)) {
+      if (formData.password !== formData.confirmPassword) {
+        setError('As senhas não coincidem.');
+        return;
+      }
+      // Se for o último passo, o form será submetido pelo onSubmit
+      return;
+    }
+    
+    setStep(prev => prev + 1);
+  };
+
+  const handlePrevStep = () => {
+    setError('');
+    setStep(prev => prev - 1);
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (formData.password !== formData.confirmPassword) {
+      setError('As senhas não coincidem.');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
     
     try {
-      // Formatar a data para o formato esperado pela API (ISO 8601)
       let formattedDate = formData.dataNascimento;
       if (formattedDate) {
         const dateObj = new Date(formattedDate);
@@ -111,16 +169,21 @@ export default function CadastroPage() {
         }
       }
 
-      const payload = {
-        ...formData,
+      const userPayload = {
+        nome: formData.nome,
+        sobrenome: formData.sobrenome,
         cpf: formData.cpf.replace(/\D/g, ''),
         telefone: formData.telefone.replace(/\D/g, ''),
-        dataNascimento: formattedDate
+        dataNascimento: formattedDate,
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+        tipoPermissao: getTipoPermissao()
       };
 
       await fetchApi('/api/Login/Registrar', {
         method: 'POST',
-        body: JSON.stringify(payload)
+        body: JSON.stringify(userPayload)
       });
       
       setIsSuccess(true);
@@ -159,63 +222,56 @@ export default function CadastroPage() {
     );
   }
 
-  return (
-    <div className="flex min-h-[calc(100vh-160px)] items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-bold">Criar Conta</CardTitle>
-          <CardDescription>
-            Cadastre-se como {isCliente ? 'Cliente' : 'Estabelecimento'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleRegister} className="space-y-4">
-            {error && (
-              <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
-                {error}
-              </div>
-            )}
-            
+  const renderStepContent = () => {
+    switch (step) {
+      case 1:
+        return (
+          <>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium leading-none" htmlFor="nome">Nome</label>
-                <Input id="nome" required placeholder="João" value={formData.nome} onChange={handleChange} />
+                <label className="text-sm font-medium" htmlFor="nome">Nome</label>
+                <Input id="nome" required placeholder="Ex: João" value={formData.nome} onChange={handleChange} />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium leading-none" htmlFor="sobrenome">Sobrenome</label>
-                <Input id="sobrenome" required placeholder="Silva" value={formData.sobrenome} onChange={handleChange} />
+                <label className="text-sm font-medium" htmlFor="sobrenome">Sobrenome</label>
+                <Input id="sobrenome" required placeholder="Ex: Silva" value={formData.sobrenome} onChange={handleChange} />
               </div>
             </div>
-
             <div className="space-y-2">
-              <label className="text-sm font-medium leading-none" htmlFor="cpf">CPF</label>
-              <Input id="cpf" required placeholder="00000000000" value={formData.cpf} onChange={handleChange} />
+              <label className="text-sm font-medium" htmlFor="cpf">CPF</label>
+              <Input id="cpf" required placeholder="000.000.000-00" maxLength={14} value={formData.cpf} onChange={handleChange} />
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium leading-none" htmlFor="telefone">Telefone</label>
-                <Input id="telefone" required placeholder="27999999999" value={formData.telefone} onChange={handleChange} />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium leading-none" htmlFor="dataNascimento">Data de Nasc.</label>
-                <Input id="dataNascimento" type="date" required value={formData.dataNascimento} onChange={handleChange} />
-              </div>
-            </div>
-            
+          </>
+        );
+      case 2:
+        return (
+          <>
             <div className="space-y-2">
-              <label className="text-sm font-medium leading-none" htmlFor="email">Email</label>
-              <Input id="email" type="email" required placeholder="seu@email.com" value={formData.email} onChange={handleChange} />
+              <label className="text-sm font-medium" htmlFor="telefone">Telefone</label>
+              <Input id="telefone" required placeholder="(00) 00000-0000" maxLength={15} value={formData.telefone} onChange={handleChange} />
             </div>
-
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="dataNascimento">Data de Nascimento</label>
+              <Input id="dataNascimento" type="date" required value={formData.dataNascimento} onChange={handleChange} />
+            </div>
+          </>
+        );
+      case 3:
+        return (
+          <>
+            <div className="space-y-2">
+              <label className="text-sm font-medium" htmlFor="email">Email</label>
+              <Input id="email" type="email" required placeholder="exemplo@email.com" value={formData.email} onChange={handleChange} />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium leading-none" htmlFor="password">Senha</label>
+                <label className="text-sm font-medium" htmlFor="password">Senha</label>
                 <div className="relative">
                   <Input 
                     id="password" 
                     type={showPassword ? "text" : "password"} 
                     required 
+                    placeholder="••••••••"
                     value={formData.password} 
                     onChange={handleChange} 
                   />
@@ -229,12 +285,13 @@ export default function CadastroPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium leading-none" htmlFor="confirmPassword">Confirmar Senha</label>
+                <label className="text-sm font-medium" htmlFor="confirmPassword">Confirmar Senha</label>
                 <div className="relative">
                   <Input 
                     id="confirmPassword" 
                     type={showConfirmPassword ? "text" : "password"} 
                     required 
+                    placeholder="••••••••"
                     value={formData.confirmPassword} 
                     onChange={handleChange} 
                   />
@@ -248,34 +305,113 @@ export default function CadastroPage() {
                 </div>
               </div>
             </div>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Cadastrando...' : 'Cadastrar'}
-            </Button>
-            
-            {/* DEVELOPMENT ONLY: Remove this button before production */}
+  const totalSteps = 3;
+  const isLastStep = step === totalSteps;
+
+  return (
+    <div className="w-full max-w-md mx-auto">
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Criar Conta</h1>
+        <p className="text-gray-600">
+          Cadastre-se como {isCliente ? 'Cliente' : isProfissional ? 'Profissional' : 'Estabelecimento'}
+        </p>
+      </div>
+
+      <div className="mb-6">
+        <div className="flex justify-between text-xs font-medium text-gray-500 mb-2">
+          <span>Etapa {step} de {totalSteps}</span>
+          <span>{Math.round((step / totalSteps) * 100)}%</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div 
+            className="bg-indigo-600 h-2 rounded-full transition-all duration-300" 
+            style={{ width: `${(step / totalSteps) * 100}%` }}
+          ></div>
+        </div>
+      </div>
+
+      <form onSubmit={isLastStep ? handleRegister : (e) => { e.preventDefault(); handleNextStep(); }} className="space-y-6">
+        
+        {step === 1 && (
+          <>
             <Button 
               type="button" 
               variant="outline" 
-              className="w-full border-dashed border-gray-400 text-gray-500 hover:text-gray-700" 
-              onClick={handleFillRandomData}
+              className="w-full flex items-center justify-center gap-2 hover:bg-gray-50 hover:text-gray-400 hover:cursor-not-allowed transition-all"
             >
-              Preencher Dados Aleatórios (Dev)
+              <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+                <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
+                  <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/>
+                  <path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/>
+                  <path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/>
+                  <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/>
+                </g>
+              </svg>
+              Cadastrar com Google
             </Button>
-          </form>
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-4 text-center text-sm text-gray-500">
-          <div>
-            Já tem uma conta?{' '}
-            <Link to={`/login?type=${type}`} className="text-indigo-600 hover:underline">
-              Entrar
-            </Link>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-gray-500">Ou continue com</span>
+              </div>
+            </div>
+          </>
+        )}
+
+        {error && (
+          <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
+            {error}
           </div>
-          <Link to="/login-selection" className="text-gray-400 hover:text-gray-600">
-            Voltar para seleção de perfil
-          </Link>
-        </CardFooter>
-      </Card>
+        )}
+        
+        <div className="space-y-4">
+          {renderStepContent()}
+        </div>
+
+        <div className="flex gap-3 pt-2">
+          {step > 1 && (
+            <Button type="button" variant="outline" onClick={handlePrevStep} className="w-1/3">
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+          )}
+          
+          <Button type="submit" className={step > 1 ? "w-2/3" : "w-full"} disabled={isLoading}>
+            {isLastStep ? (
+              isLoading ? 'Cadastrando...' : 'Finalizar Cadastro'
+            ) : (
+              <>
+                Avançar
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </>
+            )}
+          </Button>
+        </div>
+        
+        <Button 
+          type="button" 
+          variant="outline" 
+          className="w-full border-dashed border-gray-400 text-gray-500 hover:text-gray-700" 
+          onClick={handleFillRandomData}
+        >
+          Preencher Dados Aleatórios (Dev)
+        </Button>
+      </form>
+      <div className="mt-6 text-center text-sm text-gray-500">
+        Já tem uma conta?{' '}
+        <Link to={`/login?type=${type}`} className="text-indigo-600 hover:underline">
+          Entrar
+        </Link>
+      </div>
     </div>
   );
 }

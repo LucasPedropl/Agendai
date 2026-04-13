@@ -24,6 +24,26 @@ export default defineConfig(({mode}) => {
           target: 'https://agendaai.bixs.com.br',
           changeOrigin: true,
           secure: false,
+        },
+        '/Profissionais': {
+          target: 'https://agendaai.bixs.com.br',
+          changeOrigin: true,
+          secure: false,
+        },
+        '/Config-Estabelecimento': {
+          target: 'https://agendaai.bixs.com.br',
+          changeOrigin: true,
+          secure: false,
+        },
+        '/Editar-Atendimento': {
+          target: 'https://agendaai.bixs.com.br',
+          changeOrigin: true,
+          secure: false,
+        },
+        '/Editar': {
+          target: 'https://agendaai.bixs.com.br',
+          changeOrigin: true,
+          secure: false,
         }
       }
     },

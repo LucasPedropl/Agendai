@@ -1,6 +1,26 @@
 {
   "rewrites": [
     {
+      "source": "/api/(.*)",
+      "destination": "https://agendaai.bixs.com.br/api/$1"
+    },
+    {
+      "source": "/Profissionais/(.*)",
+      "destination": "https://agendaai.bixs.com.br/Profissionais/$1"
+    },
+    {
+      "source": "/Config-Estabelecimento/(.*)",
+      "destination": "https://agendaai.bixs.com.br/Config-Estabelecimento/$1"
+    },
+    {
+      "source": "/Editar-Atendimento/(.*)",
+      "destination": "https://agendaai.bixs.com.br/Editar-Atendimento/$1"
+    },
+    {
+      "source": "/Editar/(.*)",
+      "destination": "https://agendaai.bixs.com.br/Editar/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

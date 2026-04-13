@@ -17,11 +17,11 @@ export default function AdminReceitasPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('todas');
 
-  const stats = [
+  const [stats, setStats] = useState([
     { label: 'Total a Receber', value: 'R$ 0,00', icon: DollarSign, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
     { label: 'Total Vencido', value: 'R$ 0,00', icon: AlertCircle, color: 'text-red-500', bgColor: 'bg-red-50' },
     { label: 'Recebido Este Mês', value: 'R$ 0,00', icon: CheckCircle2, color: 'text-emerald-500', bgColor: 'bg-emerald-50' },
-  ];
+  ]);
 
   return (
     <div className="space-y-8">

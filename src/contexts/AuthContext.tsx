@@ -10,15 +10,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authState, setAuthState] = useState<AuthState>({
-    isAuthenticated: true,
-    user: {
-      id: 1,
-      nome: 'Usuário Teste',
-      email: 'teste@agendaai.com',
-      tipo: 'cliente'
-    },
-    token: 'mock-token',
-    userType: 'cliente',
+    isAuthenticated: false,
+    user: null,
+    token: null,
+    userType: null,
   });
 
   useEffect(() => {

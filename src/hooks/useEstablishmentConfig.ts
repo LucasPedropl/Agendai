@@ -72,7 +72,7 @@ export interface ComercioConfg {
   resumoDiario: boolean;
 }
 
-const IS_DEMO_MODE = true; // TODO: Remover depois
+const IS_DEMO_MODE = false; // TODO: Remover depois
 
 export function useEstablishmentConfig() {
   const { user } = useAuth();

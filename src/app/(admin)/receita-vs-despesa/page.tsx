@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import { 
   BarChart, 
   Bar, 
@@ -24,23 +26,19 @@ import {
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 
-const data = [
-  { name: 'Jan', receita: 4000, despesa: 2400 },
-  { name: 'Fev', receita: 3000, despesa: 1398 },
-  { name: 'Mar', receita: 2000, despesa: 9800 },
-  { name: 'Abr', receita: 2780, despesa: 3908 },
-  { name: 'Mai', receita: 1890, despesa: 4800 },
-  { name: 'Jun', receita: 2390, despesa: 3800 },
-];
-
-const pieData = [
-  { name: 'Receitas', value: 400 },
-  { name: 'Despesas', value: 300 },
-];
-
 const COLORS = ['#4f46e5', '#ef4444'];
 
 export default function AdminRevenueVsExpensePage() {
+  const [data, setData] = useState<any[]>([]);
+  const [pieData, setPieData] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    receitaTotal: 0,
+    despesaTotal: 0,
+    saldoLiquido: 0,
+    receitaPercentual: 0,
+    despesaPercentual: 0
+  });
+
   return (
     <div className="space-y-8">
       <div>
@@ -57,11 +55,13 @@ export default function AdminRevenueVsExpensePage() {
             </div>
             <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full flex items-center">
               <ArrowUpRight className="h-3 w-3 mr-1" />
-              +12.5%
+              +{stats.receitaPercentual}%
             </span>
           </div>
           <p className="text-sm font-medium text-slate-500">Receita Total</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">R$ 18.450,00</p>
+          <p className="text-2xl font-bold text-slate-900 mt-1">
+            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.receitaTotal)}
+          </p>
         </Card>
 
         <Card className="p-6 border-none shadow-sm bg-white">
@@ -71,11 +71,13 @@ export default function AdminRevenueVsExpensePage() {
             </div>
             <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full flex items-center">
               <ArrowDownRight className="h-3 w-3 mr-1" />
-              -4.2%
+              {stats.despesaPercentual}%
             </span>
           </div>
           <p className="text-sm font-medium text-slate-500">Despesa Total</p>
-          <p className="text-2xl font-bold text-slate-900 mt-1">R$ 9.230,00</p>
+          <p className="text-2xl font-bold text-slate-900 mt-1">
+            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.despesaTotal)}
+          </p>
         </Card>
 
         <Card className="p-6 border-none shadow-sm bg-indigo-600 text-white">
@@ -85,7 +87,9 @@ export default function AdminRevenueVsExpensePage() {
             </div>
           </div>
           <p className="text-sm font-medium text-indigo-100">Saldo Líquido</p>
-          <p className="text-2xl font-bold mt-1">R$ 9.220,00</p>
+          <p className="text-2xl font-bold mt-1">
+            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.saldoLiquido)}
+          </p>
         </Card>
       </div>
 

@@ -1,9 +1,24 @@
-// O Vite exige que as variáveis de ambiente comecem com VITE_ para serem expostas no frontend.
-// Se VITE_API_URL não estiver definida, usamos a URL de produção por padrão.
-export const API_URL = import.meta.env.VITE_API_URL || 'https://agendaai.bixs.com.br';
+// Deixamos a API_URL vazia para que o frontend faça requisições relativas (ex: /api/Login).
+// Isso faz com que as requisições passem pelo proxy do Vite (localmente) e pelo proxy do Vercel (em produção),
+// resolvendo completamente qualquer erro de CORS ("Failed to fetch").
+export const API_URL = '';
 
 export async function fetchApi(endpoint: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('token');
+  let token = localStorage.getItem('token');
+  
+  if (!token) {
+    const storedAuth = localStorage.getItem('agendaAi_auth');
+    if (storedAuth) {
+      try {
+        const parsed = JSON.parse(storedAuth);
+        if (parsed.token) {
+          token = parsed.token;
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+  }
   
   const headers = {
     'Content-Type': 'application/json',

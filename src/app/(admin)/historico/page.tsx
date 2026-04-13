@@ -13,11 +13,11 @@ import { Button } from '@/components/ui/button';
 export default function AdminHistoryPage() {
   const [activeTab, setActiveTab] = useState('todos');
 
-  const stats = [
+  const [stats, setStats] = useState([
     { label: 'Concluídos', value: '0', icon: CheckCircle2, color: 'text-emerald-500', bgColor: 'bg-emerald-50' },
     { label: 'Cancelados', value: '0', icon: XCircle, color: 'text-red-500', bgColor: 'bg-red-50' },
     { label: 'Total Faturado', value: 'R$ 0,00', icon: Calendar, color: 'text-indigo-600', bgColor: 'bg-indigo-50' },
-  ];
+  ]);
 
   return (
     <div className="space-y-8">

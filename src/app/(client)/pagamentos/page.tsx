@@ -1,21 +1,10 @@
+'use client';
+
 import { useState } from 'react';
 import { CreditCard, Plus } from 'lucide-react';
 
 export default function ClientPagamentosPage() {
-  const [cards] = useState([
-    {
-      id: '1',
-      brand: 'VISA',
-      number: '**** **** **** 1234',
-      expiry: '12/28',
-    },
-    {
-      id: '2',
-      brand: 'MASTERCARD',
-      number: '**** **** **** 5678',
-      expiry: '05/26',
-    },
-  ]);
+  const [cards, setCards] = useState<any[]>([]);
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -33,22 +22,28 @@ export default function ClientPagamentosPage() {
         </div>
         
         <div className="p-6 space-y-4">
-          {cards.map((card) => (
-            <div key={card.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-8 bg-slate-100 rounded flex items-center justify-center font-bold text-slate-600 text-xs">
-                  {card.brand}
-                </div>
-                <div>
-                  <p className="font-medium text-slate-900">{card.number}</p>
-                  <p className="text-sm text-slate-500">Expira em {card.expiry}</p>
-                </div>
-              </div>
-              <button className="text-red-600 hover:text-red-700 text-sm font-medium transition-colors">
-                Remover
-              </button>
+          {cards.length === 0 ? (
+            <div className="text-center text-slate-500 py-4">
+              Nenhum cartão salvo.
             </div>
-          ))}
+          ) : (
+            cards.map((card) => (
+              <div key={card.id} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-8 bg-slate-100 rounded flex items-center justify-center font-bold text-slate-600 text-xs">
+                    {card.brand}
+                  </div>
+                  <div>
+                    <p className="font-medium text-slate-900">{card.number}</p>
+                    <p className="text-sm text-slate-500">Expira em {card.expiry}</p>
+                  </div>
+                </div>
+                <button className="text-red-600 hover:text-red-700 text-sm font-medium transition-colors">
+                  Remover
+                </button>
+              </div>
+            ))
+          )}
 
           <button className="w-full py-4 border-2 border-dashed border-slate-300 rounded-lg text-slate-600 font-medium flex items-center justify-center gap-2 hover:bg-slate-50 hover:border-slate-400 transition-colors">
             <Plus className="h-5 w-5" />

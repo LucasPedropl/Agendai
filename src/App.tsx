@@ -6,7 +6,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
-import { PublicLayout } from '@/components/layout/PublicLayout';
+import { AuthLayout } from '@/components/layout/AuthLayout';
 import { ClientLayout } from '@/components/layout/ClientLayout';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 
@@ -14,6 +14,7 @@ import LandingPage from '@/app/(public)/page';
 import LoginSelectionPage from '@/app/(public)/login-selection/page';
 import LoginPage from '@/app/(public)/login/page';
 import CadastroPage from '@/app/(public)/cadastro/page';
+import CadastroComercioPage from '@/app/(public)/cadastro-comercio/page';
 import AtivarContaPage from '@/app/(public)/ativar-conta/page';
 import ClientDashboardPage from '@/app/(client)/agendamentos/page';
 import ClientHistoryPage from '@/app/(client)/historico/page';
@@ -27,7 +28,6 @@ import AdminDashboardPage from '@/app/(admin)/dashboard/page';
 import AdminAgendaPage from '@/app/(admin)/agenda/page';
 import AdminHistoryPage from '@/app/(admin)/historico/page';
 import AdminServicosPage from '@/app/(admin)/servicos/page';
-import AdminProductsPage from '@/app/(admin)/produtos/page';
 import AdminProfissionaisPage from '@/app/(admin)/profissionais/page';
 import AdminClientesPage from '@/app/(admin)/clientes/page';
 import AdminEstablishmentConfigPage from '@/app/(admin)/config-estabelecimento/page';
@@ -51,11 +51,12 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           {/* Public Routes */}
-          <Route element={<PublicLayout />}>
+          <Route element={<AuthLayout />}>
             <Route path="/" element={<Navigate to="/login-selection" replace />} />
             <Route path="/login-selection" element={<LoginSelectionPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/cadastro/:type" element={<CadastroPage />} />
+            <Route path="/cadastro-comercio" element={<CadastroComercioPage />} />
             <Route path="/ativar-conta" element={<AtivarContaPage />} />
           </Route>
 
@@ -78,7 +79,6 @@ export default function App() {
             <Route path="agenda" element={<AdminAgendaPage />} />
             <Route path="historico" element={<AdminHistoryPage />} />
             <Route path="servicos" element={<AdminServicosPage />} />
-            <Route path="produtos" element={<AdminProductsPage />} />
             <Route path="profissionais" element={<AdminProfissionaisPage />} />
             <Route path="clientes" element={<AdminClientesPage />} />
             <Route path="config-estabelecimento" element={<AdminEstablishmentConfigPage />} />

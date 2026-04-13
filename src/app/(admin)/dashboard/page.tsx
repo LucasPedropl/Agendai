@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, CalendarDays, DollarSign, TrendingUp } from 'lucide-react';
@@ -11,30 +13,15 @@ interface DashboardMetrics {
 }
 
 export default function AdminDashboardPage() {
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const data = [
-    { name: 'Seg', receita: 400, cancelamentos: 24 },
-    { name: 'Ter', receita: 300, cancelamentos: 13 },
-    { name: 'Qua', receita: 200, cancelamentos: 98 },
-    { name: 'Qui', receita: 278, cancelamentos: 39 },
-    { name: 'Sex', receita: 189, cancelamentos: 48 },
-    { name: 'Sáb', receita: 239, cancelamentos: 38 },
-    { name: 'Dom', receita: 349, cancelamentos: 43 },
-  ];
-
-  useEffect(() => {
-    setTimeout(() => {
-      setMetrics({
-        agendamentosHoje: 12,
-        agendamentosSemana: 84,
-        receitaMes: 4500,
-        taxaCancelamento: 5,
-      });
-      setIsLoading(false);
-    }, 1000);
-  }, []);
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>({
+    agendamentosHoje: 0,
+    agendamentosSemana: 0,
+    receitaMes: 0,
+    taxaCancelamento: 0,
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [data, setData] = useState<any[]>([]);
+  const [agendamentos, setAgendamentos] = useState<any[]>([]);
 
   if (isLoading) {
     return <div className="flex h-full items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-b-2 border-indigo-600"></div></div>;
@@ -55,7 +42,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics?.agendamentosHoje}</div>
-            <p className="text-xs text-gray-500">+20% em relação a ontem</p>
+            <p className="text-xs text-gray-500">0% em relação a ontem</p>
           </CardContent>
         </Card>
         <Card>
@@ -65,7 +52,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics?.agendamentosSemana}</div>
-            <p className="text-xs text-gray-500">+15% em relação à semana passada</p>
+            <p className="text-xs text-gray-500">0% em relação à semana passada</p>
           </CardContent>
         </Card>
         <Card>
@@ -75,7 +62,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">R$ {metrics?.receitaMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-            <p className="text-xs text-gray-500">+10% em relação ao mês passado</p>
+            <p className="text-xs text-gray-500">0% em relação ao mês passado</p>
           </CardContent>
         </Card>
         <Card>
@@ -85,7 +72,7 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{metrics?.taxaCancelamento}%</div>
-            <p className="text-xs text-gray-500">-2% em relação ao mês passado</p>
+            <p className="text-xs text-gray-500">0% em relação ao mês passado</p>
           </CardContent>
         </Card>
       </div>
@@ -119,20 +106,24 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="flex items-center justify-between border-b border-gray-100 pb-4 last:border-0 last:pb-0">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold">
-                      {i + 8}:00
+              {agendamentos.length === 0 ? (
+                <div className="text-center text-gray-500 py-4">Nenhum agendamento próximo.</div>
+              ) : (
+                agendamentos.map((agendamento, i) => (
+                  <div key={i} className="flex items-center justify-between border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold">
+                        {agendamento.horario}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{agendamento.cliente}</p>
+                        <p className="text-xs text-gray-500">{agendamento.servico}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Cliente {i}</p>
-                      <p className="text-xs text-gray-500">Corte de Cabelo</p>
-                    </div>
+                    <div className="text-sm font-medium text-gray-900">R$ {agendamento.valor}</div>
                   </div>
-                  <div className="text-sm font-medium text-gray-900">R$ 50,00</div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

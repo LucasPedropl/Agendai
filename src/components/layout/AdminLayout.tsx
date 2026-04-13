@@ -44,7 +44,6 @@ export function AdminLayout() {
       title: 'GERENCIAMENTO',
       items: [
         { to: '/estabelecimento/servicos', icon: Briefcase, label: 'Serviços' },
-        { to: '/estabelecimento/produtos', icon: Package, label: 'Produtos' },
         { to: '/estabelecimento/profissionais', icon: Users, label: 'Profissionais' },
         { to: '/estabelecimento/clientes', icon: User, label: 'Clientes' },
         { to: '/estabelecimento/config-estabelecimento', icon: Store, label: 'Config. Estabelecimento' },

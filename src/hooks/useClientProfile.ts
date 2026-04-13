@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { fetchApi } from '@/lib/api';
 
-const IS_DEMO_MODE = true; // TODO: Remover depois
+const IS_DEMO_MODE = false; // TODO: Remover depois
 
 export function useClientProfile() {
   const [isLoading, setIsLoading] = useState(false);
