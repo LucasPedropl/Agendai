@@ -1,15 +1,81 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Mail, Phone, Calendar } from 'lucide-react';
+import { Modal } from '@/components/ui/modal';
+import { Search, Mail, Phone, Calendar, Plus, UserPlus } from 'lucide-react';
 import { Cliente } from '@/types';
+import { fetchApi } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AdminClientesPage() {
+  const { token, user } = useAuth();
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  // Form state
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+
+  const fetchClientes = async () => {
+    setIsLoading(true);
+    try {
+      // Assuming endpoint for getting clientes
+      const commerceId = (user as any)?.id || 1;
+      const data = await fetchApi(`/api/ClientesCommecio/${commerceId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setClientes(Array.isArray(data) ? data : (data ? [data] : []));
+    } catch (err) {
+      console.error("Erro ao buscar clientes:", err);
+      setClientes([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchClientes();
+    }
+  }, [token]);
+
+  const handleInviteCliente = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const commerceId = (user as any)?.id || 1;
+      await fetchApi('/Cadastrar-Funcionario-Cliente', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          idComercio: commerceId,
+          nome,
+          email,
+          permissao: 0 // Cliente
+        })
+      });
+
+      setIsModalOpen(false);
+      setNome('');
+      setEmail('');
+      alert('Convite enviado com sucesso!');
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Erro ao convidar cliente.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (isLoading) {
     return <div className="flex h-full items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-b-2 border-indigo-600"></div></div>;
@@ -22,13 +88,59 @@ export default function AdminClientesPage() {
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">Clientes</h1>
           <p className="text-gray-500">Gerencie sua base de clientes e histórico.</p>
         </div>
-        <div className="flex w-full max-w-sm items-center gap-2">
-          <Input type="text" placeholder="Buscar cliente..." className="w-full" />
-          <Button variant="outline" size="icon">
-            <Search className="h-4 w-4" />
+        <div className="flex w-full max-sm:flex-col sm:w-auto items-center gap-2">
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+            <Input type="text" placeholder="Buscar cliente..." className="pl-9 w-full" />
+          </div>
+          <Button className="w-full sm:w-auto whitespace-nowrap" onClick={() => setIsModalOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Convidar Cliente
           </Button>
         </div>
       </div>
+
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Convidar Novo Cliente">
+        <form onSubmit={handleInviteCliente} className="space-y-4">
+          <p className="text-sm text-gray-500">
+            Enviaremos um convite por e-mail para que o cliente realize o cadastro completo.
+          </p>
+          {error && (
+            <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
+              {error}
+            </div>
+          )}
+          <div className="space-y-2">
+            <label className="text-sm font-medium" htmlFor="nome">Nome do Cliente</label>
+            <Input 
+              id="nome" 
+              required 
+              placeholder="Ex: João da Silva" 
+              value={nome} 
+              onChange={(e) => setNome(e.target.value)} 
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium" htmlFor="email">E-mail</label>
+            <Input 
+              id="email" 
+              type="email"
+              required 
+              placeholder="exemplo@email.com" 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+            />
+          </div>
+          <div className="pt-4 flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Enviando Convite...' : 'Enviar Convite'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
 
       <Card>
         <CardHeader>

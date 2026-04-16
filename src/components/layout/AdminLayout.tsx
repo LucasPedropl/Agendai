@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { 
   PieChart, 
@@ -18,14 +18,49 @@ import {
   ChevronLeft,
   ChevronRight,
   Bell,
-  Search
+  Search,
+  Loader2
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { fetchApi } from '@/lib/api';
+import CadastroComercioPage from '@/app/(public)/cadastro-comercio/page';
 
 export function AdminLayout() {
-  const { logout, user } = useAuth();
+  const { logout, user, token } = useAuth();
   const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [hasCommerce, setHasCommerce] = useState<boolean | null>(null);
+  const [isLoadingCommerce, setIsLoadingCommerce] = useState(true);
+
+  useEffect(() => {
+    const checkCommerce = async () => {
+      try {
+        const comercios = await fetchApi('/api/Comercios', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!comercios || (Array.isArray(comercios) && comercios.length === 0)) {
+          setHasCommerce(false);
+        } else {
+          setHasCommerce(true);
+        }
+      } catch (err) {
+        console.error("Erro ao verificar comércios:", err);
+        setHasCommerce(false);
+      } finally {
+        setIsLoadingCommerce(false);
+      }
+    };
+
+    if (token) {
+      checkCommerce();
+    } else {
+      setIsLoadingCommerce(false);
+    }
+  }, [token]);
 
   const handleLogout = () => {
     logout();
@@ -66,13 +101,21 @@ export function AdminLayout() {
     }
   ];
 
+  if (isLoadingCommerce) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex relative">
       {/* Sidebar */}
       <aside 
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-gray-200 bg-white transition-all duration-300 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-40 flex flex-col border-r border-gray-200 bg-white transition-all duration-300 ease-in-out ${
           isCollapsed ? 'w-20' : 'w-64'
-        } hidden lg:flex`}
+        } hidden lg:flex ${hasCommerce === false ? 'blur-sm pointer-events-none select-none' : ''}`}
       >
         {/* Sidebar Header */}
         <div className="flex h-16 items-center justify-between px-4 border-b border-gray-200">
@@ -150,7 +193,7 @@ export function AdminLayout() {
       {/* Main Content Area */}
       <div className={`flex-1 flex flex-col transition-all duration-300 ${isCollapsed ? 'lg:pl-20' : 'lg:pl-64'}`}>
         {/* Top Bar */}
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 md:px-8">
+        <header className={`sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 md:px-8 ${hasCommerce === false ? 'blur-sm pointer-events-none select-none' : ''}`}>
           <div className="flex items-center gap-4">
             <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -202,10 +245,19 @@ export function AdminLayout() {
         </header>
 
         {/* Content */}
-        <main className="p-4 md:p-8">
-          <Outlet />
+        <main className={`p-4 md:p-8 flex-1 ${hasCommerce === false ? 'blur-sm pointer-events-none select-none' : ''}`}>
+          {hasCommerce === true && <Outlet />}
         </main>
       </div>
+
+      {/* Blocking Overlay for Commerce Setup */}
+      {hasCommerce === false && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm">
+          <div className="bg-white p-8 rounded-xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <CadastroComercioPage onSuccess={() => setHasCommerce(true)} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

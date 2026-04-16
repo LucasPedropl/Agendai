@@ -80,6 +80,7 @@ export function useEstablishmentConfig() {
   const [basicInfo, setBasicInfo] = useState<ComercioConfg | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeComercioId, setActiveComercioId] = useState<number | null>(null);
 
   const comercioId = user?.id || 1; // Fallback to 1 for testing
 
@@ -126,7 +127,7 @@ export function useEstablishmentConfig() {
             setBasicInfo(JSON.parse(storedBasic));
           } else {
             setBasicInfo({
-              id: comercioId,
+              id: 1,
               nome: 'Barbearia Demo',
               endereco: 'Rua Fictícia, 123',
               telefone: '(11) 99999-9999',
@@ -140,16 +141,58 @@ export function useEstablishmentConfig() {
             });
           }
           
+          setActiveComercioId(1);
           setIsLoading(false);
         }, 500);
         return;
       }
 
       try {
-        const [configData, basicDataRaw] = await Promise.all([
-          fetchApi(`/Config-Estabelecimento/${comercioId}`),
-          fetchApi(`/api/Comercios/${comercioId}`)
-        ]);
+        // First, get the user's comercios to find the correct comercioId
+        const comercios = await fetchApi('/api/Comercios');
+        
+        let actualComercioId = null;
+        let basicDataRaw: any = null;
+
+        if (Array.isArray(comercios) && comercios.length > 0) {
+          actualComercioId = comercios[0].id;
+          basicDataRaw = comercios[0];
+        } else if (comercios && !Array.isArray(comercios) && comercios.id) {
+          actualComercioId = comercios.id;
+          basicDataRaw = comercios;
+        }
+
+        if (!actualComercioId) {
+          throw new Error("Nenhum comércio encontrado para este usuário.");
+        }
+
+        setActiveComercioId(actualComercioId);
+
+        // Como a página ainda não tem GET para as configurações, vamos usar valores padrão
+        const configData: ComercioConfiguracao = {
+          horarioAtendimento: {
+            dias: [1, 2, 3, 4, 5],
+            horaInicio: '09:00',
+            horaFim: '18:00',
+            intervalo: true,
+            inicioIntervalo: '12:00',
+            fimIntervalo: '13:00'
+          },
+          configuracao: {
+            antecedenciaMin: 30,
+            limiteAgendar: 30,
+            confirmaAuto: true,
+            tempoDuracaoPadrao: 30,
+            tempoCancelamento: 2,
+            reagendar: true,
+            tempoIntervalo: 15,
+            agendaSimultanea: 1,
+            horarioPorProfissional: false,
+            fechaFeriadosNacionais: true,
+            fechaFeriadosMunicipais: false,
+            diasFechados: []
+          }
+        };
         
         // Adapt basicData from API (which returns Comercio instead of ComercioConfg)
         let horaEntradaUtil = '09:00';
@@ -208,8 +251,13 @@ export function useEstablishmentConfig() {
       });
     }
 
+    if (!activeComercioId) {
+      setError('ID do comércio não encontrado.');
+      return false;
+    }
+
     try {
-      await fetchApi(`/Editar-Atendimento/${comercioId}`, {
+      await fetchApi(`/Editar-Atendimento/${activeComercioId}`, {
         method: 'PUT',
         body: JSON.stringify(newConfig),
       });
@@ -232,8 +280,13 @@ export function useEstablishmentConfig() {
       });
     }
 
+    if (!activeComercioId) {
+      setError('ID do comércio não encontrado.');
+      return false;
+    }
+
     try {
-      await fetchApi(`/Editar/${comercioId}`, {
+      await fetchApi(`/Editar/${activeComercioId}`, {
         method: 'PUT',
         body: JSON.stringify(newBasicInfo),
       });

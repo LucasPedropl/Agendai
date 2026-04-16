@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { fetchApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function CadastroComercioPage() {
-  const navigate = useNavigate();
-  const { token, userType } = useAuth();
+interface CadastroComercioPageProps {
+  onSuccess?: () => void;
+}
+
+export default function CadastroComercioPage({ onSuccess }: CadastroComercioPageProps) {
+  const { token } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -78,8 +80,9 @@ export default function CadastroComercioPage() {
         body: JSON.stringify(comercioPayload)
       });
       
-      // Redirect to dashboard after successful commerce registration
-      navigate('/estabelecimento/dashboard');
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Erro ao cadastrar comércio. Verifique os dados e tente novamente.');
@@ -127,6 +130,25 @@ export default function CadastroComercioPage() {
 
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? 'Salvando...' : 'Finalizar Cadastro'}
+        </Button>
+
+        <Button 
+          type="button" 
+          variant="outline" 
+          className="w-full border-dashed border-gray-400 text-gray-500 hover:text-gray-700" 
+          onClick={() => {
+            const randomString = Math.random().toString(36).substring(2, 8);
+            const randomPhone = `279${Array.from({ length: 8 }, () => Math.floor(Math.random() * 10)).join('')}`;
+            setFormData({
+              comercioNome: `Comércio ${randomString}`,
+              comercioCnpj: '12.345.678/0001-90',
+              comercioEndereco: 'Rua Teste, 123, Centro',
+              comercioTelefone: formatTelefone(randomPhone),
+              comercioEmail: `contato_${randomString}@example.com`
+            });
+          }}
+        >
+          Preencher Dados Aleatórios (Dev)
         </Button>
       </form>
     </div>

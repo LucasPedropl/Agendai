@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Store, Save, MapPin, Phone, Mail, Clock, Globe, Instagram, Facebook, Camera,
-  Info, Calendar as CalendarIcon, CalendarX, Settings2, Check, Loader2, Bell
+  Info, Calendar as CalendarIcon, CalendarX, Settings2, Check, Loader2, Bell,
+  Briefcase, Users, Umbrella, Ban
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -82,20 +83,8 @@ export default function AdminEstablishmentConfigPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Configuração do Estabelecimento</h1>
-          <p className="text-slate-500">Gerencie informações, horários de funcionamento e regras da agenda.</p>
+          <p className="text-slate-500">Gerencie horários de funcionamento, feriados e bloqueios de agenda.</p>
         </div>
-        <Button 
-          onClick={handleSave}
-          disabled={isSaving}
-          className="bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-200"
-        >
-          {isSaving ? (
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          ) : (
-            <Save className="h-4 w-4 mr-2" />
-          )}
-          Salvar Alterações
-        </Button>
       </div>
 
       {/* Tabs */}
@@ -127,8 +116,11 @@ export default function AdminEstablishmentConfigPage() {
           {/* Horário de Funcionamento */}
           <Card className="p-0 border-gray-200 shadow-sm bg-white overflow-hidden">
             <div className="p-6 border-b border-gray-100 bg-slate-50/50">
-              <h3 className="text-lg font-bold text-slate-900">Horário de Funcionamento</h3>
-              <p className="text-sm text-slate-500">Defina os dias e horários em que seu estabelecimento funciona</p>
+              <h3 className="text-lg font-bold text-slate-900 flex items-center">
+                <Clock className="h-5 w-5 mr-2 text-slate-700" />
+                Horário de Funcionamento
+              </h3>
+              <p className="text-sm text-slate-500 mt-1">Defina os dias e horários em que seu estabelecimento funciona</p>
             </div>
             
             <div className="p-6 space-y-8">
@@ -149,14 +141,15 @@ export default function AdminEstablishmentConfigPage() {
                         });
                       }
                     }}
-                    className={`p-4 rounded-xl border cursor-pointer transition-all text-center ${
+                    className={`p-4 rounded-xl border cursor-pointer transition-all text-center flex flex-col items-center justify-center ${
                       activePattern === 'seg-sex' 
-                        ? 'border-indigo-600 ring-1 ring-indigo-600 bg-indigo-50/50' 
-                        : 'border-gray-200 hover:border-indigo-300'
+                        ? 'border-slate-900 ring-1 ring-slate-900 bg-slate-50' 
+                        : 'border-gray-200 hover:border-slate-300'
                     }`}
                   >
+                    <Briefcase className="h-6 w-6 text-slate-700 mb-2" />
                     <p className="font-semibold text-slate-900">Segunda a Sexta</p>
-                    <p className="text-xs text-slate-500 mt-1">5 dias por semana</p>
+                    <p className="text-xs text-slate-500 mt-1">Dias úteis</p>
                   </div>
                   <div 
                     onClick={() => {
@@ -171,14 +164,15 @@ export default function AdminEstablishmentConfigPage() {
                         });
                       }
                     }}
-                    className={`p-4 rounded-xl border cursor-pointer transition-all text-center ${
+                    className={`p-4 rounded-xl border cursor-pointer transition-all text-center flex flex-col items-center justify-center ${
                       activePattern === 'seg-sab' 
-                        ? 'border-indigo-600 ring-1 ring-indigo-600 bg-indigo-50/50' 
-                        : 'border-gray-200 hover:border-indigo-300'
+                        ? 'border-slate-900 ring-1 ring-slate-900 bg-slate-50' 
+                        : 'border-gray-200 hover:border-slate-300'
                     }`}
                   >
+                    <CalendarIcon className="h-6 w-6 text-slate-700 mb-2" />
                     <p className="font-semibold text-slate-900">Segunda a Sábado</p>
-                    <p className="text-xs text-slate-500 mt-1">6 dias por semana</p>
+                    <p className="text-xs text-slate-500 mt-1">Com sábado</p>
                   </div>
                   <div 
                     onClick={() => {
@@ -193,14 +187,15 @@ export default function AdminEstablishmentConfigPage() {
                         });
                       }
                     }}
-                    className={`p-4 rounded-xl border cursor-pointer transition-all text-center ${
+                    className={`p-4 rounded-xl border cursor-pointer transition-all text-center flex flex-col items-center justify-center ${
                       activePattern === 'todos' 
                         ? 'border-slate-900 ring-1 ring-slate-900 bg-slate-50' 
                         : 'border-gray-200 hover:border-slate-300'
                     }`}
                   >
-                    <p className="font-semibold text-slate-900">Todos os Dias</p>
-                    <p className="text-xs text-slate-500 mt-1">7 dias por semana</p>
+                    <CalendarIcon className="h-6 w-6 text-slate-700 mb-2" />
+                    <p className="font-semibold text-slate-900">Segunda a Domingo</p>
+                    <p className="text-xs text-slate-500 mt-1">Todos os dias</p>
                   </div>
                 </div>
               </div>
@@ -208,15 +203,15 @@ export default function AdminEstablishmentConfigPage() {
               {/* Dias Personalizados */}
               <div className="space-y-3">
                 <label className="text-sm font-medium text-slate-700">Dias de Funcionamento (Personalizado)</label>
-                <div className="flex flex-wrap gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
                   {days.map(day => (
-                    <label key={day.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg min-w-[140px] flex-1 cursor-pointer hover:bg-gray-50">
-                      <span className="text-sm text-slate-700">{day.label}</span>
+                    <label key={day.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+                      <span className="text-sm text-slate-700">{day.label.substring(0, 3)}</span>
                       <input 
                         type="checkbox" 
                         checked={activeDays.includes(day.id)}
                         onChange={() => handleDayToggle(day.id)}
-                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                        className="h-4 w-4 rounded border-gray-300 text-slate-900 focus:ring-slate-900"
                       />
                     </label>
                   ))}
@@ -228,7 +223,7 @@ export default function AdminEstablishmentConfigPage() {
                 <label className="text-sm font-medium text-slate-700">Horário de Atendimento Padrão</label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-1.5">
-                    <label className="text-xs text-slate-500">Horário de Abertura</label>
+                    <label className="text-xs text-slate-500">Abertura</label>
                     <div className="relative">
                       <input 
                         type="time" 
@@ -243,16 +238,17 @@ export default function AdminEstablishmentConfigPage() {
                             }
                           });
                         }}
-                        className="w-full h-11 rounded-lg border border-gray-200 px-4 text-sm focus:ring-2 focus:ring-indigo-600 outline-none"
+                        className="w-full h-11 rounded-lg border border-gray-200 px-4 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
                       />
+                      <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs text-slate-500">Horário de Fechamento</label>
+                    <label className="text-xs text-slate-500">Fechamento</label>
                     <div className="relative">
                       <input 
                         type="time" 
-                        value={localConfig?.horarioAtendimento?.horaFim?.substring(0, 5) || '19:00'}
+                        value={localConfig?.horarioAtendimento?.horaFim?.substring(0, 5) || '18:00'}
                         onChange={(e) => {
                           if (!localConfig?.horarioAtendimento) return;
                           setLocalConfig({
@@ -263,8 +259,9 @@ export default function AdminEstablishmentConfigPage() {
                             }
                           });
                         }}
-                        className="w-full h-11 rounded-lg border border-gray-200 px-4 text-sm focus:ring-2 focus:ring-indigo-600 outline-none"
+                        className="w-full h-11 rounded-lg border border-gray-200 px-4 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
                       />
+                      <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
                     </div>
                   </div>
                 </div>
@@ -284,7 +281,7 @@ export default function AdminEstablishmentConfigPage() {
                           }
                         });
                       }}
-                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                      className="h-4 w-4 rounded border-gray-300 text-slate-900 focus:ring-slate-900"
                     />
                     <span className="text-sm font-medium text-slate-700">Possui intervalo para almoço</span>
                   </label>
@@ -337,10 +334,13 @@ export default function AdminEstablishmentConfigPage() {
           {/* Horários por Profissional */}
           <Card className="p-6 border-gray-200 shadow-sm bg-white flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-bold text-slate-900">Horários por Profissional</h3>
-              <p className="text-sm text-slate-500">Configure horários específicos para cada profissional</p>
+              <h3 className="text-lg font-bold text-slate-900 flex items-center">
+                <Users className="h-5 w-5 mr-2 text-slate-700" />
+                Horários por Profissional
+              </h3>
+              <p className="text-sm text-slate-500 mt-1">Configure horários individuais para cada profissional (opcional)</p>
             </div>
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className="relative inline-flex items-center cursor-pointer">
               <input 
                 type="checkbox" 
                 checked={localConfig?.configuracao?.horarioPorProfissional || false}
@@ -354,63 +354,72 @@ export default function AdminEstablishmentConfigPage() {
                     }
                   });
                 }}
-                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                className="sr-only peer"
               />
-              <span className="text-sm font-medium text-slate-700">Ativar</span>
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
             </label>
           </Card>
 
           {/* Funcionamento em Feriados */}
           <Card className="p-0 border-gray-200 shadow-sm bg-white overflow-hidden">
             <div className="p-6 border-b border-gray-100 bg-slate-50/50">
-              <h3 className="text-lg font-bold text-slate-900">Funcionamento em Feriados</h3>
-              <p className="text-sm text-slate-500">Configure o funcionamento do estabelecimento em feriados</p>
+              <h3 className="text-lg font-bold text-slate-900 flex items-center">
+                <Umbrella className="h-5 w-5 mr-2 text-slate-700" />
+                Funcionamento em Feriados
+              </h3>
+              <p className="text-sm text-slate-500 mt-1">Configure o funcionamento do estabelecimento em feriados</p>
             </div>
             
             <div className="p-6 space-y-6">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={localConfig?.configuracao?.fechaFeriadosNacionais || false}
-                  onChange={(e) => {
-                    if (!localConfig?.configuracao) return;
-                    setLocalConfig({
-                      ...localConfig,
-                      configuracao: {
-                        ...localConfig.configuracao,
-                        fechaFeriadosNacionais: e.target.checked
-                      }
-                    });
-                  }}
-                  className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mt-0.5"
-                />
-                <div>
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1">
                   <span className="text-sm font-medium text-slate-900 block">Fechar em Feriados Nacionais</span>
-                  <span className="text-xs text-slate-500">O estabelecimento não aceitará agendamentos em feriados nacionais</span>
+                  <span className="text-xs text-slate-500 mt-1 block">O estabelecimento não aceitará agendamentos em feriados nacionais</span>
                 </div>
-              </label>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={localConfig?.configuracao?.fechaFeriadosNacionais || false}
+                    onChange={(e) => {
+                      if (!localConfig?.configuracao) return;
+                      setLocalConfig({
+                        ...localConfig,
+                        configuracao: {
+                          ...localConfig.configuracao,
+                          fechaFeriadosNacionais: e.target.checked
+                        }
+                      });
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                </label>
+              </div>
 
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={localConfig?.configuracao?.fechaFeriadosMunicipais || false}
-                  onChange={(e) => {
-                    if (!localConfig?.configuracao) return;
-                    setLocalConfig({
-                      ...localConfig,
-                      configuracao: {
-                        ...localConfig.configuracao,
-                        fechaFeriadosMunicipais: e.target.checked
-                      }
-                    });
-                  }}
-                  className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mt-0.5"
-                />
-                <div>
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
+                <div className="flex-1">
                   <span className="text-sm font-medium text-slate-900 block">Fechar em Feriados Municipais</span>
-                  <span className="text-xs text-slate-500">O estabelecimento não aceitará agendamentos em feriados locais</span>
+                  <span className="text-xs text-slate-500 mt-1 block">O estabelecimento não aceitará agendamentos em feriados locais</span>
                 </div>
-              </label>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={localConfig?.configuracao?.fechaFeriadosMunicipais || false}
+                    onChange={(e) => {
+                      if (!localConfig?.configuracao) return;
+                      setLocalConfig({
+                        ...localConfig,
+                        configuracao: {
+                          ...localConfig.configuracao,
+                          fechaFeriadosMunicipais: e.target.checked
+                        }
+                      });
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                </label>
+              </div>
 
               <div className="pt-4 border-t border-gray-100">
                 <label className="text-sm font-medium text-slate-700 block mb-3">Feriados Personalizados</label>
@@ -502,16 +511,52 @@ export default function AdminEstablishmentConfigPage() {
           {/* Bloqueio de Agenda */}
           <Card className="p-0 border-gray-200 shadow-sm bg-white overflow-hidden">
             <div className="p-6 border-b border-gray-100 bg-slate-50/50">
-              <h3 className="text-lg font-bold text-slate-900">Bloqueio de Agenda</h3>
-              <p className="text-sm text-slate-500">Bloqueie datas específicas para não receber agendamentos</p>
+              <h3 className="text-lg font-bold text-slate-900 flex items-center">
+                <Ban className="h-5 w-5 mr-2 text-slate-700" />
+                Bloqueio de Agenda
+              </h3>
+              <p className="text-sm text-slate-500 mt-1">Bloqueie datas específicas para não receber agendamentos</p>
             </div>
             
-            <div className="p-6">
-              <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
-                <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-sm font-bold text-blue-900">Funcionalidade em Desenvolvimento</h4>
-                  <p className="text-sm text-blue-700 mt-1">Em breve você poderá bloquear datas específicas através de um calendário interativo.</p>
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <h4 className="text-sm font-medium text-slate-700 mb-4">Selecione as datas</h4>
+                <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
+                  <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-bold text-blue-900">Funcionalidade em Desenvolvimento</h4>
+                    <p className="text-sm text-blue-700 mt-1">Em breve você poderá bloquear datas específicas através de um calendário interativo.</p>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium text-slate-700 mb-4">Datas Bloqueadas</h4>
+                <div className="space-y-3">
+                  <div className="bg-red-50 border border-red-100 p-3 rounded-lg flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">25 de Dezembro de 2025</p>
+                      <p className="text-xs text-slate-500">Data bloqueada</p>
+                    </div>
+                    <button className="text-red-500 hover:text-red-700">
+                      <CalendarX className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="bg-red-50 border border-red-100 p-3 rounded-lg flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">1 de Janeiro de 2026</p>
+                      <p className="text-xs text-slate-500">Data bloqueada</p>
+                    </div>
+                    <button className="text-red-500 hover:text-red-700">
+                      <CalendarX className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-4 bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
+                  <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-bold text-blue-900">Como usar:</h4>
+                    <p className="text-sm text-blue-700 mt-1">Clique nos dias do calendário para bloquear ou desbloquear datas. Clientes não poderão agendar serviços nas datas bloqueadas.</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -520,19 +565,17 @@ export default function AdminEstablishmentConfigPage() {
           {/* Configurações Adicionais */}
           <Card className="p-0 border-gray-200 shadow-sm bg-white overflow-hidden">
             <div className="p-6 border-b border-gray-100 bg-slate-50/50">
-              <h3 className="text-lg font-bold text-slate-900">Configurações Adicionais</h3>
+              <h3 className="text-lg font-bold text-slate-900 flex items-center">
+                <Settings2 className="h-5 w-5 mr-2 text-slate-700" />
+                Configurações Adicionais
+              </h3>
             </div>
             
             <div className="p-6 space-y-6">
-              <div className="flex items-start gap-3">
-                <input 
-                  type="checkbox" 
-                  checked={localConfig?.configuracao?.antecedenciaMin !== undefined}
-                  className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mt-0.5"
-                />
+              <div className="flex items-center justify-between gap-4">
                 <div className="flex-1">
                   <span className="text-sm font-medium text-slate-900 block">Antecedência Mínima para Agendamentos</span>
-                  <div className="flex items-center gap-2 mt-2 text-sm text-slate-600">
+                  <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
                     Clientes devem agendar com pelo menos
                     <select 
                       value={localConfig?.configuracao?.antecedenciaMin || 2}
@@ -546,7 +589,7 @@ export default function AdminEstablishmentConfigPage() {
                           }
                         });
                       }}
-                      className="h-9 rounded-md border border-gray-200 px-2 outline-none focus:ring-2 focus:ring-indigo-600"
+                      className="h-8 rounded-md border border-gray-200 px-2 outline-none focus:ring-2 focus:ring-slate-900 bg-white"
                     >
                       <option value={1}>1 hora</option>
                       <option value={2}>2 horas</option>
@@ -557,17 +600,21 @@ export default function AdminEstablishmentConfigPage() {
                     de antecedência
                   </div>
                 </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={localConfig?.configuracao?.antecedenciaMin !== undefined}
+                    onChange={() => {}} // Toggle logic would go here
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                </label>
               </div>
 
-              <div className="flex items-start gap-3">
-                <input 
-                  type="checkbox" 
-                  checked={localConfig?.configuracao?.limiteAgendar !== undefined}
-                  className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mt-0.5"
-                />
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
                 <div className="flex-1">
                   <span className="text-sm font-medium text-slate-900 block">Limite de Agendamentos Simultâneos</span>
-                  <div className="flex items-center gap-2 mt-2 text-sm text-slate-600">
+                  <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
                     Permitir no máximo
                     <select 
                       value={localConfig?.configuracao?.agendaSimultanea || 1}
@@ -581,7 +628,7 @@ export default function AdminEstablishmentConfigPage() {
                           }
                         });
                       }}
-                      className="h-9 rounded-md border border-gray-200 px-2 outline-none focus:ring-2 focus:ring-indigo-600"
+                      className="h-8 rounded-md border border-gray-200 px-2 outline-none focus:ring-2 focus:ring-slate-900 bg-white"
                     >
                       <option value={1}>1</option>
                       <option value={2}>2</option>
@@ -590,39 +637,46 @@ export default function AdminEstablishmentConfigPage() {
                     agendamentos no mesmo horário
                   </div>
                 </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={localConfig?.configuracao?.limiteAgendar !== undefined}
+                    onChange={() => {}}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                </label>
               </div>
 
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={localConfig?.configuracao?.confirmaAuto || false}
-                  onChange={(e) => {
-                    if (!localConfig?.configuracao) return;
-                    setLocalConfig({
-                      ...localConfig,
-                      configuracao: {
-                        ...localConfig.configuracao,
-                        confirmaAuto: e.target.checked
-                      }
-                    });
-                  }}
-                  className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mt-0.5"
-                />
-                <div>
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
+                <div className="flex-1">
                   <span className="text-sm font-medium text-slate-900 block">Confirmação Automática de Agendamentos</span>
-                  <span className="text-xs text-slate-500">Agendamentos serão confirmados automaticamente sem necessidade de aprovação manual</span>
+                  <span className="text-xs text-slate-500 mt-1 block">Agendamentos serão confirmados automaticamente sem necessidade de aprovação manual</span>
                 </div>
-              </label>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={localConfig?.configuracao?.confirmaAuto || false}
+                    onChange={(e) => {
+                      if (!localConfig?.configuracao) return;
+                      setLocalConfig({
+                        ...localConfig,
+                        configuracao: {
+                          ...localConfig.configuracao,
+                          confirmaAuto: e.target.checked
+                        }
+                      });
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                </label>
+              </div>
 
-              <div className="flex items-start gap-3">
-                <input 
-                  type="checkbox" 
-                  checked={localConfig?.configuracao?.tempoIntervalo !== undefined}
-                  className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mt-0.5"
-                />
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
                 <div className="flex-1">
                   <span className="text-sm font-medium text-slate-900 block">Buffer entre Serviços</span>
-                  <div className="flex items-center gap-2 mt-2 text-sm text-slate-600">
+                  <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
                     Adicionar
                     <select 
                       value={localConfig?.configuracao?.tempoIntervalo || 0}
@@ -636,7 +690,7 @@ export default function AdminEstablishmentConfigPage() {
                           }
                         });
                       }}
-                      className="h-9 rounded-md border border-gray-200 px-2 outline-none focus:ring-2 focus:ring-indigo-600"
+                      className="h-8 rounded-md border border-gray-200 px-2 outline-none focus:ring-2 focus:ring-slate-900 bg-white"
                     >
                       <option value={0}>Nenhum</option>
                       <option value={5}>5 minutos</option>
@@ -647,17 +701,21 @@ export default function AdminEstablishmentConfigPage() {
                     de intervalo entre cada agendamento
                   </div>
                 </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={localConfig?.configuracao?.tempoIntervalo !== undefined}
+                    onChange={() => {}}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                </label>
               </div>
 
-              <div className="flex items-start gap-3">
-                <input 
-                  type="checkbox" 
-                  checked={localConfig?.configuracao?.tempoCancelamento !== undefined}
-                  className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mt-0.5"
-                />
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
                 <div className="flex-1">
                   <span className="text-sm font-medium text-slate-900 block">Antecedência para Cancelamento</span>
-                  <div className="flex items-center gap-2 mt-2 text-sm text-slate-600">
+                  <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
                     Clientes podem cancelar com até
                     <select 
                       value={localConfig?.configuracao?.tempoCancelamento || 24}
@@ -671,7 +729,7 @@ export default function AdminEstablishmentConfigPage() {
                           }
                         });
                       }}
-                      className="h-9 rounded-md border border-gray-200 px-2 outline-none focus:ring-2 focus:ring-indigo-600"
+                      className="h-8 rounded-md border border-gray-200 px-2 outline-none focus:ring-2 focus:ring-slate-900 bg-white"
                     >
                       <option value={2}>2 horas</option>
                       <option value={12}>12 horas</option>
@@ -681,36 +739,59 @@ export default function AdminEstablishmentConfigPage() {
                     antes do horário agendado
                   </div>
                 </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={localConfig?.configuracao?.tempoCancelamento !== undefined}
+                    onChange={() => {}}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                </label>
               </div>
 
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={localConfig?.configuracao?.reagendar || false}
-                  onChange={(e) => {
-                    if (!localConfig?.configuracao) return;
-                    setLocalConfig({
-                      ...localConfig,
-                      configuracao: {
-                        ...localConfig.configuracao,
-                        reagendar: e.target.checked
-                      }
-                    });
-                  }}
-                  className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mt-0.5"
-                />
-                <div>
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
+                <div className="flex-1">
                   <span className="text-sm font-medium text-slate-900 block">Permitir Reagendamento pelo Cliente</span>
-                  <span className="text-xs text-slate-500">Clientes podem reagendar seus agendamentos sem aprovação do estabelecimento</span>
+                  <span className="text-xs text-slate-500 mt-1 block">Clientes podem reagendar seus agendamentos sem aprovação do estabelecimento</span>
                 </div>
-              </label>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={localConfig?.configuracao?.reagendar || false}
+                    onChange={(e) => {
+                      if (!localConfig?.configuracao) return;
+                      setLocalConfig({
+                        ...localConfig,
+                        configuracao: {
+                          ...localConfig.configuracao,
+                          reagendar: e.target.checked
+                        }
+                      });
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                </label>
+              </div>
             </div>
           </Card>
 
-          {/* Auto-save notice */}
-          <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-center gap-2">
-            <span className="text-sm font-bold text-blue-900">Salvamento Automático Ativo:</span>
-            <span className="text-sm text-blue-700">Suas alterações são salvas automaticamente após 300ms de inatividade.</span>
+          {/* Bottom Bar */}
+          <div className="flex items-center justify-end gap-4 pt-4">
+            <Button variant="outline" className="bg-slate-50">Cancelar</Button>
+            <Button 
+              onClick={handleSave}
+              disabled={isSaving}
+              className="bg-slate-900 hover:bg-slate-800 text-white"
+            >
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              Salvar Configurações
+            </Button>
           </div>
         </div>
       )}

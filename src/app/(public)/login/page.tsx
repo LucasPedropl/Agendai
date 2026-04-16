@@ -10,7 +10,7 @@ import { Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
-  const type = searchParams.get('type') as 'cliente' | 'estabelecimento' || 'cliente';
+  const type = searchParams.get('type') as 'cliente' | 'estabelecimento' | 'profissional' || 'cliente';
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -41,30 +41,6 @@ export default function LoginPage() {
         : { id: 1, nome: response.nome || 'Estabelecimento', email, endereco: '', imagem: '', avaliacao: 5, totalAvaliacoes: 0, horarioFuncionamento: '', tipo: 'estabelecimento' };
       
       login(mockUser, token, type);
-
-      if (type === 'estabelecimento' || type === 'profissional') {
-        try {
-          // Check if the user has a registered commerce
-          const comercios = await fetchApi('/api/Comercios', {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-
-          // If no comercios are returned (empty array or null), redirect to commerce registration
-          if (!comercios || (Array.isArray(comercios) && comercios.length === 0)) {
-            navigate('/cadastro-comercio');
-            return;
-          }
-        } catch (comercioErr) {
-          console.error("Erro ao verificar comércios:", comercioErr);
-          // If there's an error (e.g. 404), we might also want to redirect to registration
-          // Assuming 404 or similar means no commerce found
-          navigate('/cadastro-comercio');
-          return;
-        }
-      }
 
       navigate(type === 'cliente' ? '/app' : '/estabelecimento/dashboard');
     } catch (err: any) {

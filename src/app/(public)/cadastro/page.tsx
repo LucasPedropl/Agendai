@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,15 +7,36 @@ import { fetchApi } from '@/lib/api';
 import { CheckCircle2, Eye, EyeOff, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export default function CadastroPage() {
-  const { type } = useParams<{ type: string }>();
+  const { type, '*': splat } = useParams<{ type: string, '*': string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  
+  // Try to get params from search params first, then from the "splat" (remainder of the path)
+  const getParam = (name: string) => {
+    const fromQuery = searchParams.get(name);
+    if (fromQuery) return fromQuery;
+    
+    // If not in query, try to find in the splat (e.g., "comercioId=1&email=test@test.com")
+    if (splat) {
+      const pairs = splat.split('&');
+      for (const pair of pairs) {
+        const [key, value] = pair.split('=');
+        if (key === name) return decodeURIComponent(value);
+      }
+    }
+    return '';
+  };
+  
+  const initialEmail = getParam('email');
+  const initialComercioId = getParam('comercioId');
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(initialEmail ? 1 : 1); // Start at step 1 anyway
 
   const isCliente = type === 'cliente';
   const isProfissional = type === 'profissional';
@@ -34,10 +55,20 @@ export default function CadastroPage() {
     cpf: '',
     telefone: '',
     dataNascimento: '',
-    email: '',
+    email: initialEmail,
+    comercioId: initialComercioId,
     password: '',
     confirmPassword: ''
   });
+
+  useEffect(() => {
+    if (initialEmail) {
+      setFormData(prev => ({ ...prev, email: initialEmail }));
+    }
+    if (initialComercioId) {
+      setFormData(prev => ({ ...prev, comercioId: initialComercioId }));
+    }
+  }, [initialEmail, initialComercioId]);
 
   const formatCPF = (value: string) => {
     return value
@@ -178,7 +209,8 @@ export default function CadastroPage() {
         email: formData.email,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
-        tipoPermissao: getTipoPermissao()
+        tipoPermissao: getTipoPermissao(),
+        idComercio: formData.comercioId ? parseInt(formData.comercioId) : 0
       };
 
       await fetchApi('/api/Login/Registrar', {
@@ -261,7 +293,7 @@ export default function CadastroPage() {
           <>
             <div className="space-y-2">
               <label className="text-sm font-medium" htmlFor="email">Email</label>
-              <Input id="email" type="email" required placeholder="exemplo@email.com" value={formData.email} onChange={handleChange} />
+              <Input id="email" type="email" required placeholder="exemplo@email.com" value={formData.email} onChange={handleChange} disabled={!!initialEmail} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
