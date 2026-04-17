@@ -7,6 +7,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { User } from '@/types';
 import { fetchApi } from '@/lib/api';
 import { Eye, EyeOff } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
+import FacebookLogin from '@greatsumini/react-facebook-login';
 
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
@@ -19,6 +21,37 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  const handleSocialLogin = async (provider: 'google' | 'facebook', tokenPayload: any) => {
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const endpoint = provider === 'google' ? '/api/Login/google-login' : '/api/Login/facebook-login';
+      const response = await fetchApi(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(tokenPayload)
+      });
+
+      const token = response.token || response.accessToken || (typeof response === 'string' ? response : 'mock-jwt-token');
+      
+      const mockUser: User = type === 'cliente' 
+        ? { id: '1', nome: response.nome || 'Usuário', email: response.email || '', tipo: 'cliente' }
+        : { id: 1, nome: response.nome || 'Estabelecimento', email: response.email || '', endereco: '', imagem: '', avaliacao: 5, totalAvaliacoes: 0, horarioFuncionamento: '', tipo: 'estabelecimento' };
+      
+      login(mockUser, token, type as any);
+
+      navigate(type === 'cliente' ? '/app' : '/estabelecimento/dashboard');
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || `Erro ao entrar com ${provider === 'google' ? 'Google' : 'Facebook'}.`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,21 +94,50 @@ export default function LoginPage() {
       </div>
 
       <form onSubmit={handleLogin} className="space-y-4">
-        <Button 
-          type="button" 
-          variant="outline" 
-          className="w-full flex items-center justify-center gap-2 hover:bg-gray-50 hover:text-gray-400 hover:cursor-not-allowed transition-all"
-        >
-          <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
-            <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
-              <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/>
-              <path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/>
-              <path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/>
-              <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/>
-            </g>
-          </svg>
-          Entrar com Google
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex-1 overflow-hidden rounded-md h-10 flex items-center justify-center border">
+            <GoogleLogin
+              onSuccess={credentialResponse => {
+                handleSocialLogin('google', { idToken: credentialResponse.credential });
+              }}
+              onError={() => {
+                setError('Falha ao autenticar com o Google.');
+              }}
+              type="standard"
+              theme="outline"
+              size="large"
+              width="100%"
+            />
+          </div>
+
+          <FacebookLogin
+            appId={import.meta.env.VITE_FACEBOOK_APP_ID || "123456789"}
+            onSuccess={(response) => {
+              handleSocialLogin('facebook', { accessToken: response.accessToken });
+            }}
+            onFail={(error) => {
+              console.error('Facebook Login Error:', error);
+              setError('Falha ao autenticar com o Facebook.');
+            }}
+            onProfileSuccess={(response) => {
+              console.log('Get Profile Success!', response);
+            }}
+            render={({ onClick }) => (
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onClick}
+                disabled
+                className="flex-1 flex items-center justify-center gap-2 hover:bg-blue-50 hover:text-blue-600 transition-all h-10 opacity-50 cursor-not-allowed"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M13.397 20.997v-8.196h2.765l.411-3.209h-3.176V7.548c0-.926.258-1.56 1.587-1.56h1.684V3.127A22.336 22.336 0 0 0 14.201 3c-2.444 0-4.122 1.492-4.122 4.231v2.355H7.332v3.209h2.753v8.202h3.312z"></path>
+                </svg>
+                Facebook
+              </Button>
+            )}
+          />
+        </div>
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />

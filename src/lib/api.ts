@@ -37,9 +37,37 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
     headers,
   });
 
+  const method = options.method?.toUpperCase() || 'GET';
+  
+  // Flag to avoid conflicting with manual toasts on some pages, optional
+  const skipToast = (options as any).skipToast;
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || `API Error: ${response.status}`);
+    const message = errorData.message || errorData.error || `Erro na operação: ${response.status} ${response.statusText}`;
+    
+    if (!skipToast) {
+      window.dispatchEvent(new CustomEvent('global-toast', { 
+        detail: { type: 'error', message } 
+      }));
+    }
+    
+    throw new Error(message);
+  }
+
+  // Handle successful CRUD (POST, PUT, DELETE)
+  if (!skipToast && ['POST', 'PUT', 'DELETE'].includes(method)) {
+    let message = 'Operação realizada com sucesso!';
+    if (method === 'POST') message = 'Cadastrado com sucesso!';
+    if (method === 'PUT') message = 'Atualizado com sucesso!';
+    if (method === 'DELETE') message = 'Excluído com sucesso!';
+    
+    // Avoid showing success toast for GET or neutral calls like fetching tokens
+    if (!path.toLowerCase().includes('login') && !path.toLowerCase().includes('auth')) {
+       window.dispatchEvent(new CustomEvent('global-toast', { 
+        detail: { type: 'success', message } 
+      }));
+    }
   }
 
   // Handle empty responses

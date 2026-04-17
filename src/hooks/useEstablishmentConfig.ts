@@ -260,12 +260,12 @@ export function useEstablishmentConfig() {
       await fetchApi(`/Editar-Atendimento/${activeComercioId}`, {
         method: 'PUT',
         body: JSON.stringify(newConfig),
-      });
+        skipToast: true
+      } as any);
       setConfig(newConfig);
       return true;
     } catch (err: any) {
-      setError(err.message || 'Erro ao salvar configurações');
-      return false;
+      throw err;
     }
   };
 
@@ -289,12 +289,12 @@ export function useEstablishmentConfig() {
       await fetchApi(`/Editar/${activeComercioId}`, {
         method: 'PUT',
         body: JSON.stringify(newBasicInfo),
-      });
+        skipToast: true
+      } as any);
       setBasicInfo(newBasicInfo);
       return true;
     } catch (err: any) {
-      setError(err.message || 'Erro ao salvar informações básicas');
-      return false;
+      throw err;
     }
   };
 

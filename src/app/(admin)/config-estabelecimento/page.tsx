@@ -7,6 +7,7 @@ import {
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useEstablishmentConfig, ComercioConfg, ComercioConfiguracao } from '@/hooks/useEstablishmentConfig';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function AdminEstablishmentConfigPage() {
   const [activeTab, setActiveTab] = useState('horarios');
@@ -15,6 +16,7 @@ export default function AdminEstablishmentConfigPage() {
   const [localBasicInfo, setLocalBasicInfo] = useState<ComercioConfg | null>(null);
   const [localConfig, setLocalConfig] = useState<ComercioConfiguracao | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const toast = useToast();
 
   useEffect(() => {
     if (basicInfo) setLocalBasicInfo(basicInfo);
@@ -26,9 +28,13 @@ export default function AdminEstablishmentConfigPage() {
     try {
       if (activeTab === 'informacoes' && localBasicInfo) {
         await updateBasicInfo(localBasicInfo);
+        toast.success('Informações salvas com sucesso!');
       } else if (activeTab === 'horarios' && localConfig) {
         await updateConfig(localConfig);
+        toast.success('Horários salvos com sucesso!');
       }
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao salvar as configurações.');
     } finally {
       setIsSaving(false);
     }
@@ -42,10 +48,12 @@ export default function AdminEstablishmentConfigPage() {
     );
   }
 
-  if (error) {
+  // Se for erro no carregamento inicial, exibe o erro mas com um botão de tentar novamente ou layout básico
+  if (error && !localConfig && !localBasicInfo) {
     return (
-      <div className="p-4 bg-red-50 text-red-600 rounded-lg">
-        {error}
+      <div className="p-4 bg-red-50 text-red-600 rounded-lg flex flex-col items-center">
+        <span>{error}</span>
+        <Button onClick={() => window.location.reload()} className="mt-4" variant="outline">Tentar Novamente</Button>
       </div>
     );
   }
