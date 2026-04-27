@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Check, ChevronDown, Search } from 'lucide-react';
+import { Check, ChevronDown, Search, Plus, Settings } from 'lucide-react';
 
 interface Option {
   value: string;
@@ -12,9 +12,19 @@ interface SearchableSelectProps {
   onChange: (value: string) => void;
   placeholder?: string;
   emptyMessage?: string;
+  onAdd?: () => void;
+  onSettings?: () => void;
 }
 
-export function SearchableSelect({ options, value, onChange, placeholder = "Selecione...", emptyMessage = "Nenhum resultado encontrado." }: SearchableSelectProps) {
+export function SearchableSelect({ 
+  options, 
+  value, 
+  onChange, 
+  placeholder = "Selecione...", 
+  emptyMessage = "Nenhum resultado encontrado.",
+  onAdd,
+  onSettings
+}: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -30,7 +40,7 @@ export function SearchableSelect({ options, value, onChange, placeholder = "Sele
   }, []);
 
   const filteredOptions = options.filter(option => 
-    option.label.toLowerCase().includes(search.toLowerCase())
+    (option.label || "").toLowerCase().includes((search || "").toLowerCase())
   );
 
   const selectedOption = options.find(opt => opt.value === value);
@@ -54,12 +64,38 @@ export function SearchableSelect({ options, value, onChange, placeholder = "Sele
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-500" />
               <input
                 type="text"
-                className="w-full rounded-sm border border-slate-200 bg-transparent px-8 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-indigo-500"
+                className="w-full rounded-sm border border-slate-200 bg-transparent pl-8 pr-16 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-indigo-500"
                 placeholder="Pesquisar..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onClick={(e) => e.stopPropagation()}
               />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                {onAdd && (
+                  <button 
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onAdd();
+                    }}
+                    className="p-1 hover:bg-slate-100 rounded-md text-slate-500 hover:text-indigo-600 transition-colors"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                )}
+                {onSettings && (
+                  <button 
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSettings();
+                    }}
+                    className="p-1 hover:bg-slate-100 rounded-md text-slate-500 hover:text-indigo-600 transition-colors"
+                  >
+                    <Settings className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
           

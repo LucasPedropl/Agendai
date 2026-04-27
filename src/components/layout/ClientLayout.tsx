@@ -16,11 +16,25 @@ import {
   Settings
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { motion, AnimatePresence } from 'motion/react';
 
 export function ClientLayout() {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const handleProfileEnter = () => {
+    if (profileTimeoutRef.current) clearTimeout(profileTimeoutRef.current);
+    setIsProfileOpen(true);
+  };
+
+  const handleProfileLeave = () => {
+    profileTimeoutRef.current = setTimeout(() => {
+      setIsProfileOpen(false);
+    }, 300); // 300ms delay to allow moving mouse to menu
+  };
 
   const handleLogout = () => {
     logout();
@@ -159,35 +173,45 @@ export function ClientLayout() {
             
             <div className="h-8 w-px bg-gray-200 mx-2"></div>
 
-            <div className="flex items-center gap-3">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-semibold text-gray-900">{user?.nome}</p>
-                <p className="text-xs text-gray-500">Cliente</p>
+            <div 
+              className="relative flex items-center gap-3 cursor-pointer"
+              onMouseEnter={handleProfileEnter}
+              onMouseLeave={handleProfileLeave}
+            >
+              <div className="text-right hidden sm:block pointer-events-none select-none">
+                <p className="text-sm font-semibold text-gray-900 leading-tight">{user?.nome}</p>
+                <p className="text-[10px] uppercase tracking-wider font-medium text-gray-500 mt-0.5">Cliente</p>
               </div>
-              <div className="group relative">
-                <button className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold hover:ring-2 hover:ring-indigo-600 hover:ring-offset-2 transition-all">
-                  {user?.nome?.charAt(0) || 'C'}
-                </button>
-                
-                {/* Dropdown Menu */}
-                <div className="absolute right-0 top-full pt-2 w-48 origin-top-right hidden group-hover:block z-50">
-                  <div className="rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+              <button className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 font-bold hover:ring-2 hover:ring-indigo-600 hover:ring-offset-2 transition-all">
+                {user?.nome?.charAt(0) || 'C'}
+              </button>
+              
+              {/* Dropdown Menu */}
+              <AnimatePresence>
+                {isProfileOpen && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="absolute right-0 top-full mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                  >
                     <button 
                       onClick={() => navigate('/app/perfil')}
-                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                     >
                       Meus Dados
                     </button>
                     <button 
                       onClick={handleLogout}
-                      className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                      className="flex w-full items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                     >
                       <LogOut className="mr-2 h-4 w-4" />
                       Sair
                     </button>
-                  </div>
-                </div>
-              </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </header>

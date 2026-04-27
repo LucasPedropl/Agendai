@@ -9,12 +9,14 @@ import { fetchApi } from '@/lib/api';
 import { Eye, EyeOff } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import FacebookLogin from '@greatsumini/react-facebook-login';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
   const type = searchParams.get('type') as 'cliente' | 'estabelecimento' | 'profissional' || 'cliente';
   const navigate = useNavigate();
   const { login } = useAuth();
+  const toast = useToast();
 
   const [email, setEmail] = useState(type === 'estabelecimento' ? 'jdncbdb2005@gmail.com' : '');
   const [password, setPassword] = useState(type === 'estabelecimento' ? '123123' : '');
@@ -38,16 +40,21 @@ export default function LoginPage() {
 
       const token = response.token || response.accessToken || (typeof response === 'string' ? response : 'mock-jwt-token');
       
+      const realId = response.id || response.usuarioId || response.user?.id || (type === 'cliente' ? '1' : 1);
+
       const mockUser: User = type === 'cliente' 
-        ? { id: '1', nome: response.nome || 'Usuário', email: response.email || '', tipo: 'cliente' }
-        : { id: 1, nome: response.nome || 'Estabelecimento', email: response.email || '', endereco: '', imagem: '', avaliacao: 5, totalAvaliacoes: 0, horarioFuncionamento: '', tipo: 'estabelecimento' };
+        ? { id: String(realId), nome: response.nome || 'Usuário', email: response.email || '', tipo: 'cliente' }
+        : { id: Number(realId), nome: response.nome || 'Estabelecimento', email: response.email || '', endereco: '', imagem: '', avaliacao: 5, totalAvaliacoes: 0, horarioFuncionamento: '', tipo: 'estabelecimento' };
       
       login(mockUser, token, type as any);
 
+      toast.success(`Autenticado com ${provider === 'google' ? 'Google' : 'Facebook'}!`);
       navigate(type === 'cliente' ? '/app' : '/estabelecimento/dashboard');
     } catch (err: any) {
       console.error(err);
-      setError(err.message || `Erro ao entrar com ${provider === 'google' ? 'Google' : 'Facebook'}.`);
+      const errorMessage = err.message || `Erro ao entrar com ${provider === 'google' ? 'Google' : 'Facebook'}. Por favor, tente novamente.`;
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -61,24 +68,30 @@ export default function LoginPage() {
     try {
       const response = await fetchApi('/api/Login/Acesso', {
         method: 'POST',
-        body: JSON.stringify({ email, password })
-      });
+        body: JSON.stringify({ email, password }),
+        skipToast: true
+      } as any);
 
       // A API retorna o token e possivelmente os dados do usuário.
       // Vamos assumir que a resposta tem um formato { token: string, user: any } ou similar.
       // Se a API retornar apenas o token como string ou num objeto, adaptamos.
       const token = response.token || response.accessToken || (typeof response === 'string' ? response : 'mock-jwt-token');
       
+      const realId = response.id || response.usuarioId || response.user?.id || (type === 'cliente' ? '1' : 1);
+
       const mockUser: User = type === 'cliente' 
-        ? { id: '1', nome: response.nome || 'Usuário', email, tipo: 'cliente' }
-        : { id: 1, nome: response.nome || 'Estabelecimento', email, endereco: '', imagem: '', avaliacao: 5, totalAvaliacoes: 0, horarioFuncionamento: '', tipo: 'estabelecimento' };
+        ? { id: String(realId), nome: response.nome || 'Usuário', email, tipo: 'cliente' }
+        : { id: Number(realId), nome: response.nome || 'Estabelecimento', email, endereco: '', imagem: '', avaliacao: 5, totalAvaliacoes: 0, horarioFuncionamento: '', tipo: 'estabelecimento' };
       
       login(mockUser, token, type);
 
+      toast.success('Bem-vindo de volta!');
       navigate(type === 'cliente' ? '/app' : '/estabelecimento/dashboard');
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Credenciais inválidas ou erro no servidor.');
+      const errorMessage = 'E-mail ou senha incorretos. Você tem certeza que digitou os dados corretamente?';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

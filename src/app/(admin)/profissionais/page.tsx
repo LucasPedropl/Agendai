@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
-import { Plus, Edit, Trash2, Mail, Phone } from 'lucide-react';
+import { Plus, Edit, Trash2, Phone } from 'lucide-react';
 import { Profissional } from '@/types';
 import { fetchApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,11 +24,12 @@ export default function AdminProfissionaisPage() {
     setIsLoading(true);
     try {
       const commerceId = (user as any)?.id || 1;
-      const data = await fetchApi(`/api/Profissionais/${commerceId}`, {
+      const data = await fetchApi(`/api/ComercioUsuarios/Profissionais/${commerceId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
-        }
-      });
+        },
+        skipToast: true
+      } as any);
       setProfissionais(Array.isArray(data) ? data : (data ? [data] : []));
     } catch (err) {
       console.error("Erro ao buscar profissionais:", err);
@@ -51,7 +52,7 @@ export default function AdminProfissionaisPage() {
 
     try {
       const commerceId = (user as any)?.id || 1;
-      await fetchApi('/Cadastrar-Funcionario-Cliente', {
+      await fetchApi('/api/ComercioUsuarios/Cadastrar-Funcionario-Cliente', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -61,8 +62,9 @@ export default function AdminProfissionaisPage() {
           nome,
           email,
           permissao: 1 // Profissional
-        })
-      });
+        }),
+        skipToast: true
+      } as any);
 
       setIsModalOpen(false);
       setNome('');
@@ -111,11 +113,17 @@ export default function AdminProfissionaisPage() {
                     </div>
                     <div>
                       <CardTitle className="text-lg">{profissional.nome}</CardTitle>
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                        profissional.ativo ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {profissional.ativo ? 'Ativo' : 'Inativo'}
-                      </span>
+                      {profissional.status && (
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium mt-1 ${
+                          profissional.status.toLowerCase() === 'ativo' 
+                            ? 'bg-green-100 text-green-800' 
+                            : profissional.status.toLowerCase() === 'pendente'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {profissional.status}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -123,22 +131,8 @@ export default function AdminProfissionaisPage() {
               <CardContent>
                 <div className="space-y-3 text-sm text-gray-600">
                   <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                    {profissional.email}
-                  </div>
-                  <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-gray-400" />
-                    {profissional.telefone}
-                  </div>
-                  <div className="pt-2">
-                    <p className="font-medium text-gray-900 mb-1">Especialidades:</p>
-                    <div className="flex flex-wrap gap-1">
-                      {profissional.especialidades?.map(esp => (
-                        <span key={esp} className="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-700/10">
-                          {esp}
-                        </span>
-                      ))}
-                    </div>
+                    {profissional.telefone || 'Sem telefone'}
                   </div>
                 </div>
                 <div className="mt-6 flex gap-2">

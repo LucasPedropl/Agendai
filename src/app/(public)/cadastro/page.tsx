@@ -151,7 +151,7 @@ export default function CadastroPage() {
       cpf: formatCPF(validCpf),
       telefone: formatTelefone(randomPhone),
       dataNascimento: formattedRandomDate,
-      email: `test_${randomString}@example.com`,
+      email: formData.email || `test_${randomString}@example.com`,
       password: '123123',
       confirmPassword: '123123'
     });

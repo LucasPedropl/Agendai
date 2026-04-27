@@ -20,13 +20,15 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
     }
   }
   
-  const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
+  const headers = new Headers(options.headers || {});
 
-  if (token) {
-    (headers as any)['Authorization'] = `Bearer ${token}`;
+  // Only set default content-type if not FormData
+  if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
   }
 
   // Ensure endpoint starts with /
@@ -44,7 +46,14 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    const message = errorData.message || errorData.error || `Erro na operação: ${response.status} ${response.statusText}`;
+    console.error(`API Error (${response.status}):`, errorData);
+    
+    // Extract validation errors if present (Common in .NET APIs for example)
+    const validationErrors = errorData.errors ? 
+      Object.entries(errorData.errors).map(([key, val]) => `${key}: ${(val as string[]).join(', ')}`).join(' | ') : 
+      '';
+
+    const message = errorData.message || errorData.error || validationErrors || `Erro na operação: ${response.status} ${response.statusText}`;
     
     if (!skipToast) {
       window.dispatchEvent(new CustomEvent('global-toast', { 

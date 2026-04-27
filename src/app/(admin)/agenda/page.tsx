@@ -11,13 +11,12 @@ import { fetchApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function AdminAgendaPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [agendamentos, setAgendamentos] = useState<any[]>([]);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
 
   // Form state
   const [idProssional, setIdProssional] = useState('');
@@ -37,73 +36,108 @@ export default function AdminAgendaPage() {
     // Fetch data for selects when modal opens
     if (isModalOpen) {
       const fetchSelectData = async () => {
+        const commerceId = (user as any)?.id || 1;
+        
         try {
           // Fetch real services
-          const servicosData = await fetchApi('/api/Servicos/1', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
+          const servicosData = await fetchApi(`/api/Servicos/Todos/${commerceId}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            skipToast: true
+          } as any);
           
           if (Array.isArray(servicosData)) {
-            setServicosOptions(servicosData.map(s => ({ value: s.id.toString(), label: s.nome })));
-          } else if (servicosData && servicosData.id) {
-            setServicosOptions([{ value: servicosData.id.toString(), label: servicosData.nome }]);
+            setServicosOptions(servicosData.map(s => ({ value: String(s.id), label: s.nome })));
           } else {
             setServicosOptions([]);
           }
         } catch (err) {
           console.error("Erro ao buscar serviços para o select:", err);
-          // Fallback if API fails
-          setServicosOptions([
-            { value: '1', label: 'Corte de Cabelo' },
-            { value: '2', label: 'Barba' },
-            { value: '3', label: 'Pé e Mão' },
-          ]);
+          setServicosOptions([]);
+        }
+
+        try {
+          // Fetch real professionals
+          const profissionaisData = await fetchApi(`/api/ComercioUsuarios/Profissionais/${commerceId}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            skipToast: true
+          } as any);
+          
+          if (Array.isArray(profissionaisData)) {
+            setProfissionaisOptions(profissionaisData.map(p => ({ value: String(p.id), label: p.nome })));
+          } else {
+            setProfissionaisOptions([]);
+          }
+        } catch (err) {
+          console.error("Erro ao buscar profissionais para o select:", err);
+          setProfissionaisOptions([]);
+        }
+
+        try {
+          // Fetch real clients
+          const clientesData = await fetchApi(`/api/ComercioUsuarios/Clientes/${commerceId}`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+            skipToast: true
+          } as any);
+          
+          if (Array.isArray(clientesData)) {
+            setClientesOptions(clientesData.map(c => ({ value: String(c.id), label: c.nome })));
+          } else {
+            setClientesOptions([]);
+          }
+        } catch (err) {
+          console.error("Erro ao buscar clientes para o select:", err);
+          setClientesOptions([]);
         }
       };
 
       fetchSelectData();
-
-      // Mock data for now, replace with actual API calls when available
-      setClientesOptions([
-        { value: '1', label: 'João Silva' },
-        { value: '2', label: 'Maria Oliveira' },
-        { value: '3', label: 'Carlos Santos' },
-      ]);
-      setProfissionaisOptions([
-        { value: '1', label: 'Pedro (Barbeiro)' },
-        { value: '2', label: 'Ana (Manicure)' },
-      ]);
     }
-  }, [isModalOpen, token]);
+  }, [isModalOpen, token, user]);
 
   const handleCreateAgenda = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!idUsuario || !idProssional || !idServico) {
-      setError('Por favor, selecione o cliente, profissional e serviço.');
+    console.log('Tentativa de agendamento:', { idUsuario, idProssional, idServico, data, horario });
+
+    if (!idUsuario || !idProssional || !idServico || !data || !horario) {
+      console.error('Campos obrigatórios ausentes:', {
+        cliente: !idUsuario,
+        profissional: !idProssional,
+        servico: !idServico,
+        data: !data,
+        horario: !horario
+      });
       return;
     }
 
     setIsSubmitting(true);
-    setError('');
 
     try {
       // Create a valid ISO date string from the date input
       const dataIso = new Date(data).toISOString();
+      const commerceId = (user as any)?.id || 1;
+
+      const payload = {
+        idProssional: idProssional, // Spelling as per user curl
+        idProfissional: idProssional, // Correct spelling just in case
+        idUsuario: idUsuario,
+        idComercio: commerceId, // Likely required as in other endpoints
+        comercioId: commerceId, // Alternative naming
+        data: dataIso,
+        horario: horario,
+        idServico: Number(idServico)
+      };
+
+      console.log('Enviando Payload:', payload);
 
       await fetchApi('/api/Agenda', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          idProssional,
-          idUsuario,
-          data: dataIso,
-          horario,
-          idServico: parseInt(idServico, 10) || 0
-        })
-      });
+        body: JSON.stringify(payload),
+        skipToast: true
+      } as any);
 
       setIsModalOpen(false);
       setIdProssional('');
@@ -113,8 +147,7 @@ export default function AdminAgendaPage() {
       setIdServico('');
       // TODO: Refresh list of agendamentos
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || 'Erro ao cadastrar agendamento.');
+      console.error("Erro ao cadastrar agendamento:", err);
     } finally {
       setIsSubmitting(false);
     }
@@ -200,11 +233,6 @@ export default function AdminAgendaPage() {
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Novo Agendamento">
         <form onSubmit={handleCreateAgenda} className="space-y-4">
-          {error && (
-            <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
-              {error}
-            </div>
-          )}
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

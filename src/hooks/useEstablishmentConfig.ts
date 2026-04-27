@@ -257,7 +257,7 @@ export function useEstablishmentConfig() {
     }
 
     try {
-      await fetchApi(`/Editar-Atendimento/${activeComercioId}`, {
+      await fetchApi(`/api/Editar-Atendimento/${activeComercioId}`, {
         method: 'PUT',
         body: JSON.stringify(newConfig),
         skipToast: true
@@ -286,7 +286,7 @@ export function useEstablishmentConfig() {
     }
 
     try {
-      await fetchApi(`/Editar/${activeComercioId}`, {
+      await fetchApi(`/api/Editar/${activeComercioId}`, {
         method: 'PUT',
         body: JSON.stringify(newBasicInfo),
         skipToast: true

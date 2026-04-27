@@ -17,6 +17,7 @@ export interface Cliente {
   tipo: 'cliente';
   totalAgendamentos?: number;
   ultimoAgendamento?: string;
+  status?: string;
 }
 
 export interface Estabelecimento {
@@ -65,6 +66,7 @@ export interface Profissional {
   estabelecimentoId?: number;
   email?: string;
   ativo?: boolean;
+  status?: string;
 }
 
 export interface Transacao {

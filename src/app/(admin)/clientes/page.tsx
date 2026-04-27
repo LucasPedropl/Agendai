@@ -27,9 +27,10 @@ export default function AdminClientesPage() {
     try {
       // Assuming endpoint for getting clientes
       const commerceId = (user as any)?.id || 1;
-      const data = await fetchApi(`/api/ClientesCommecio/${commerceId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const data = await fetchApi(`/api/ComercioUsuarios/Clientes/${commerceId}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        skipToast: true
+      } as any);
       setClientes(Array.isArray(data) ? data : (data ? [data] : []));
     } catch (err) {
       console.error("Erro ao buscar clientes:", err);
@@ -52,7 +53,7 @@ export default function AdminClientesPage() {
 
     try {
       const commerceId = (user as any)?.id || 1;
-      await fetchApi('/Cadastrar-Funcionario-Cliente', {
+      await fetchApi('/api/ComercioUsuarios/Cadastrar-Funcionario-Cliente', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -62,8 +63,9 @@ export default function AdminClientesPage() {
           nome,
           email,
           permissao: 0 // Cliente
-        })
-      });
+        }),
+        skipToast: true
+      } as any);
 
       setIsModalOpen(false);
       setNome('');
@@ -152,6 +154,7 @@ export default function AdminClientesPage() {
               <thead className="bg-gray-50 text-xs uppercase text-gray-700">
                 <tr>
                   <th scope="col" className="px-6 py-3">Nome / Contato</th>
+                  <th scope="col" className="px-6 py-3 text-center">Status</th>
                   <th scope="col" className="px-6 py-3 text-center">Total de Agendamentos</th>
                   <th scope="col" className="px-6 py-3">Último Agendamento</th>
                   <th scope="col" className="px-6 py-3 text-right">Ações</th>
@@ -175,14 +178,25 @@ export default function AdminClientesPage() {
                           <div>
                             <div className="font-medium text-gray-900">{cliente.nome}</div>
                             <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
-                              <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {cliente.email}</span>
-                              <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {cliente.telefone}</span>
+                              {cliente.email && <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {cliente.email}</span>}
+                              {cliente.telefone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {cliente.telefone}</span>}
                             </div>
                           </div>
                         </div>
                       </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                          (cliente.status || 'Pendente').toLowerCase() === 'ativo' 
+                            ? 'bg-green-100 text-green-800' 
+                            : (cliente.status || 'Pendente').toLowerCase() === 'pendente'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {cliente.status || 'Pendente'}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 text-center font-medium text-gray-900">
-                        {cliente.totalAgendamentos}
+                        {cliente.totalAgendamentos ?? 0}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2 text-gray-600">

@@ -10,20 +10,8 @@ import { fetchApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 
-const iconOptions = [
-  { value: 'scissors', label: 'Tesoura' },
-  { value: 'spray', label: 'Spray' },
-  { value: 'comb', label: 'Pente' },
-  { value: 'razor', label: 'Navalha' },
-  { value: 'brush', label: 'Pincel' },
-  { value: 'hair-dryer', label: 'Secador' },
-  { value: 'sparkles', label: 'Brilho/Limpeza' },
-  { value: 'droplet', label: 'Gota/Lavagem' },
-  { value: 'star', label: 'Estrela/Destaque' },
-];
-
 export default function AdminServicosPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [servicos, setServicos] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [categorias, setCategorias] = useState<any[]>([]);
@@ -44,7 +32,6 @@ export default function AdminServicosPage() {
   const [descricao, setDescricao] = useState('');
   const [preco, setPreco] = useState('');
   const [duracao, setDuracao] = useState('');
-  const [icone, setIcone] = useState('scissors'); // Default icon
   const [ativo, setAtivo] = useState(true);
 
   // Form state - Category
@@ -53,13 +40,14 @@ export default function AdminServicosPage() {
   const fetchServicos = async () => {
     setIsLoading(true);
     try {
-      // Using /api/Servicos/1 as requested by user, though it might be a specific ID.
-      // We'll wrap it in a try-catch and fallback to empty array if it fails.
-      const data = await fetchApi('/api/Servicos/1', {
+      const commerceId = (user as any)?.id || 1;
+      // Usando o endpoint sugerido pelo usuário: /api/Servicos/Todos/{idComercio}
+      const data = await fetchApi(`/api/Servicos/Todos/${commerceId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
-        }
-      });
+        },
+        skipToast: true
+      } as any);
       setServicos(Array.isArray(data) ? data : (data ? [data] : []));
     } catch (err) {
       console.error("Erro ao buscar serviços:", err);
@@ -76,9 +64,11 @@ export default function AdminServicosPage() {
   const fetchCategorias = async () => {
     setIsLoadingCategorias(true);
     try {
-      const data = await fetchApi('/Todas/1', { // Using 1 as commerce ID
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const commerceId = (user as any)?.id || 1;
+      const data = await fetchApi(`/api/Categorias/Todas/${commerceId}`, { // Using commerce ID
+        headers: { 'Authorization': `Bearer ${token}` },
+        skipToast: true
+      } as any);
       setCategorias(Array.isArray(data) ? data : (data ? [data] : []));
     } catch (err) {
       console.error("Erro ao buscar categorias:", err);
@@ -108,7 +98,6 @@ export default function AdminServicosPage() {
       setDescricao(servico.descricao || '');
       setPreco(servico.preco?.toString() || '');
       setDuracao(servico.duracao || '');
-      setIcone(servico.icone || 'scissors');
       setAtivo(servico.ativo !== false);
     } else {
       setEditingId(null);
@@ -117,7 +106,6 @@ export default function AdminServicosPage() {
       setDescricao('');
       setPreco('');
       setDuracao('');
-      setIcone('scissors');
       setAtivo(true);
     }
     setError('');
@@ -135,15 +123,27 @@ export default function AdminServicosPage() {
       formattedDuracao = `${duracao}:00`;
     }
 
+    const commerceId = (user as any)?.id || 1;
+
+    // Find category ID from category name if necessary, 
+    // but we'll try to store ID directly in state if it fits better.
+    const selectedCat = categorias.find(c => c.nome === categoria || c.id.toString() === categoria);
+    const catId = selectedCat ? parseInt(selectedCat.id) : 0;
+
     const payload = {
-      categoria,
-      icone,
+      comercioId: commerceId,
+      categoria: [
+        {
+          idCategoria: catId
+        }
+      ],
+      icone: "string",
       nome,
+      servico: nome, // Adding this because API said it's required
       descricao,
       preco: parseFloat(preco) || 0,
       duracao: formattedDuracao,
-      ativo,
-      agendamentos: []
+      ativo
     };
 
     try {
@@ -151,20 +151,22 @@ export default function AdminServicosPage() {
         await fetchApi(`/api/Servicos/${editingId}`, {
           method: 'PUT',
           headers: { 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify(payload)
-        });
+          body: JSON.stringify(payload),
+          skipToast: true
+        } as any);
       } else {
         await fetchApi('/api/Servicos', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify(payload)
-        });
+          body: JSON.stringify(payload),
+          skipToast: true
+        } as any);
       }
       setIsModalOpen(false);
       fetchServicos();
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || 'Erro ao salvar serviço.');
+      console.error("Full Submit Error:", err);
+      // No longer setting error in UI or toast per user request
     } finally {
       setIsSubmitting(false);
     }
@@ -193,33 +195,37 @@ export default function AdminServicosPage() {
     setCatError('');
 
     try {
+      const commerceId = (user as any)?.id || 1;
       if (editingCategoriaId) {
         await fetchApi(`/api/Categorias/${editingCategoriaId}`, {
           method: 'PUT',
           headers: { 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({
-            comercioId: 1,
+            comercioId: commerceId,
             nome: categoriaNome,
             icone: "string"
-          })
-        });
+          }),
+          skipToast: true
+        } as any);
       } else {
         await fetchApi('/api/Categorias', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({
+            comercioId: commerceId,
             nome: categoriaNome,
             icone: "string"
-          })
-        });
+          }),
+          skipToast: true
+        } as any);
       }
       setCategoriaNome('');
       setEditingCategoriaId(null);
       setIsCategoriaModalOpen(false);
       fetchCategorias();
     } catch (err: any) {
-      console.error(err);
-      setCatError(err.message || 'Erro ao salvar categoria.');
+      console.error("Save Category Error:", err);
+      // Removed setCatError to keep errors in console only as requested
     } finally {
       setIsSubmitting(false);
     }
@@ -327,12 +333,6 @@ export default function AdminServicosPage() {
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Editar Serviço" : "Novo Serviço"}>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
-              {error}
-            </div>
-          )}
-          
           <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="nome">Nome do Serviço</label>
             <Input 
@@ -344,49 +344,16 @@ export default function AdminServicosPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="categoria">Categoria</label>
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <SearchableSelect 
-                    options={categorias.map(c => ({ value: c.nome, label: c.nome }))}
-                    value={categoria}
-                    onChange={setCategoria}
-                    placeholder="Selecione ou busque..."
-                  />
-                </div>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="icon" 
-                  className="shrink-0" 
-                  onClick={() => openCategoriaModal()}
-                  title="Nova Categoria"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="icon" 
-                  className="shrink-0" 
-                  onClick={() => setIsManageCategoriasModalOpen(true)}
-                  title="Gerenciar Categorias"
-                >
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="icone">Ícone</label>
-              <SearchableSelect 
-                options={iconOptions}
-                value={icone}
-                onChange={setIcone}
-                placeholder="Selecione um ícone..."
-              />
-            </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium" htmlFor="categoria">Categoria</label>
+            <SearchableSelect 
+              options={categorias.filter(c => c && c.nome).map(c => ({ value: c.id.toString(), label: c.nome }))}
+              value={categoria}
+              onChange={setCategoria}
+              placeholder="Pesquise ou selecione uma categoria"
+              onAdd={() => openCategoriaModal()}
+              onSettings={() => setIsManageCategoriasModalOpen(true)}
+            />
           </div>
 
           <div className="space-y-2">
@@ -501,11 +468,6 @@ export default function AdminServicosPage() {
         title={editingCategoriaId ? "Editar Categoria" : "Nova Categoria"}
       >
         <form onSubmit={handleSaveCategoria} className="space-y-4">
-          {catError && (
-            <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
-              {catError}
-            </div>
-          )}
           <div className="space-y-2">
             <label className="text-sm font-medium">Nome da Categoria</label>
             <Input 
