@@ -232,7 +232,7 @@ export default function CadastroComercioPage({ onSuccess }: CadastroComercioPage
               cnpj: '12.345.678/0001-90',
               endereco: 'Rua Teste, 123, Centro',
               telefone: formatTelefone(randomPhone),
-              email: formData.email || `contato_${randomString}@example.com`,
+              email: formData.email || 'jdncbdb2005@gmail.com',
               descricao: 'Descrição de teste para este comércio criado automaticamente.',
               instagram: '@teste_insta',
               facebook: 'fb.com/teste',
