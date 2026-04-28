@@ -44,16 +44,14 @@ function ProtectedRoute({ children, allowedType }: { children: React.ReactNode, 
   return <>{children}</>;
 }
 
-import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ToastProvider } from '@/contexts/ToastContext';
 
 export default function App() {
   return (
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || 'mock_google_id'}>
-      <ToastProvider>
-        <AuthProvider>
-          <BrowserRouter>
-            <Routes>
+    <ToastProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
             {/* Public Routes */}
           <Route element={<AuthLayout />}>
             <Route path="/" element={<Navigate to="/login-selection" replace />} />
@@ -97,6 +95,5 @@ export default function App() {
       </BrowserRouter>
     </AuthProvider>
     </ToastProvider>
-    </GoogleOAuthProvider>
   );
 }

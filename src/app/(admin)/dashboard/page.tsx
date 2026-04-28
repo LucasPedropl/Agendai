@@ -13,6 +13,7 @@ interface DashboardMetrics {
 }
 
 export default function AdminDashboardPage() {
+  const [isMounted, setIsMounted] = useState(false);
   const [metrics, setMetrics] = useState<DashboardMetrics | null>({
     agendamentosHoje: 0,
     agendamentosSemana: 0,
@@ -22,6 +23,10 @@ export default function AdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState<any[]>([]);
   const [agendamentos, setAgendamentos] = useState<any[]>([]);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   if (isLoading) {
     return <div className="flex h-full items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-b-2 border-indigo-600"></div></div>;
@@ -84,19 +89,21 @@ export default function AdminDashboardPage() {
           </CardHeader>
           <CardContent className="pl-2">
             <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                  <XAxis dataKey="name" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
-                  <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `R$${value}`} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                    itemStyle={{ color: '#111827', fontSize: '14px' }}
-                  />
-                  <Line type="monotone" dataKey="receita" stroke="#4f46e5" strokeWidth={2} dot={{ r: 4, fill: '#4f46e5' }} activeDot={{ r: 6 }} />
-                  <Line type="monotone" dataKey="cancelamentos" stroke="#ef4444" strokeWidth={2} dot={{ r: 4, fill: '#ef4444' }} />
-                </LineChart>
-              </ResponsiveContainer>
+              {isMounted && (
+                <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0}>
+                  <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                    <XAxis dataKey="name" stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} />
+                    <YAxis stroke="#6b7280" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `R$${value}`} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      itemStyle={{ color: '#111827', fontSize: '14px' }}
+                    />
+                    <Line type="monotone" dataKey="receita" stroke="#4f46e5" strokeWidth={2} dot={{ r: 4, fill: '#4f46e5' }} activeDot={{ r: 6 }} />
+                    <Line type="monotone" dataKey="cancelamentos" stroke="#ef4444" strokeWidth={2} dot={{ r: 4, fill: '#ef4444' }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </CardContent>
         </Card>

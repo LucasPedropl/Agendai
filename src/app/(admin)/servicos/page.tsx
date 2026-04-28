@@ -13,6 +13,7 @@ import { SearchableSelect } from '@/components/ui/searchable-select';
 export default function AdminServicosPage() {
   const { token, user } = useAuth();
   const [servicos, setServicos] = useState<any[]>([]);
+  const [comercioId, setComercioId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [categorias, setCategorias] = useState<any[]>([]);
   const [isLoadingCategorias, setIsLoadingCategorias] = useState(false);
@@ -37,12 +38,28 @@ export default function AdminServicosPage() {
   // Form state - Category
   const [categoriaNome, setCategoriaNome] = useState('');
 
-  const fetchServicos = async () => {
+  const fetchComercioId = async () => {
+    try {
+      const data = await fetchApi('/api/Comercios', {
+        headers: { 'Authorization': `Bearer ${token}` },
+        skipToast: true
+      } as any);
+      if (Array.isArray(data) && data.length > 0) {
+        setComercioId(data[0].id);
+        return data[0].id;
+      }
+    } catch (err) {
+      console.error("Erro ao buscar comércio:", err);
+    }
+    return 1; // Fallback
+  };
+
+  const fetchServicos = async (id?: number) => {
     setIsLoading(true);
     try {
-      const commerceId = (user as any)?.id || 1;
+      const activeId = id || comercioId || await fetchComercioId();
       // Usando o endpoint sugerido pelo usuário: /api/Servicos/Todos/{idComercio}
-      const data = await fetchApi(`/api/Servicos/Todos/${commerceId}`, {
+      const data = await fetchApi(`/api/Servicos/Todos/${activeId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         },
@@ -61,11 +78,11 @@ export default function AdminServicosPage() {
     }
   };
 
-  const fetchCategorias = async () => {
+  const fetchCategorias = async (id?: number) => {
     setIsLoadingCategorias(true);
     try {
-      const commerceId = (user as any)?.id || 1;
-      const data = await fetchApi(`/api/Categorias/Todas/${commerceId}`, { // Using commerce ID
+      const activeId = id || comercioId || await fetchComercioId();
+      const data = await fetchApi(`/api/Categorias/Todas/${activeId}`, { // Using commerce ID
         headers: { 'Authorization': `Bearer ${token}` },
         skipToast: true
       } as any);
@@ -84,10 +101,14 @@ export default function AdminServicosPage() {
   };
 
   useEffect(() => {
-    if (token) {
-      fetchServicos();
-      fetchCategorias();
-    }
+    const init = async () => {
+      if (token) {
+        const id = await fetchComercioId();
+        fetchServicos(id);
+        fetchCategorias(id);
+      }
+    };
+    init();
   }, [token]);
 
   const openModal = (servico?: any) => {
@@ -123,7 +144,7 @@ export default function AdminServicosPage() {
       formattedDuracao = `${duracao}:00`;
     }
 
-    const commerceId = (user as any)?.id || 1;
+    const activeCommerceId = comercioId || await fetchComercioId();
 
     // Find category ID from category name if necessary, 
     // but we'll try to store ID directly in state if it fits better.
@@ -131,7 +152,7 @@ export default function AdminServicosPage() {
     const catId = selectedCat ? parseInt(selectedCat.id) : 0;
 
     const payload = {
-      comercioId: commerceId,
+      comercioId: activeCommerceId,
       categoria: [
         {
           idCategoria: catId
@@ -192,16 +213,15 @@ export default function AdminServicosPage() {
     e.preventDefault();
     if (!categoriaNome) return;
     setIsSubmitting(true);
-    setCatError('');
 
     try {
-      const commerceId = (user as any)?.id || 1;
+      const activeCommerceId = comercioId || await fetchComercioId();
       if (editingCategoriaId) {
         await fetchApi(`/api/Categorias/${editingCategoriaId}`, {
           method: 'PUT',
           headers: { 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({
-            comercioId: commerceId,
+            comercioId: activeCommerceId,
             nome: categoriaNome,
             icone: "string"
           }),
@@ -212,7 +232,7 @@ export default function AdminServicosPage() {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({
-            comercioId: commerceId,
+            comercioId: activeCommerceId,
             nome: categoriaNome,
             icone: "string"
           }),

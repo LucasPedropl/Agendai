@@ -29,6 +29,7 @@ import { Card } from '@/components/ui/card';
 const COLORS = ['#4f46e5', '#ef4444'];
 
 export default function AdminRevenueVsExpensePage() {
+  const [isMounted, setIsMounted] = useState(false);
   const [data, setData] = useState<any[]>([]);
   const [pieData, setPieData] = useState<any[]>([]);
   const [stats, setStats] = useState({
@@ -38,6 +39,10 @@ export default function AdminRevenueVsExpensePage() {
     receitaPercentual: 0,
     despesaPercentual: 0
   });
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -98,8 +103,71 @@ export default function AdminRevenueVsExpensePage() {
         <Card className="p-6 border-none shadow-sm bg-white">
           <h3 className="text-lg font-bold text-slate-900 mb-6">Comparativo Mensal</h3>
           <div className="h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
+            {isMounted && (
+              <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0}>
+                <BarChart data={data}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#64748b', fontSize: 12 }} 
+                    dy={10}
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#64748b', fontSize: 12 }} 
+                  />
+                  <Tooltip 
+                    cursor={{ fill: '#f8fafc' }}
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                  />
+                  <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+                  <Bar dataKey="receita" name="Receita" fill="#4f46e5" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="despesa" name="Despesa" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </Card>
+
+        {/* Pie Chart */}
+        <Card className="p-6 border-none shadow-sm bg-white">
+          <h3 className="text-lg font-bold text-slate-900 mb-6">Distribuição de Gastos</h3>
+          <div className="h-[300px] w-full flex items-center justify-center">
+            {isMounted && (
+              <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend verticalAlign="bottom" height={36} />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </Card>
+      </div>
+
+      {/* Line Chart */}
+      <Card className="p-6 border-none shadow-sm bg-white">
+        <h3 className="text-lg font-bold text-slate-900 mb-6">Tendência de Lucratividade</h3>
+        <div className="h-[300px] w-full">
+          {isMounted && (
+            <ResponsiveContainer width="100%" height={300} minWidth={0} minHeight={0}>
+              <LineChart data={data}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis 
                   dataKey="name" 
@@ -114,76 +182,19 @@ export default function AdminRevenueVsExpensePage() {
                   tick={{ fill: '#64748b', fontSize: 12 }} 
                 />
                 <Tooltip 
-                  cursor={{ fill: '#f8fafc' }}
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                 />
-                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
-                <Bar dataKey="receita" name="Receita" fill="#4f46e5" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="despesa" name="Despesa" fill="#ef4444" radius={[4, 4, 0, 0]} />
-              </BarChart>
+                <Line 
+                  type="monotone" 
+                  dataKey="receita" 
+                  stroke="#4f46e5" 
+                  strokeWidth={3} 
+                  dot={{ r: 4, fill: '#4f46e5', strokeWidth: 2, stroke: '#fff' }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
             </ResponsiveContainer>
-          </div>
-        </Card>
-
-        {/* Pie Chart */}
-        <Card className="p-6 border-none shadow-sm bg-white">
-          <h3 className="text-lg font-bold text-slate-900 mb-6">Distribuição de Gastos</h3>
-          <div className="h-[300px] w-full flex items-center justify-center">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend verticalAlign="bottom" height={36} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      </div>
-
-      {/* Line Chart */}
-      <Card className="p-6 border-none shadow-sm bg-white">
-        <h3 className="text-lg font-bold text-slate-900 mb-6">Tendência de Lucratividade</h3>
-        <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-              <XAxis 
-                dataKey="name" 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: '#64748b', fontSize: 12 }} 
-                dy={10}
-              />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
-                tick={{ fill: '#64748b', fontSize: 12 }} 
-              />
-              <Tooltip 
-                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="receita" 
-                stroke="#4f46e5" 
-                strokeWidth={3} 
-                dot={{ r: 4, fill: '#4f46e5', strokeWidth: 2, stroke: '#fff' }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+          )}
         </div>
       </Card>
     </div>
