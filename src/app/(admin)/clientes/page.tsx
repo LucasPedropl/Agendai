@@ -9,14 +9,15 @@ import { Search, Mail, Phone, Calendar, Plus, UserPlus } from 'lucide-react';
 import { Cliente } from '@/types';
 import { fetchApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function AdminClientesPage() {
   const { token, user } = useAuth();
+  const { showToast } = useToast();
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
 
   // Form state
   const [nome, setNome] = useState('');
@@ -49,7 +50,6 @@ export default function AdminClientesPage() {
   const handleInviteCliente = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError('');
 
     try {
       const commerceId = (user as any)?.id || 1;
@@ -70,10 +70,11 @@ export default function AdminClientesPage() {
       setIsModalOpen(false);
       setNome('');
       setEmail('');
-      alert('Convite enviado com sucesso!');
+      showToast('Convite enviado com sucesso!', 'success');
+      fetchClientes();
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Erro ao convidar cliente.');
+      showToast(err.message || 'Erro ao convidar cliente.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -107,11 +108,6 @@ export default function AdminClientesPage() {
           <p className="text-sm text-gray-500">
             Enviaremos um convite por e-mail para que o cliente realize o cadastro completo.
           </p>
-          {error && (
-            <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
-              {error}
-            </div>
-          )}
           <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="nome">Nome do Cliente</label>
             <Input 

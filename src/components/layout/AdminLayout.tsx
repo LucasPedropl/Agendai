@@ -50,6 +50,11 @@ export function AdminLayout() {
 
   useEffect(() => {
     const checkCommerce = async () => {
+      if (userType === 'profissional') {
+        setHasCommerce(true);
+        setIsLoadingCommerce(false);
+        return;
+      }
       try {
         const comercios = await fetchApi('/api/Comercios', {
           method: 'GET',
@@ -78,12 +83,14 @@ export function AdminLayout() {
     } else {
       setIsLoadingCommerce(false);
     }
-  }, [token]);
+  }, [token, userType]);
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
+
+  const isProfissional = userType === 'profissional';
 
   const navCategories = [
     {
@@ -99,18 +106,20 @@ export function AdminLayout() {
         { to: '/estabelecimento/servicos', icon: Briefcase, label: 'Serviços' },
         { to: '/estabelecimento/profissionais', icon: Users, label: 'Profissionais' },
         { to: '/estabelecimento/clientes', icon: User, label: 'Clientes' },
-        { to: '/estabelecimento/config-estabelecimento', icon: Store, label: 'Config. Estabelecimento' },
+        ...(!isProfissional ? [{ to: '/estabelecimento/config-estabelecimento', icon: Store, label: 'Config. Estabelecimento' }] : []),
       ]
     },
-    {
-      title: 'FINANCEIRO',
-      items: [
-        { to: '/estabelecimento/receitas', icon: TrendingUp, label: 'Receitas' },
-        { to: '/estabelecimento/despesas', icon: TrendingDown, label: 'Despesas' },
-        { to: '/estabelecimento/receita-vs-despesa', icon: LineChart, label: 'Receita vs Despesa' },
-        { to: '/estabelecimento/relatorios', icon: BarChart3, label: 'Relatórios' },
-      ]
-    },
+    ...(!isProfissional ? [
+      {
+        title: 'FINANCEIRO',
+        items: [
+          { to: '/estabelecimento/receitas', icon: TrendingUp, label: 'Receitas' },
+          { to: '/estabelecimento/despesas', icon: TrendingDown, label: 'Despesas' },
+          { to: '/estabelecimento/receita-vs-despesa', icon: LineChart, label: 'Receita vs Despesa' },
+          { to: '/estabelecimento/relatorios', icon: BarChart3, label: 'Relatórios' },
+        ]
+      }
+    ] : []),
     {
       title: 'OUTROS',
       items: [
@@ -255,7 +264,7 @@ export function AdminLayout() {
                     className="absolute right-0 top-full mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
                   >
                     <button 
-                      onClick={() => navigate('/estabelecimento/config-estabelecimento')}
+                      onClick={() => navigate('/estabelecimento/config')}
                       className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                     >
                       Meu Perfil

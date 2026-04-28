@@ -8,10 +8,12 @@ import { Modal } from '@/components/ui/modal';
 import { Plus, Edit, Trash2, Settings } from 'lucide-react';
 import { fetchApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 
 export default function AdminServicosPage() {
   const { token, user } = useAuth();
+  const { showToast } = useToast();
   const [servicos, setServicos] = useState<any[]>([]);
   const [comercioId, setComercioId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,8 +24,6 @@ export default function AdminServicosPage() {
   const [isCategoriaModalOpen, setIsCategoriaModalOpen] = useState(false);
   const [isManageCategoriasModalOpen, setIsManageCategoriasModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [catError, setCatError] = useState('');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingCategoriaId, setEditingCategoriaId] = useState<number | null>(null);
 
@@ -129,14 +129,12 @@ export default function AdminServicosPage() {
       setDuracao('');
       setAtivo(true);
     }
-    setError('');
     setIsModalOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError('');
 
     // Ensure duracao has seconds (HH:MM:SS)
     let formattedDuracao = duracao;
@@ -184,10 +182,11 @@ export default function AdminServicosPage() {
         } as any);
       }
       setIsModalOpen(false);
+      showToast(editingId ? 'Serviço atualizado com sucesso!' : 'Serviço criado com sucesso!', 'success');
       fetchServicos();
     } catch (err: any) {
       console.error("Full Submit Error:", err);
-      // No longer setting error in UI or toast per user request
+      showToast(err.message || 'Erro ao salvar serviço.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -201,10 +200,11 @@ export default function AdminServicosPage() {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      showToast('Serviço excluído com sucesso!', 'success');
       fetchServicos();
     } catch (err: any) {
       console.error(err);
-      alert('Erro ao excluir serviço.');
+      showToast('Erro ao excluir serviço.', 'error');
     }
   };
 
@@ -242,10 +242,11 @@ export default function AdminServicosPage() {
       setCategoriaNome('');
       setEditingCategoriaId(null);
       setIsCategoriaModalOpen(false);
+      showToast('Categoria salva com sucesso!', 'success');
       fetchCategorias();
     } catch (err: any) {
       console.error("Save Category Error:", err);
-      // Removed setCatError to keep errors in console only as requested
+      showToast(err.message || 'Erro ao salvar categoria.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -258,10 +259,11 @@ export default function AdminServicosPage() {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      showToast('Categoria excluída com sucesso!', 'success');
       fetchCategorias();
     } catch (err: any) {
       console.error(err);
-      alert('Erro ao excluir categoria.');
+      showToast('Erro ao excluir categoria.', 'error');
     }
   };
 
@@ -273,7 +275,6 @@ export default function AdminServicosPage() {
       setEditingCategoriaId(null);
       setCategoriaNome('');
     }
-    setCatError('');
     setIsCategoriaModalOpen(true);
   };
 

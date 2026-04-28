@@ -2,10 +2,10 @@ export interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
   token: string | null;
-  userType: 'cliente' | 'estabelecimento' | null;
+  userType: 'cliente' | 'estabelecimento' | 'profissional' | null;
 }
 
-export type User = Cliente | Estabelecimento;
+export type User = Cliente | Estabelecimento | Profissional;
 
 export interface Cliente {
   id: string;

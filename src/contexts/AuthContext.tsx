@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthState, User } from '@/types';
 
 interface AuthContextType extends AuthState {
-  login: (user: User, token: string, userType: 'cliente' | 'estabelecimento') => void;
+  login: (user: User, token: string, userType: 'cliente' | 'estabelecimento' | 'profissional') => void;
   logout: () => void;
 }
 
@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = (user: User, token: string, userType: 'cliente' | 'estabelecimento') => {
+  const login = (user: User, token: string, userType: 'cliente' | 'estabelecimento' | 'profissional') => {
     const newState = { isAuthenticated: true, user, token, userType };
     setAuthState(newState);
     localStorage.setItem('agendaAi_auth', JSON.stringify(newState));

@@ -25,10 +25,11 @@ import { useNavigate } from 'react-router-dom';
 type ConfigTab = 'perfil' | 'empresa' | 'notificacoes' | 'seguranca';
 
 export default function AdminConfigPage() {
-  const { token, logout, user } = useAuth();
+  const { token, logout, user, userType } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<ConfigTab>('empresa');
+  const isProfissional = userType === 'profissional';
+  const [activeTab, setActiveTab] = useState<ConfigTab>(isProfissional ? 'perfil' : 'empresa');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   
@@ -137,7 +138,7 @@ export default function AdminConfigPage() {
 
   const navItems = [
     { id: 'perfil', label: 'Meu Perfil', icon: User },
-    { id: 'empresa', label: 'Dados da Empresa', icon: Building2 },
+    ...(!isProfissional ? [{ id: 'empresa', label: 'Dados da Empresa', icon: Building2 }] : []),
     { id: 'notificacoes', label: 'Notificações', icon: Bell },
     { id: 'seguranca', label: 'Segurança', icon: Shield },
   ];

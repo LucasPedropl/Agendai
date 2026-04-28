@@ -18,8 +18,16 @@ export default function LoginPage() {
   const { login } = useAuth();
   const toast = useToast();
 
-  const [email, setEmail] = useState(type === 'estabelecimento' ? 'jdncbdb2005@gmail.com' : '');
-  const [password, setPassword] = useState(type === 'estabelecimento' ? '123123' : '');
+  const [email, setEmail] = useState(() => {
+    if (type === 'profissional') return 'pedrolucasmota2005@gmail.com';
+    if (type === 'cliente') return 'pedrolucasmota2005.pl@gmail.com';
+    if (type === 'estabelecimento') return 'jdncbdb2005@gmail.com';
+    return '';
+  });
+  const [password, setPassword] = useState(() => {
+    if (type === 'profissional' || type === 'cliente' || type === 'estabelecimento') return '123123';
+    return '';
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -42,13 +50,18 @@ export default function LoginPage() {
       
       const realId = response.id || response.usuarioId || response.user?.id || (type === 'cliente' ? '1' : 1);
 
-      const mockUser: User = type === 'cliente' 
-        ? { id: String(realId), nome: response.nome || 'Usuário', email: response.email || '', tipo: 'cliente' }
-        : { id: Number(realId), nome: response.nome || 'Estabelecimento', email: response.email || '', endereco: '', imagem: '', avaliacao: 5, totalAvaliacoes: 0, horarioFuncionamento: '', tipo: 'estabelecimento' };
+      let mockUser: User;
+      if (type === 'cliente') {
+        mockUser = { id: String(realId), nome: response.nome || 'Usuário', email: response.email || email || '', tipo: 'cliente' };
+      } else if (type === 'profissional') {
+        mockUser = { id: String(realId), nome: response.nome || 'Profissional', email: response.email || email || '', tipo: 'profissional' } as any;
+      } else {
+        mockUser = { id: Number(realId), nome: response.nome || 'Estabelecimento', email: response.email || email || '', endereco: '', imagem: '', avaliacao: 5, totalAvaliacoes: 0, horarioFuncionamento: '', tipo: 'estabelecimento' };
+      }
       
       login(mockUser, token, type as any);
 
-      toast.success(`Autenticado com ${provider === 'google' ? 'Google' : 'Facebook'}!`);
+      toast.success(type === 'profissional' ? 'Bem-vindo, Profissional!' : 'Bem-vindo de volta!');
       navigate(type === 'cliente' ? '/app' : '/estabelecimento/dashboard');
     } catch (err: any) {
       console.error(err);
@@ -78,14 +91,19 @@ export default function LoginPage() {
       const token = response.token || response.accessToken || (typeof response === 'string' ? response : 'mock-jwt-token');
       
       const realId = response.id || response.usuarioId || response.user?.id || (type === 'cliente' ? '1' : 1);
-
-      const mockUser: User = type === 'cliente' 
-        ? { id: String(realId), nome: response.nome || 'Usuário', email, tipo: 'cliente' }
-        : { id: Number(realId), nome: response.nome || 'Estabelecimento', email, endereco: '', imagem: '', avaliacao: 5, totalAvaliacoes: 0, horarioFuncionamento: '', tipo: 'estabelecimento' };
+      
+      let mockUser: User;
+      if (type === 'cliente') {
+        mockUser = { id: String(realId), nome: response.nome || 'Usuário', email, tipo: 'cliente' };
+      } else if (type === 'profissional') {
+        mockUser = { id: String(realId), nome: response.nome || 'Profissional', email, tipo: 'profissional' } as any;
+      } else {
+        mockUser = { id: Number(realId), nome: response.nome || 'Estabelecimento', email, endereco: '', imagem: '', avaliacao: 5, totalAvaliacoes: 0, horarioFuncionamento: '', tipo: 'estabelecimento' };
+      }
       
       login(mockUser, token, type);
 
-      toast.success('Bem-vindo de volta!');
+      toast.success(type === 'profissional' ? 'Bem-vindo, Profissional!' : 'Bem-vindo de volta!');
       navigate(type === 'cliente' ? '/app' : '/estabelecimento/dashboard');
     } catch (err: any) {
       console.error(err);

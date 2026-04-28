@@ -9,16 +9,17 @@ import { Plus, Edit, Trash2, Phone } from 'lucide-react';
 import { Profissional } from '@/types';
 import { fetchApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/contexts/ToastContext';
 
 export default function AdminProfissionaisPage() {
   const { token, user } = useAuth();
+  const { showToast } = useToast();
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
 
   const fetchProfissionais = async () => {
     setIsLoading(true);
@@ -48,7 +49,6 @@ export default function AdminProfissionaisPage() {
   const handleInviteProfissional = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setError('');
 
     try {
       const commerceId = (user as any)?.id || 1;
@@ -69,11 +69,11 @@ export default function AdminProfissionaisPage() {
       setIsModalOpen(false);
       setNome('');
       setEmail('');
-      alert('Convite enviado com sucesso para o profissional!');
+      showToast('Convite enviado com sucesso para o profissional!', 'success');
       fetchProfissionais();
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Erro ao convidar profissional.');
+      showToast(err.message || 'Erro ao convidar profissional.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -154,11 +154,6 @@ export default function AdminProfissionaisPage() {
           <p className="text-sm text-gray-500">
             Enviaremos um convite por e-mail para que o profissional realize seu cadastro e tenha acesso ao painel.
           </p>
-          {error && (
-            <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
-              {error}
-            </div>
-          )}
           <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="nome">Nome Completo</label>
             <Input 
