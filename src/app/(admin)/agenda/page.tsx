@@ -63,7 +63,7 @@ export default function AdminAgendaPage() {
           } as any);
           
           if (Array.isArray(profissionaisData)) {
-            setProfissionaisOptions(profissionaisData.map(p => ({ value: String(p.id), label: p.nome })));
+            setProfissionaisOptions(profissionaisData.map(p => ({ value: String(p.id || p.Id), label: p.nome || p.Nome })));
           } else {
             setProfissionaisOptions([]);
           }
@@ -80,7 +80,16 @@ export default function AdminAgendaPage() {
           } as any);
           
           if (Array.isArray(clientesData)) {
-            setClientesOptions(clientesData.map(c => ({ value: String(c.id), label: c.nome })));
+            // Defensive mapping: check for various ID property names (id, Id, userId, usuarioId)
+            const options = clientesData
+              .map(c => {
+                const id = c.id || c.Id || c.usuarioId || c.UsuarioId || c.idUsuario;
+                const nome = c.nome || c.Nome || c.userName || c.UserName || "Cliente sem nome";
+                return { value: id ? String(id) : 'undefined', label: String(nome) };
+              })
+              .filter(opt => opt.value !== 'undefined');
+            
+            setClientesOptions(options);
           } else {
             setClientesOptions([]);
           }
@@ -97,11 +106,9 @@ export default function AdminAgendaPage() {
   const handleCreateAgenda = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('Tentativa de agendamento:', { idUsuario, idProssional, idServico, data, horario });
-
-    if (!idUsuario || !idProssional || !idServico || !data || !horario) {
-      console.error('Campos obrigatórios ausentes:', {
-        cliente: !idUsuario,
+    if (!idUsuario || idUsuario === 'undefined' || !idProssional || !idServico || !data || !horario) {
+      console.error('Campos obrigatórios ausentes ou inválidos:', {
+        cliente: !idUsuario || idUsuario === 'undefined',
         profissional: !idProssional,
         servico: !idServico,
         data: !data,
@@ -115,20 +122,20 @@ export default function AdminAgendaPage() {
     try {
       // Create a valid ISO date string from the date input
       const dataIso = new Date(data).toISOString();
-      const commerceId = (user as any)?.id || 1;
+      
+      // Ensure horario has seconds for TimeSpan parsing in .NET if needed
+      const horarioComSegundos = horario.length === 5 ? `${horario}:00` : horario;
 
+      // Use PascalCase for the payload as seen in the reference ViewModels
       const payload = {
-        idProssional: idProssional, // Spelling as per user curl
-        idProfissional: idProssional, // Correct spelling just in case
-        idUsuario: idUsuario,
-        idComercio: commerceId, // Likely required as in other endpoints
-        comercioId: commerceId, // Alternative naming
-        data: dataIso,
-        horario: horario,
-        idServico: Number(idServico)
+        IdProssional: idProssional,
+        IdUsuario: idUsuario,
+        Data: dataIso,
+        Horario: horarioComSegundos,
+        IdServico: Number(idServico)
       };
 
-      console.log('Enviando Payload:', payload);
+      console.log('Enviando Payload (PascalCase) para API do Servidor:', payload);
 
       await fetchApi('/api/Agenda', {
         method: 'POST',
