@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendai - Elegant Lifestyle</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .serif { font-family: 'Playfair Display', serif; }
+        .bg-luxury { background: #FAF7F2; }
+    </style>
+</head>
+<body class="bg-luxury text-stone-800 flex flex-col md:flex-row min-h-screen">
+
+    <!-- Vertical Navigation (Elegant) -->
+    <nav class="w-full md:w-20 lg:w-72 bg-white border-r border-stone-200 flex flex-col items-center py-8">
+        <div class="mb-12">
+            <h1 class="serif text-3xl italic font-bold text-stone-900">Agendai</h1>
+        </div>
+        
+        <div class="flex-1 w-full px-6 space-y-8">
+            <div class="space-y-4">
+                <p class="text-[10px] uppercase tracking-[0.2em] text-stone-400 font-bold ml-4">Geral</p>
+                <a href="#" class="flex items-center space-x-4 px-4 py-3 rounded-2xl bg-stone-900 text-white shadow-xl shadow-stone-200 transition-all">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                    <span class="font-medium hidden lg:block">Atelier</span>
+                </a>
+                <a href="#" class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-stone-500 hover:bg-stone-50 transition-all">
+                    <i data-lucide="calendar" class="w-5 h-5"></i>
+                    <span class="font-medium hidden lg:block">Agenda</span>
+                </a>
+                <a href="#" class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-stone-500 hover:bg-stone-50 transition-all">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    <span class="font-medium hidden lg:block">Serviços</span>
+                </a>
+            </div>
+
+            <div class="space-y-4">
+                <p class="text-[10px] uppercase tracking-[0.2em] text-stone-400 font-bold ml-4">Relacionamento</p>
+                <a href="#" class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-stone-500 hover:bg-stone-50 transition-all">
+                    <i data-lucide="heart" class="w-5 h-5"></i>
+                    <span class="font-medium hidden lg:block">Clientes VIP</span>
+                </a>
+                <a href="#" class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-stone-500 hover:bg-stone-50 transition-all">
+                    <i data-lucide="message-circle" class="w-5 h-5"></i>
+                    <span class="font-medium hidden lg:block">Feedback</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="mt-auto px-6 w-full">
+            <div class="p-4 bg-stone-50 rounded-3xl border border-stone-100 flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-stone-200 border-2 border-white shadow-sm overflow-hidden">
+                    <img src="https://i.pravatar.cc/100?u=spa" alt="Avatar">
+                </div>
+                <div class="hidden lg:block overflow-hidden">
+                    <p class="text-xs font-bold truncate text-stone-900 uppercase tracking-wider">L'Atelier Spa</p>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="flex-1 p-6 md:p-12 overflow-y-auto">
+        <header class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-12 space-y-4 md:space-y-0">
+            <div>
+                <h2 class="serif text-4xl text-stone-900 mb-2">Boa tarde, <span class="italic underline decoration-stone-300">Elena</span></h2>
+                <p class="text-stone-500 font-light tracking-wide">A harmonia do seu espaço hoje.</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="h-12 w-[1px] bg-stone-200 mx-4 hidden md:block"></div>
+                <button class="bg-stone-900 text-stone-50 px-8 py-4 rounded-full text-sm font-bold tracking-widest uppercase hover:bg-stone-800 transition-all transform hover:-translate-y-1 active:translate-y-0 shadow-2xl shadow-stone-300">
+                    Reservar Horário
+                </button>
+            </div>
+        </header>
+
+        <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <!-- Main Column -->
+            <div class="lg:col-span-2 space-y-10">
+                <!-- Highlight Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-8 rounded-[2.5rem] border border-stone-100 shadow-sm">
+                        <p class="text-stone-400 text-xs font-bold uppercase tracking-widest mb-6">Próxima Sessão</p>
+                        <div class="flex items-center space-x-6">
+                            <div class="w-16 h-16 rounded-3xl bg-stone-50 flex items-center justify-center text-stone-400">
+                                <i data-lucide="clock" class="w-8 h-8"></i>
+                            </div>
+                            <div>
+                                <h3 class="serif text-2xl text-stone-900 italic">15:30</h3>
+                                <p class="text-stone-500">Juliana Alencar</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-stone-900 p-8 rounded-[2.5rem] text-stone-50 shadow-2xl shadow-stone-300">
+                        <p class="text-stone-500 text-xs font-bold uppercase tracking-widest mb-6">Disponibilidade</p>
+                        <div class="flex items-center space-x-6">
+                            <div class="w-16 h-16 rounded-3xl bg-stone-800 flex items-center justify-center text-stone-500">
+                                <i data-lucide="calendar-days" class="w-8 h-8"></i>
+                            </div>
+                            <div>
+                                <h3 class="serif text-2xl italic">4 Vagas</h3>
+                                <p class="text-stone-400">Para amanhã</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daily Agenda (Stylized) -->
+                <section>
+                    <div class="flex justify-between items-end mb-8">
+                        <h3 class="serif text-3xl text-stone-900">Jornada de Hoje</h3>
+                        <p class="text-stone-400 text-sm italic">29 de Abril, 2026</p>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div class="bg-white p-2 rounded-[2rem] flex items-center space-x-6 pr-8 border border-stone-50 hover:border-stone-200 transition-all group">
+                            <div class="w-20 h-20 rounded-[1.8rem] bg-stone-50 flex flex-col items-center justify-center text-stone-900 border border-stone-100 group-hover:bg-stone-900 group-hover:text-white transition-all">
+                                <span class="text-xs uppercase font-bold tracking-tighter opacity-50">Início</span>
+                                <span class="text-lg font-bold">16:00</span>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-bold text-stone-900 uppercase tracking-widest text-sm mb-1">Ritual de Boas Vindas</h4>
+                                <p class="text-stone-500 text-xs italic">Cliente: Mariana Costa</p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="px-3 py-1 bg-stone-100 text-stone-500 rounded-full text-[10px] font-bold uppercase">Confirmado</span>
+                                <button class="w-10 h-10 rounded-full border border-stone-100 flex items-center justify-center text-stone-300 hover:text-stone-900 transition-colors">
+                                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-2 rounded-[2rem] flex items-center space-x-6 pr-8 border border-stone-50 hover:border-stone-200 transition-all group">
+                            <div class="w-20 h-20 rounded-[1.8rem] bg-stone-50 flex flex-col items-center justify-center text-stone-900 border border-stone-100 group-hover:bg-stone-900 group-hover:text-white transition-all">
+                                <span class="text-xs uppercase font-bold tracking-tighter opacity-50">Início</span>
+                                <span class="text-lg font-bold">17:30</span>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="font-bold text-stone-900 uppercase tracking-widest text-sm mb-1">Massagem de Pedras Quentes</h4>
+                                <p class="text-stone-500 text-xs italic">Cliente: Sofia Werner</p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[10px] font-bold uppercase">Pendente</span>
+                                <button class="w-10 h-10 rounded-full border border-stone-100 flex items-center justify-center text-stone-300 hover:text-stone-900 transition-colors">
+                                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Side Column -->
+            <div class="space-y-10">
+                <div class="bg-stone-50 p-10 rounded-[3rem] border border-stone-200/50">
+                    <div class="text-center mb-8">
+                        <i data-lucide="star" class="w-8 h-8 text-stone-300 mx-auto mb-4"></i>
+                        <h4 class="serif text-xl italic mb-2">Momento de Excelência</h4>
+                        <p class="text-stone-500 text-sm font-light leading-relaxed">"O atendimento foi impecável, me senti em outro mundo. Voltarei sempre!"</p>
+                        <p class="text-stone-900 text-xs font-bold mt-4 uppercase tracking-[0.2em]">- Beatriz S.</p>
+                    </div>
+                    <div class="h-[1px] bg-stone-200 w-12 mx-auto"></div>
+                </div>
+
+                <div class="bg-white p-8 rounded-[3rem] shadow-sm border border-stone-100">
+                    <h4 class="font-bold text-stone-900 uppercase tracking-widest text-xs mb-6">Finanças do Mês</h4>
+                    <div class="space-y-6">
+                        <div>
+                            <div class="flex justify-between items-end mb-2">
+                                <span class="text-xs text-stone-400 uppercase font-bold">Meta de Vendas</span>
+                                <span class="text-xs font-bold">R$ 12.000 / 15.000</span>
+                            </div>
+                            <div class="w-full h-1 bg-stone-50 rounded-full overflow-hidden">
+                                <div class="w-[80%] h-full bg-stone-900"></div>
+                            </div>
+                        </div>
+                        <button class="w-full py-4 border border-stone-900 text-stone-900 rounded-full text-[10px] font-bold uppercase tracking-widest hover:bg-stone-900 hover:text-white transition-all">
+                            Relatórios Completos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

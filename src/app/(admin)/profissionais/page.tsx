@@ -21,8 +21,8 @@ export default function AdminProfissionaisPage() {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchProfissionais = async () => {
-    setIsLoading(true);
+  const fetchProfissionais = async (silent = false) => {
+    if (!silent) setIsLoading(true);
     try {
       const commerceId = (user as any)?.id || 1;
       const data = await fetchApi(`/api/ComercioUsuarios/Profissionais/${commerceId}`, {
@@ -36,7 +36,7 @@ export default function AdminProfissionaisPage() {
       console.error("Erro ao buscar profissionais:", err);
       setProfissionais([]);
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
@@ -70,7 +70,8 @@ export default function AdminProfissionaisPage() {
       setNome('');
       setEmail('');
       showToast('Convite enviado com sucesso para o profissional!', 'success');
-      fetchProfissionais();
+      // Refresh with a small delay
+      setTimeout(() => fetchProfissionais(true), 500);
     } catch (err: any) {
       console.error(err);
       showToast(err.message || 'Erro ao convidar profissional.', 'error');

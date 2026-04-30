@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="h-full bg-[#fdfdfd]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendai - Enterprise Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .sidebar-gradient { background: linear-gradient(180deg, #1e1b4b 0%, #312e81 100%); }
+        .elevated { box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.04); }
+        .nav-link:hover { background: rgba(255, 255, 255, 0.05); }
+        .nav-link.active { background: #6366f1; color: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+        .card-stat { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-stat:hover { transform: translateY(-5px); box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08); }
+    </style>
+</head>
+<body class="h-full text-slate-700 antialiased">
+    <div class="flex h-full">
+        <!-- Enterprise Sidebar -->
+        <aside class="w-64 sidebar-gradient flex flex-col h-full text-white/70">
+            <div class="p-8 flex items-center gap-3">
+                <div class="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-indigo-900 shadow-xl">
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                </div>
+                <span class="text-2xl font-bold tracking-tight text-white">Agendai</span>
+            </div>
+
+            <nav class="flex-1 px-4 mt-4 space-y-1">
+                <a href="#" class="nav-link active flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all">
+                    <i data-lucide="grid" class="w-5 h-5"></i> Dashboard
+                </a>
+                <a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold hover:text-white transition-all">
+                    <i data-lucide="calendar-days" class="w-5 h-5"></i> Schedule
+                </a>
+                <a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold hover:text-white transition-all">
+                    <i data-lucide="users-2" class="w-5 h-5"></i> Customers
+                </a>
+                <a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold hover:text-white transition-all">
+                    <i data-lucide="wallet-2" class="w-5 h-5"></i> Financial
+                </a>
+                
+                <div class="pt-8 pb-3 px-4 text-[10px] font-bold text-white/30 uppercase tracking-widest">Internal Tools</div>
+                <a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold hover:text-white transition-all">
+                    <i data-lucide="cpu" class="w-5 h-5"></i> AI Insights
+                </a>
+                <a href="#" class="nav-link flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold hover:text-white transition-all">
+                    <i data-lucide="message-circle-code" class="w-5 h-5"></i> WhatsApp
+                </a>
+            </nav>
+
+            <div class="p-6">
+                <div class="bg-indigo-500/20 rounded-2xl p-6 border border-white/10">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-indigo-300"></i>
+                        <span class="text-xs font-bold text-white">Agendai Elite</span>
+                    </div>
+                    <p class="text-[11px] text-white/60 mb-4 leading-relaxed">You're currently using the most powerful version of Agendai.</p>
+                    <button class="w-full bg-white text-indigo-900 py-2 rounded-lg text-xs font-bold hover:bg-slate-100 transition-colors">Manage Plan</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden">
+            <!-- Header -->
+            <header class="h-24 bg-white border-b border-slate-100 px-10 flex items-center justify-between sticky top-0 z-40">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Enterprise Overview</h2>
+                    <p class="text-xs text-slate-400 font-medium">Monitoring all activities across your establishment.</p>
+                </div>
+
+                <div class="flex items-center gap-6">
+                    <div class="relative hidden lg:block">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                        <input type="text" placeholder="Global search..." class="w-72 bg-slate-50 border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-4 focus:ring-indigo-100 outline-none transition-all">
+                    </div>
+                    <button class="p-3 bg-slate-50 rounded-xl text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all relative">
+                        <i data-lucide="bell-ring" class="w-5 h-5"></i>
+                        <span class="absolute top-3 right-3 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                    </button>
+                    <div class="h-10 w-px bg-slate-100 mx-2"></div>
+                    <div class="flex items-center gap-3">
+                        <div class="text-right">
+                            <p class="text-sm font-bold text-slate-900 leading-tight">Elite Barbershop</p>
+                            <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-widest">Verified Merchant</p>
+                        </div>
+                        <div class="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden shadow-sm">
+                            <img src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&h=100&fit=crop" alt="Profile">
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="flex-1 overflow-y-auto p-10 bg-[#fdfdfd] space-y-10">
+                <!-- Large Stat Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-white p-8 rounded-[2rem] border border-slate-100 elevated card-stat relative overflow-hidden">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="banknote" class="w-8 h-8"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Revenue</p>
+                                <h3 class="text-3xl font-bold text-slate-900 font-display">R$ 52.480,00</h3>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-lg">+18.5%</span>
+                            <span class="text-[10px] text-slate-400 font-medium">Increase from last month</span>
+                        </div>
+                        <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl"></div>
+                    </div>
+                    <div class="bg-white p-8 rounded-[2rem] border border-slate-100 elevated card-stat relative overflow-hidden">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="calendar-check-2" class="w-8 h-8"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Appointments</p>
+                                <h3 class="text-3xl font-bold text-slate-900 font-display">1,840</h3>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-emerald-500 bg-emerald-50 px-2 py-1 rounded-lg">+124</span>
+                            <span class="text-[10px] text-slate-400 font-medium">Bookings this week</span>
+                        </div>
+                    </div>
+                    <div class="bg-white p-8 rounded-[2rem] border border-slate-100 elevated card-stat relative overflow-hidden">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center">
+                                <i data-lucide="users-round" class="w-8 h-8"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Retention Rate</p>
+                                <h3 class="text-3xl font-bold text-slate-900 font-display">94.8%</h3>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-indigo-500 bg-indigo-50 px-2 py-1 rounded-lg">High Performance</span>
+                            <span class="text-[10px] text-slate-400 font-medium">Based on 2k+ reviews</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Section -->
+                <div class="grid grid-cols-12 gap-8">
+                    <!-- Activity Table -->
+                    <div class="col-span-12 lg:col-span-8 bg-white rounded-[2rem] border border-slate-100 elevated overflow-hidden">
+                        <div class="p-8 border-b border-slate-50 flex items-center justify-between">
+                            <h3 class="text-xl font-bold text-slate-900">Recent Transactions</h3>
+                            <button class="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-all">Download Audit</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left">
+                                <thead class="bg-slate-50/50 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">
+                                    <tr>
+                                        <th class="px-8 py-5">Client Profile</th>
+                                        <th class="px-8 py-5">Service ID</th>
+                                        <th class="px-8 py-5">Status</th>
+                                        <th class="px-8 py-5 text-right">Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-50">
+                                    <tr class="hover:bg-slate-50/30 transition-colors">
+                                        <td class="px-8 py-6">
+                                            <div class="flex items-center gap-4">
+                                                <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">JD</div>
+                                                <div>
+                                                    <p class="text-sm font-bold text-slate-900">John Doe</p>
+                                                    <p class="text-[10px] text-slate-400">Regular Customer</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-8 py-6">
+                                            <p class="text-sm font-medium text-slate-600">SRV-204-PRO</p>
+                                            <p class="text-[10px] text-slate-400 italic">Full Hair Treatment</p>
+                                        </td>
+                                        <td class="px-8 py-6">
+                                            <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-bold border border-emerald-100 uppercase tracking-wider">Settled</span>
+                                        </td>
+                                        <td class="px-8 py-6 text-right">
+                                            <p class="text-sm font-bold text-slate-900">R$ 145.00</p>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50/30 transition-colors">
+                                        <td class="px-8 py-6">
+                                            <div class="flex items-center gap-4">
+                                                <div class="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center font-bold">MS</div>
+                                                <div>
+                                                    <p class="text-sm font-bold text-slate-900">Mila Stevens</p>
+                                                    <p class="text-[10px] text-slate-400">New Guest</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-8 py-6">
+                                            <p class="text-sm font-medium text-slate-600">SRV-102-BAS</p>
+                                            <p class="text-[10px] text-slate-400 italic">Standard Trim</p>
+                                        </td>
+                                        <td class="px-8 py-6">
+                                            <span class="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[10px] font-bold border border-amber-100 uppercase tracking-wider">Pending</span>
+                                        </td>
+                                        <td class="px-8 py-6 text-right">
+                                            <p class="text-sm font-bold text-slate-900">R$ 45.00</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Widgets -->
+                    <div class="col-span-12 lg:col-span-4 space-y-8">
+                        <div class="bg-indigo-900 rounded-[2rem] p-8 text-white elevated relative overflow-hidden group">
+                            <h4 class="text-xl font-bold mb-4 relative z-10 font-display">System Health</h4>
+                            <div class="space-y-6 relative z-10">
+                                <div class="flex justify-between items-end">
+                                    <p class="text-xs font-bold text-white/50 uppercase tracking-widest">Server Load</p>
+                                    <p class="text-sm font-bold text-white">12%</p>
+                                </div>
+                                <div class="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                    <div class="bg-indigo-400 h-full w-[12%]"></div>
+                                </div>
+                                <div class="flex justify-between items-end">
+                                    <p class="text-xs font-bold text-white/50 uppercase tracking-widest">Webhook Status</p>
+                                    <p class="text-sm font-bold text-emerald-400 flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3 h-3"></i> Operational</p>
+                                </div>
+                            </div>
+                            <div class="absolute right-[-10%] bottom-[-10%] w-48 h-48 bg-white/5 rounded-full blur-2xl group-hover:bg-white/10 transition-all duration-700"></div>
+                        </div>
+
+                        <div class="bg-white rounded-[2rem] border border-slate-100 p-8 elevated">
+                            <h4 class="text-lg font-bold text-slate-900 mb-6 font-display">Quick Actions</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <button class="p-4 bg-slate-50 rounded-2xl text-center hover:bg-indigo-50 hover:text-indigo-600 transition-all group">
+                                    <i data-lucide="user-plus-2" class="w-6 h-6 mx-auto mb-2 text-slate-400 group-hover:text-indigo-500"></i>
+                                    <span class="text-[10px] font-bold uppercase tracking-widest">New Staff</span>
+                                </button>
+                                <button class="p-4 bg-slate-50 rounded-2xl text-center hover:bg-indigo-50 hover:text-indigo-600 transition-all group">
+                                    <i data-lucide="message-square-quote" class="w-6 h-6 mx-auto mb-2 text-slate-400 group-hover:text-indigo-500"></i>
+                                    <span class="text-[10px] font-bold uppercase tracking-widest">Feedback</span>
+                                </button>
+                                <button class="p-4 bg-slate-50 rounded-2xl text-center hover:bg-indigo-50 hover:text-indigo-600 transition-all group">
+                                    <i data-lucide="calendar-plus" class="w-6 h-6 mx-auto mb-2 text-slate-400 group-hover:text-indigo-500"></i>
+                                    <span class="text-[10px] font-bold uppercase tracking-widest">Events</span>
+                                </button>
+                                <button class="p-4 bg-slate-50 rounded-2xl text-center hover:bg-indigo-50 hover:text-indigo-600 transition-all group">
+                                    <i data-lucide="file-down" class="w-6 h-6 mx-auto mb-2 text-slate-400 group-hover:text-indigo-500"></i>
+                                    <span class="text-[10px] font-bold uppercase tracking-widest">Reports</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="h-full bg-[#FCFBF8]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendai - Boutique Collection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .serif { font-family: 'Playfair Display', serif; }
+        .sidebar-float { box-shadow: 0 10px 40px -10px rgba(115, 115, 115, 0.1); }
+        .nav-item:hover { color: #A89060; }
+        .nav-active { color: #A89060; font-weight: 700; }
+        .nav-active::before { content: ''; position: absolute; left: -24px; top: 50%; transform: translateY(-50%); width: 4px; height: 16px; background: #A89060; border-radius: 0 4px 4px 0; }
+        .soft-card { background: white; border: 1px solid #F1EFE9; box-shadow: 0 4px 12px rgba(168, 144, 96, 0.03); }
+        .btn-gold { background: #A89060; color: white; transition: all 0.3s; }
+        .btn-gold:hover { background: #8E784D; transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(168, 144, 96, 0.4); }
+    </style>
+</head>
+<body class="h-full text-[#4A4741] antialiased">
+    <div class="flex h-full p-6 gap-6">
+        <!-- Floating Sidebar -->
+        <aside class="w-64 bg-white rounded-[2rem] sidebar-float flex flex-col h-full border border-[#F1EFE9] shrink-0">
+            <div class="p-10">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 border-2 border-[#A89060] rounded-full flex items-center justify-center text-[#A89060] italic serif text-xl">A</div>
+                    <span class="text-2xl italic serif tracking-tight text-[#2D2A26]">Agendai</span>
+                </div>
+            </div>
+
+            <nav class="flex-1 px-8 space-y-6">
+                <div class="space-y-4">
+                    <p class="text-[10px] font-bold text-[#C9C4B8] uppercase tracking-[0.3em]">Atelier</p>
+                    <a href="#" class="relative flex items-center gap-4 nav-active group">
+                        <i data-lucide="home" class="w-5 h-5"></i>
+                        <span class="text-sm">Início</span>
+                    </a>
+                    <a href="#" class="relative flex items-center gap-4 text-[#8C887F] hover:text-[#A89060] group transition-all">
+                        <i data-lucide="calendar-heart" class="w-5 h-5"></i>
+                        <span class="text-sm">Agenda VIP</span>
+                    </a>
+                    <a href="#" class="relative flex items-center gap-4 text-[#8C887F] hover:text-[#A89060] group transition-all">
+                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                        <span class="text-sm">Serviços</span>
+                    </a>
+                </div>
+
+                <div class="space-y-4 pt-6">
+                    <p class="text-[10px] font-bold text-[#C9C4B8] uppercase tracking-[0.3em]">Relacionamento</p>
+                    <a href="#" class="relative flex items-center gap-4 text-[#8C887F] hover:text-[#A89060] group transition-all">
+                        <i data-lucide="users-round" class="w-5 h-5"></i>
+                        <span class="text-sm">Membros</span>
+                    </a>
+                    <a href="#" class="relative flex items-center gap-4 text-[#8C887F] hover:text-[#A89060] group transition-all">
+                        <i data-lucide="mail" class="w-5 h-5"></i>
+                        <span class="text-sm">Marketing</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="p-8">
+                <div class="bg-[#F9F8F4] rounded-2xl p-5 border border-[#F1EFE9]">
+                    <p class="text-xs font-bold text-[#A89060] mb-2 italic serif">Suporte Exclusivo</p>
+                    <p class="text-[11px] text-[#8C887F] leading-relaxed mb-3">Dúvidas sobre o sistema? Fale com seu concierge.</p>
+                    <button class="w-full py-2 bg-white border border-[#F1EFE9] rounded-xl text-[10px] font-bold text-[#4A4741] hover:bg-[#F1EFE9] transition-all">Chamar Agora</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col h-full gap-6">
+            <!-- Header Card -->
+            <header class="bg-white h-20 rounded-[2rem] border border-[#F1EFE9] px-10 flex items-center justify-between sidebar-float">
+                <div class="flex items-center gap-6">
+                    <h2 class="serif italic text-2xl text-[#2D2A26]">Bem-vindo, Spa Royal</h2>
+                    <div class="h-4 w-px bg-[#F1EFE9]"></div>
+                    <p class="text-sm text-[#8C887F] font-medium">Quarta-feira, 29 de Abril</p>
+                </div>
+
+                <div class="flex items-center gap-6">
+                    <button class="text-[#8C887F] hover:text-[#A89060] transition-colors"><i data-lucide="search" class="w-5 h-5"></i></button>
+                    <button class="text-[#8C887F] hover:text-[#A89060] transition-colors relative">
+                        <i data-lucide="bell" class="w-5 h-5"></i>
+                        <span class="absolute -top-1 -right-1 w-2 h-2 bg-[#A89060] rounded-full ring-4 ring-white"></span>
+                    </button>
+                    <div class="w-10 h-10 rounded-full bg-[#F9F8F4] border border-[#F1EFE9] overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop" alt="User">
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="flex-1 overflow-y-auto space-y-6">
+                <!-- Top Row -->
+                <div class="grid grid-cols-12 gap-6">
+                    <div class="col-span-12 lg:col-span-4 soft-card p-8 rounded-[2.5rem]">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-12 h-12 bg-[#F9F8F4] rounded-2xl flex items-center justify-center text-[#A89060]">
+                                <i data-lucide="sun" class="w-6 h-6"></i>
+                            </div>
+                            <p class="text-sm font-bold uppercase tracking-widest text-[#C9C4B8]">Hoje</p>
+                        </div>
+                        <h3 class="text-4xl serif italic text-[#2D2A26] mb-2">18 Atendimentos</h3>
+                        <p class="text-sm text-[#8C887F]">Sua agenda está <span class="text-[#A89060] font-bold">85% preenchida</span> para hoje.</p>
+                    </div>
+
+                    <div class="col-span-12 lg:col-span-8 bg-[#A89060] p-10 rounded-[2.5rem] text-white flex justify-between items-center relative overflow-hidden">
+                        <div class="relative z-10">
+                            <h3 class="text-3xl serif italic mb-3">Impulsione seus agendamentos</h3>
+                            <p class="text-white/70 text-sm max-w-md mb-6 leading-relaxed">Crie campanhas personalizadas para os clientes que não retornam há mais de 30 dias.</p>
+                            <button class="px-8 py-3 bg-white text-[#A89060] rounded-2xl text-sm font-bold shadow-xl shadow-black/5 hover:scale-105 transition-all">Criar Campanha</button>
+                        </div>
+                        <div class="absolute right-[-5%] top-[-10%] opacity-10">
+                            <i data-lucide="sparkles" class="w-64 h-64"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Row -->
+                <div class="grid grid-cols-12 gap-6 pb-6">
+                    <div class="col-span-12 lg:col-span-8 soft-card rounded-[2.5rem] overflow-hidden">
+                        <div class="p-8 border-b border-[#F1EFE9] flex justify-between items-center">
+                            <h3 class="serif italic text-xl">Próximas Experiências</h3>
+                            <button class="text-[#A89060] text-sm font-bold border-b border-[#A89060]/20 pb-1">Ver todos</button>
+                        </div>
+                        <div class="p-8 space-y-6">
+                            <div class="flex items-center justify-between group cursor-pointer">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-14 h-14 rounded-full border border-[#F1EFE9] p-1 bg-[#FCFBF8] group-hover:scale-110 transition-transform">
+                                        <div class="w-full h-full rounded-full bg-[#E5E1D8] flex items-center justify-center text-[10px] font-bold text-[#A89060]">EC</div>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-[#2D2A26]">Elisa Camargo</p>
+                                        <p class="text-xs text-[#8C887F]">Massagem Relaxante • 14:00</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-6">
+                                    <span class="text-xs font-bold text-[#A89060] uppercase tracking-widest">Confirmado</span>
+                                    <button class="w-10 h-10 rounded-full border border-[#F1EFE9] flex items-center justify-center text-[#C9C4B8] group-hover:bg-[#A89060] group-hover:text-white transition-all">
+                                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between group cursor-pointer">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-14 h-14 rounded-full border border-[#F1EFE9] p-1 bg-[#FCFBF8] group-hover:scale-110 transition-transform">
+                                        <div class="w-full h-full rounded-full bg-[#E5E1D8] flex items-center justify-center text-[10px] font-bold text-[#A89060]">PV</div>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-[#2D2A26]">Paulo Vieira</p>
+                                        <p class="text-xs text-[#8C887F]">Tratamento Facial • 15:30</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-6">
+                                    <span class="text-xs font-bold text-[#C9C4B8] uppercase tracking-widest">Aguardando</span>
+                                    <button class="w-10 h-10 rounded-full border border-[#F1EFE9] flex items-center justify-center text-[#C9C4B8] group-hover:bg-[#A89060] group-hover:text-white transition-all">
+                                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-12 lg:col-span-4 space-y-6">
+                        <div class="soft-card rounded-[2.5rem] p-8 text-center">
+                            <div class="w-16 h-16 bg-[#F9F8F4] rounded-full flex items-center justify-center text-[#A89060] mx-auto mb-4 border border-[#F1EFE9]">
+                                <i data-lucide="award" class="w-8 h-8"></i>
+                            </div>
+                            <h4 class="serif italic text-lg mb-2">Desempenho Semanal</h4>
+                            <p class="text-xs text-[#8C887F] mb-6">Você atingiu sua meta de novos clientes esta semana!</p>
+                            <div class="relative h-2 bg-[#F9F8F4] rounded-full overflow-hidden mb-2">
+                                <div class="absolute left-0 top-0 h-full bg-[#A89060] w-[92%] rounded-full shadow-[0_0_10px_rgba(168,144,96,0.3)]"></div>
+                            </div>
+                            <p class="text-[10px] font-bold text-[#A89060] uppercase tracking-widest">92% da Meta Concluída</p>
+                        </div>
+
+                        <button class="w-full btn-gold py-6 rounded-[2.5rem] serif italic text-xl flex items-center justify-center gap-4">
+                            Novo Agendamento <i data-lucide="plus" class="w-6 h-6"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

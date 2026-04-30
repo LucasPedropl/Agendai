@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="h-full scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendai - Ultimate Hybrid Concept</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        border: "hsl(var(--border))",
+                        input: "hsl(var(--input))",
+                        ring: "hsl(var(--ring))",
+                        background: "hsl(var(--background))",
+                        foreground: "hsl(var(--foreground))",
+                        primary: {
+                            DEFAULT: "hsl(var(--primary))",
+                            foreground: "hsl(var(--primary-foreground))",
+                        },
+                        secondary: {
+                            DEFAULT: "hsl(var(--secondary))",
+                            foreground: "hsl(var(--secondary-foreground))",
+                        },
+                        destructive: {
+                            DEFAULT: "hsl(var(--destructive))",
+                            foreground: "hsl(var(--destructive-foreground))",
+                        },
+                        muted: {
+                            DEFAULT: "hsl(var(--muted))",
+                            foreground: "hsl(var(--muted-foreground))",
+                        },
+                        accent: {
+                            DEFAULT: "hsl(var(--accent))",
+                            foreground: "hsl(var(--accent-foreground))",
+                        },
+                    },
+                }
+            }
+        }
+    </script>
+    <style type="text/css">
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 224 71.4% 4.1%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 20% 98%;
+            --secondary: 220 14.3% 95.9%;
+            --secondary-foreground: 220.9 39.3% 11%;
+            --muted: 220 14.3% 95.9%;
+            --muted-foreground: 220 8.9% 46.1%;
+            --accent: 220 14.3% 95.9%;
+            --accent-foreground: 220.9 39.3% 11%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 20% 98%;
+            --border: 220 13% 91%;
+            --input: 220 13% 91%;
+            --ring: 222.2 47.4% 11.2%;
+        }
+
+        .dark {
+            --background: 224 71.4% 4.1%;
+            --foreground: 210 20% 98%;
+            --primary: 222.2 47.4% 11.2%;
+            --primary-foreground: 210 20% 98%;
+            --secondary: 215 27.9% 16.9%;
+            --secondary-foreground: 210 20% 98%;
+            --muted: 215 27.9% 16.9%;
+            --muted-foreground: 217.9 10.6% 64.9%;
+            --accent: 215 27.9% 16.9%;
+            --accent-foreground: 210 20% 98%;
+            --destructive: 0 62.8% 30.6%;
+            --destructive-foreground: 210 20% 98%;
+            --border: 215 27.9% 16.9%;
+            --input: 215 27.9% 16.9%;
+            --ring: 222.2 47.4% 11.2%;
+        }
+
+        body { font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.3s ease; }
+        .sidebar-item-active { background-color: hsl(var(--primary) / 0.1); color: hsl(var(--primary)); font-weight: 600; }
+        .glass { backdrop-filter: blur(8px); background-color: rgba(var(--background), 0.8); }
+        .custom-shadow { box-shadow: 0 0 50px -12px rgba(0,0,0,0.05); }
+        .dark .custom-shadow { box-shadow: 0 0 50px -12px rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body class="h-full bg-background text-foreground">
+    <div class="flex h-full overflow-hidden">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="w-64 border-r border-border bg-background flex flex-col h-full transition-all duration-300 z-50">
+            <!-- Brand -->
+            <div class="p-6 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-primary rounded-xl flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/20">
+                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    </div>
+                    <span class="text-xl font-extrabold tracking-tight">Agendai</span>
+                </div>
+            </div>
+
+            <!-- Workspace Selector -->
+            <div class="px-4 mb-6">
+                <button class="w-full flex items-center justify-between p-2 rounded-lg border border-border hover:bg-accent transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 rounded bg-blue-500/10 flex items-center justify-center text-blue-500 font-bold text-[10px]">BE</div>
+                        <span class="text-xs font-bold truncate">Barbearia Elite</span>
+                    </div>
+                    <i data-lucide="chevrons-up-down" class="w-3 h-3 text-muted-foreground"></i>
+                </button>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 px-3 space-y-1 overflow-y-auto">
+                <p class="px-4 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Atalhos</p>
+                <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-xl sidebar-item-active group transition-all">
+                    <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                    <span class="text-sm">Dashboard</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground group transition-all">
+                    <i data-lucide="calendar" class="w-5 h-5"></i>
+                    <span class="text-sm font-medium">Agenda</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground group transition-all">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                    <span class="text-sm font-medium">Clientes</span>
+                </a>
+                
+                <p class="px-4 py-2 mt-6 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Gestão</p>
+                <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground group transition-all">
+                    <i data-lucide="scissors" class="w-5 h-5"></i>
+                    <span class="text-sm font-medium">Serviços</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground group transition-all">
+                    <i data-lucide="wallet" class="w-5 h-5"></i>
+                    <span class="text-sm font-medium">Financeiro</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-muted-foreground hover:bg-accent hover:text-foreground group transition-all">
+                    <i data-lucide="message-square" class="w-5 h-5"></i>
+                    <span class="text-sm font-medium">WhatsApp</span>
+                </a>
+            </nav>
+
+            <!-- Bottom Content -->
+            <div class="p-4 border-t border-border mt-auto">
+                <div class="p-4 rounded-2xl bg-primary/5 border border-primary/10 mb-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                        <span class="text-[10px] font-bold text-primary uppercase tracking-wider">Live Support</span>
+                    </div>
+                    <p class="text-[11px] text-muted-foreground leading-relaxed">Sincronização ativa com o servidor.</p>
+                </div>
+                
+                <div class="flex items-center gap-3 px-2">
+                    <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold">LP</div>
+                    <div class="flex-1 overflow-hidden">
+                        <p class="text-xs font-bold truncate">Lucas Pedro</p>
+                        <p class="text-[10px] text-muted-foreground truncate">Admin Master</p>
+                    </div>
+                    <button class="p-1.5 rounded-lg hover:bg-accent text-muted-foreground transition-colors">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col h-full overflow-y-auto bg-background scroll-smooth">
+            <!-- Header -->
+            <header class="h-16 border-b border-border px-8 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-md z-40">
+                <div class="flex items-center gap-4">
+                    <button id="toggleSidebar" class="p-2 rounded-lg hover:bg-accent text-muted-foreground transition-colors">
+                        <i data-lucide="menu" class="w-5 h-5"></i>
+                    </button>
+                    <div class="hidden sm:flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                        <span>Workspace</span>
+                        <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                        <span class="text-foreground font-bold">Dashboard</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <!-- Theme Toggle -->
+                    <button id="themeToggle" class="p-2.5 rounded-xl border border-border hover:bg-accent transition-all text-muted-foreground">
+                        <i data-lucide="sun" class="w-5 h-5 dark:hidden"></i>
+                        <i data-lucide="moon" class="w-5 h-5 hidden dark:block"></i>
+                    </button>
+                    
+                    <button class="p-2.5 rounded-xl border border-border hover:bg-accent transition-all text-muted-foreground relative">
+                        <i data-lucide="bell" class="w-5 h-5"></i>
+                        <span class="absolute top-2.5 right-2.5 w-2 h-2 bg-destructive rounded-full border-2 border-background"></span>
+                    </button>
+
+                    <div class="h-6 w-px bg-border mx-2"></div>
+                    
+                    <button class="bg-primary text-primary-foreground px-4 py-2 rounded-xl text-xs font-bold hover:opacity-90 transition-all flex items-center gap-2 shadow-lg shadow-primary/20">
+                        <i data-lucide="plus" class="w-4 h-4"></i> Novo Agendamento
+                    </button>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="p-8 lg:p-10 space-y-10 max-w-[1600px] mx-auto w-full">
+                <header>
+                    <div class="flex items-center gap-3 mb-2">
+                        <h1 class="text-4xl font-extrabold tracking-tight">Overview</h1>
+                        <span class="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest mt-2 border border-primary/20">v2.0 Beta</span>
+                    </div>
+                    <p class="text-muted-foreground text-sm font-medium">Bem-vindo de volta! Aqui está o resumo operacional de hoje.</p>
+                </header>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-card border border-border p-6 rounded-3xl custom-shadow group transition-all hover:border-primary/30">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i data-lucide="trending-up" class="w-6 h-6"></i>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Crescimento</p>
+                                <span class="text-xs font-bold text-emerald-500">+12.4%</span>
+                            </div>
+                        </div>
+                        <h2 class="text-3xl font-extrabold mb-1">R$ 14.280</h2>
+                        <p class="text-xs text-muted-foreground">Faturamento Mensal</p>
+                    </div>
+                    <div class="bg-card border border-border p-6 rounded-3xl custom-shadow group transition-all hover:border-primary/30">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="w-12 h-12 bg-blue-500/10 text-blue-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i data-lucide="calendar-days" class="w-6 h-6"></i>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Ocupação</p>
+                                <span class="text-xs font-bold text-blue-500">85%</span>
+                            </div>
+                        </div>
+                        <h2 class="text-3xl font-extrabold mb-1">342</h2>
+                        <p class="text-xs text-muted-foreground">Agendamentos</p>
+                    </div>
+                    <div class="bg-card border border-border p-6 rounded-3xl custom-shadow group transition-all hover:border-primary/30">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i data-lucide="users" class="w-6 h-6"></i>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Retenção</p>
+                                <span class="text-xs font-bold text-amber-500">92%</span>
+                            </div>
+                        </div>
+                        <h2 class="text-3xl font-extrabold mb-1">1.204</h2>
+                        <p class="text-xs text-muted-foreground">Clientes Ativos</p>
+                    </div>
+                    <div class="bg-card border border-border p-6 rounded-3xl custom-shadow group transition-all hover:border-primary/30">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="w-12 h-12 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <i data-lucide="zap" class="w-6 h-6"></i>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Tickets</p>
+                                <span class="text-xs font-bold text-rose-500">4 Pendentes</span>
+                            </div>
+                        </div>
+                        <h2 class="text-3xl font-extrabold mb-1">R$ 58.00</h2>
+                        <p class="text-xs text-muted-foreground">Ticket Médio</p>
+                    </div>
+                </div>
+
+                <!-- Content Layout -->
+                <div class="grid grid-cols-12 gap-8">
+                    <!-- Main Area -->
+                    <div class="col-span-12 xl:col-span-8 space-y-8">
+                        <div class="bg-card border border-border rounded-[2rem] overflow-hidden custom-shadow">
+                            <div class="p-8 border-b border-border flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-xl font-bold">Próximos Horários</h3>
+                                    <p class="text-xs text-muted-foreground mt-1">Sincronizado em tempo real com o WhatsApp.</p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button class="p-2 rounded-lg border border-border hover:bg-accent text-muted-foreground transition-all">
+                                        <i data-lucide="filter" class="w-4 h-4"></i>
+                                    </button>
+                                    <button class="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg text-xs font-bold hover:opacity-80 transition-all">
+                                        Ver Agenda
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="p-8">
+                                <div class="space-y-6">
+                                    <!-- Item -->
+                                    <div class="flex items-center justify-between group cursor-pointer p-2 rounded-2xl hover:bg-accent/50 transition-all">
+                                        <div class="flex items-center gap-5">
+                                            <div class="w-14 h-14 rounded-2xl bg-secondary flex flex-col items-center justify-center text-foreground font-bold border border-border shadow-sm">
+                                                <span class="text-xs">09:30</span>
+                                                <span class="text-[10px] text-muted-foreground">AM</span>
+                                            </div>
+                                            <div>
+                                                <h4 class="font-bold text-sm group-hover:text-primary transition-colors">Corte Moderno + Barba VIP</h4>
+                                                <p class="text-xs text-muted-foreground">Alexandre Brandon • <span class="text-foreground">Prof: Lucas</span></p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-6">
+                                            <div class="hidden sm:block">
+                                                <span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">Confirmado</span>
+                                            </div>
+                                            <button class="w-10 h-10 rounded-xl border border-border flex items-center justify-center text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all">
+                                                <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <!-- Item -->
+                                    <div class="flex items-center justify-between group cursor-pointer p-2 rounded-2xl hover:bg-accent/50 transition-all">
+                                        <div class="flex items-center gap-5">
+                                            <div class="w-14 h-14 rounded-2xl bg-secondary flex flex-col items-center justify-center text-foreground font-bold border border-border shadow-sm">
+                                                <span class="text-xs">11:00</span>
+                                                <span class="text-[10px] text-muted-foreground">AM</span>
+                                            </div>
+                                            <div>
+                                                <h4 class="font-bold text-sm group-hover:text-primary transition-colors">Hidratação Premium</h4>
+                                                <p class="text-xs text-muted-foreground">Fernanda Lima • <span class="text-foreground">Prof: Sarah</span></p>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center gap-6">
+                                            <div class="hidden sm:block">
+                                                <span class="px-3 py-1 rounded-full bg-amber-500/10 text-amber-500 text-[10px] font-bold uppercase tracking-wider border border-amber-500/20">Aguardando</span>
+                                            </div>
+                                            <button class="w-10 h-10 rounded-xl border border-border flex items-center justify-center text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all">
+                                                <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Side Area -->
+                    <div class="col-span-12 xl:col-span-4 space-y-8">
+                        <!-- Revenue Widget -->
+                        <div class="bg-card border border-border rounded-[2rem] p-8 custom-shadow">
+                            <h3 class="text-lg font-bold mb-6">Performance Financeira</h3>
+                            <div class="space-y-6">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-2 h-2 rounded-full bg-primary"></div>
+                                        <span class="text-xs font-medium text-muted-foreground">Serviços</span>
+                                    </div>
+                                    <span class="text-sm font-bold">R$ 10.450</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-2 h-2 rounded-full bg-blue-400"></div>
+                                        <span class="text-xs font-medium text-muted-foreground">Produtos</span>
+                                    </div>
+                                    <span class="text-sm font-bold">R$ 3.830</span>
+                                </div>
+                                <div class="pt-4 border-t border-border">
+                                    <div class="flex justify-between items-end mb-2">
+                                        <span class="text-xs font-bold uppercase tracking-widest text-muted-foreground">Meta Mensal</span>
+                                        <span class="text-sm font-extrabold text-primary">82%</span>
+                                    </div>
+                                    <div class="w-full h-2 bg-secondary rounded-full overflow-hidden">
+                                        <div class="bg-primary h-full w-[82%] rounded-full shadow-[0_0_10px_rgba(var(--primary),0.3)]"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Banner Widget -->
+                        <div class="bg-primary rounded-[2rem] p-8 text-primary-foreground relative overflow-hidden group elevated">
+                            <div class="relative z-10">
+                                <h4 class="text-xl font-extrabold mb-2 italic">Nova Era de IA</h4>
+                                <p class="text-primary-foreground/70 text-xs mb-6 leading-relaxed">Deixe nossa IA agendar para você via WhatsApp e reduza faltas em 40%.</p>
+                                <button class="bg-primary-foreground text-primary px-6 py-2.5 rounded-xl text-xs font-extrabold shadow-xl hover:scale-105 transition-all">Ativar Agora</button>
+                            </div>
+                            <i data-lucide="zap" class="absolute -right-6 -bottom-6 w-32 h-32 text-primary-foreground/10 rotate-12 group-hover:rotate-0 transition-transform duration-500"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Theme Toggle Logic
+        const themeToggle = document.getElementById('themeToggle');
+        const html = document.documentElement;
+
+        themeToggle.addEventListener('click', () => {
+            html.classList.toggle('dark');
+        });
+
+        // Sidebar Collapse Logic (Simplified)
+        const toggleSidebar = document.getElementById('toggleSidebar');
+        const sidebar = document.getElementById('sidebar');
+
+        toggleSidebar.addEventListener('click', () => {
+            if (sidebar.style.width === '80px') {
+                sidebar.style.width = '256px';
+                sidebar.querySelectorAll('span').forEach(s => s.style.display = 'inline');
+                sidebar.querySelectorAll('p').forEach(p => p.style.display = 'block');
+            } else {
+                sidebar.style.width = '80px';
+                sidebar.querySelectorAll('span').forEach(s => s.style.display = 'none');
+                sidebar.querySelectorAll('p').forEach(p => p.style.display = 'none');
+            }
+        });
+    </script>
+</body>
+</html>

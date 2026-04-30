@@ -21,24 +21,24 @@ export const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
   return (
     <div
       onClick={onClick}
-      className="bg-white border border-slate-200 rounded-lg overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+      className="card-pro overflow-hidden cursor-pointer hover:scale-[1.02] transition-all"
     >
-      <div className="h-40 bg-slate-700 flex items-center justify-center p-4">
-        <h3 className="text-white text-2xl font-bold text-center">{name}</h3>
+      <div className="h-40 bg-secondary/50 flex items-center justify-center p-4 border-b border-border">
+        <h3 className="text-foreground text-2xl font-black text-center tracking-tighter uppercase opacity-30">{name}</h3>
       </div>
-      <div className="p-4 space-y-2">
-        <h4 className="font-bold text-slate-900">{name}</h4>
-        <div className="flex items-center gap-1 text-sm text-slate-600">
-          <MapPin className="h-4 w-4" />
-          <span>{address}</span>
+      <div className="p-5 space-y-3">
+        <h4 className="font-bold text-foreground text-lg tracking-tight">{name}</h4>
+        <div className="flex items-center gap-2 text-xs font-medium text-foreground/50">
+          <MapPin className="h-3.5 w-3.5 text-primary" />
+          <span className="truncate">{address}</span>
         </div>
-        <div className="flex items-center gap-1 text-sm text-yellow-500">
-          <Star className="h-4 w-4 fill-current" />
-          <span className="font-bold text-slate-900">{rating.toFixed(1)}</span>
-          <span className="text-slate-500">({reviews} avaliações)</span>
+        <div className="flex items-center gap-2 text-xs font-bold text-amber-500 bg-amber-500/10 w-fit px-2 py-1 rounded-lg">
+          <Star className="h-3.5 w-3.5 fill-current" />
+          <span>{rating.toFixed(1)}</span>
+          <span className="opacity-60 text-[10px] ml-1">({reviews} reviews)</span>
         </div>
-        <div className="flex items-center gap-1 text-sm text-slate-600">
-          <Clock className="h-4 w-4" />
+        <div className="flex items-center gap-2 text-xs font-medium text-foreground/40 italic">
+          <Clock className="h-3.5 w-3.5" />
           <span>{hours}</span>
         </div>
       </div>

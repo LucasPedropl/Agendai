@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendai - Bento Modern</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f1f5f9; }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-auto-rows: minmax(100px, auto);
+            gap: 1.5rem;
+        }
+        .bento-item {
+            background: white;
+            border-radius: 2rem;
+            padding: 2rem;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
+        }
+        .bento-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.05);
+        }
+        .sidebar-modern {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            padding: 2rem;
+            display: flex;
+            flex-col: column;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+        }
+    </style>
+</head>
+<body class="flex">
+
+    <!-- Sidebar Modern -->
+    <aside class="sidebar-modern">
+        <div class="flex items-center space-x-2 mb-12">
+            <div class="w-8 h-8 bg-black rounded-lg"></div>
+            <span class="text-xl font-extrabold tracking-tighter">AGEND.AI</span>
+        </div>
+
+        <nav class="flex-1 space-y-1">
+            <a href="#" class="flex items-center space-x-3 p-3 rounded-xl bg-slate-100 text-slate-900 font-bold">
+                <i data-lucide="layout-grid" class="w-5 h-5"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 p-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all font-semibold">
+                <i data-lucide="calendar" class="w-5 h-5"></i>
+                <span>Agenda</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 p-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all font-semibold">
+                <i data-lucide="users" class="w-5 h-5"></i>
+                <span>Clientes</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 p-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all font-semibold">
+                <i data-lucide="wallet" class="w-5 h-5"></i>
+                <span>Financeiro</span>
+            </a>
+        </nav>
+
+        <div class="mt-auto space-y-4">
+            <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                <p class="text-[10px] font-bold text-blue-600 uppercase mb-2">Plano Atual</p>
+                <p class="text-sm font-bold text-blue-900 mb-4">Enterprise Pro</p>
+                <div class="w-full h-1.5 bg-blue-200 rounded-full overflow-hidden">
+                    <div class="w-3/4 h-full bg-blue-600"></div>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3 p-2">
+                <img src="https://i.pravatar.cc/100?u=bento" alt="" class="w-10 h-10 rounded-full">
+                <div class="flex-1">
+                    <p class="text-sm font-bold truncate">Pedro Silva</p>
+                    <p class="text-xs text-slate-500">Admin</p>
+                </div>
+                <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-10">
+        <header class="flex justify-between items-center mb-10">
+            <div>
+                <h2 class="text-3xl font-black tracking-tight">Estatísticas Operacionais</h2>
+                <p class="text-slate-500">Análise detalhada do seu comércio hoje.</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="w-12 h-12 flex items-center justify-center bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all">
+                    <i data-lucide="bell" class="w-5 h-5 text-slate-400"></i>
+                </button>
+                <button class="bg-black text-white px-8 py-3 rounded-2xl font-bold hover:scale-105 transition-all shadow-xl shadow-slate-200">
+                    ADICIONAR EVENTO
+                </button>
+            </div>
+        </header>
+
+        <div class="bento-grid">
+            <!-- Large Card -->
+            <div class="bento-item col-span-2 row-span-2 bg-slate-900 text-white border-none flex flex-col justify-between overflow-hidden relative group">
+                <div class="relative z-10">
+                    <h3 class="text-3xl font-black mb-4 leading-tight">Você atingiu 92% da sua meta semanal.</h3>
+                    <p class="text-slate-400 max-w-xs">Mantenha o ritmo! Sua taxa de fidelização aumentou 12% desde a última segunda-feira.</p>
+                </div>
+                <div class="mt-12 flex items-end space-x-2 relative z-10">
+                    <div class="flex-1 h-32 bg-white/10 rounded-xl group-hover:bg-blue-500/20 transition-all duration-500"></div>
+                    <div class="flex-1 h-24 bg-white/10 rounded-xl group-hover:bg-blue-500/20 transition-all duration-500"></div>
+                    <div class="flex-1 h-40 bg-white/10 rounded-xl group-hover:bg-blue-500/20 transition-all duration-500"></div>
+                    <div class="flex-1 h-28 bg-white/10 rounded-xl group-hover:bg-blue-500/20 transition-all duration-500"></div>
+                </div>
+                <i data-lucide="crown" class="absolute -top-6 -right-6 w-32 h-32 text-white/5 rotate-12"></i>
+            </div>
+
+            <!-- Square Stats -->
+            <div class="bento-item col-span-1 flex flex-col justify-between">
+                <div class="p-3 bg-blue-50 text-blue-600 rounded-xl w-fit">
+                    <i data-lucide="users" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-slate-500 text-sm font-bold uppercase tracking-wider mb-1">Clientes</p>
+                    <p class="text-2xl font-black tracking-tight">2.4k</p>
+                </div>
+            </div>
+
+            <div class="bento-item col-span-1 flex flex-col justify-between">
+                <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl w-fit">
+                    <i data-lucide="trending-up" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <p class="text-slate-500 text-sm font-bold uppercase tracking-wider mb-1">Crescimento</p>
+                    <p class="text-2xl font-black tracking-tight">+14.2%</p>
+                </div>
+            </div>
+
+            <!-- List Bento -->
+            <div class="bento-item col-span-2 row-span-2">
+                <div class="flex justify-between items-center mb-8">
+                    <h4 class="font-bold text-lg">Próximas Reservas</h4>
+                    <a href="#" class="text-sm font-bold text-blue-600">Ver Agenda</a>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 group cursor-pointer hover:bg-white hover:shadow-lg transition-all">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center font-bold text-blue-600 border border-slate-100 group-hover:bg-blue-600 group-hover:text-white transition-all">AS</div>
+                            <div>
+                                <p class="font-bold text-sm">André Souza</p>
+                                <p class="text-xs text-slate-500">Corte & Hidratação</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-black">15:30</p>
+                            <span class="text-[10px] font-bold text-slate-400">EM 20 MIN</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 group cursor-pointer hover:bg-white hover:shadow-lg transition-all">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center font-bold text-emerald-600 border border-slate-100 group-hover:bg-emerald-600 group-hover:text-white transition-all">LP</div>
+                            <div>
+                                <p class="font-bold text-sm">Lúcia Pereira</p>
+                                <p class="text-xs text-slate-500">Design de Sobrancelha</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-black">16:45</p>
+                            <span class="text-[10px] font-bold text-slate-400">HOJE</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Bento -->
+            <div class="bento-item col-span-2 flex items-center justify-between">
+                <div>
+                    <p class="text-slate-500 text-sm font-bold uppercase tracking-wider mb-1">Receita Mensal</p>
+                    <p class="text-3xl font-black tracking-tight">R$ 18.250,00</p>
+                </div>
+                <div class="h-16 w-32 flex items-end space-x-1">
+                    <div class="flex-1 h-8 bg-blue-100 rounded-full"></div>
+                    <div class="flex-1 h-12 bg-blue-200 rounded-full"></div>
+                    <div class="flex-1 h-16 bg-blue-600 rounded-full"></div>
+                    <div class="flex-1 h-10 bg-blue-100 rounded-full"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

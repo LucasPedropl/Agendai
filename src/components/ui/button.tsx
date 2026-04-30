@@ -12,17 +12,17 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer',
+          'inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-pointer active:scale-[0.98]',
           {
-            'bg-indigo-600 text-white hover:bg-indigo-700': variant === 'default',
-            'border border-gray-200 bg-white hover:bg-gray-100 hover:text-gray-900': variant === 'outline',
-            'hover:bg-gray-100 hover:text-gray-900': variant === 'ghost',
-            'text-indigo-600 underline-offset-4 hover:underline': variant === 'link',
-            'bg-red-500 text-white hover:bg-red-600': variant === 'destructive',
-            'h-10 px-4 py-2': size === 'default',
-            'h-9 rounded-md px-3': size === 'sm',
-            'h-11 rounded-md px-8': size === 'lg',
-            'h-10 w-10': size === 'icon',
+            'bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:opacity-90': variant === 'default',
+            'border border-border bg-background hover:bg-secondary hover:text-foreground shadow-sm': variant === 'outline',
+            'hover:bg-secondary hover:text-foreground': variant === 'ghost',
+            'text-primary underline-offset-4 hover:underline': variant === 'link',
+            'bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/20': variant === 'destructive',
+            'h-10 px-6 py-2': size === 'default',
+            'h-9 rounded-md px-4': size === 'sm',
+            'h-11 rounded-xl px-10': size === 'lg',
+            'h-10 w-10 p-0': size === 'icon',
           },
           className
         )}

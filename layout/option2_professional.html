@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendai - Professional Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Public Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <aside class="w-20 lg:w-64 bg-slate-900 text-white flex flex-col transition-all duration-300">
+        <div class="h-16 flex items-center px-6 bg-slate-950">
+            <div class="w-8 h-8 bg-blue-500 rounded flex-shrink-0"></div>
+            <span class="ml-3 font-bold text-xl hidden lg:block tracking-tight">AGENDAI<span class="text-blue-500">.</span></span>
+        </div>
+        
+        <nav class="flex-1 py-6 px-3 space-y-1">
+            <div class="text-xs font-semibold text-slate-500 px-3 mb-2 hidden lg:block uppercase tracking-wider">Menu Principal</div>
+            <a href="#" class="flex items-center p-3 rounded bg-blue-600/10 text-blue-400 font-medium">
+                <i data-lucide="layout-grid" class="w-6 h-6"></i>
+                <span class="ml-3 hidden lg:block">Painel Geral</span>
+            </a>
+            <a href="#" class="flex items-center p-3 rounded text-slate-400 hover:bg-slate-800 hover:text-white transition-colors">
+                <i data-lucide="calendar-days" class="w-6 h-6"></i>
+                <span class="ml-3 hidden lg:block">Calendário</span>
+            </a>
+            <a href="#" class="flex items-center p-3 rounded text-slate-400 hover:bg-slate-800 hover:text-white transition-colors">
+                <i data-lucide="users-2" class="w-6 h-6"></i>
+                <span class="ml-3 hidden lg:block">Gestão de Clientes</span>
+            </a>
+            
+            <div class="pt-4 text-xs font-semibold text-slate-500 px-3 mb-2 hidden lg:block uppercase tracking-wider">Operação</div>
+            <a href="#" class="flex items-center p-3 rounded text-slate-400 hover:bg-slate-800 hover:text-white transition-colors">
+                <i data-lucide="clipboard-list" class="w-6 h-6"></i>
+                <span class="ml-3 hidden lg:block">Serviços</span>
+            </a>
+            <a href="#" class="flex items-center p-3 rounded text-slate-400 hover:bg-slate-800 hover:text-white transition-colors">
+                <i data-lucide="wallet" class="w-6 h-6"></i>
+                <span class="ml-3 hidden lg:block">Financeiro</span>
+            </a>
+        </nav>
+
+        <div class="p-4 bg-slate-950 flex items-center">
+            <div class="w-10 h-10 rounded-full bg-slate-700 overflow-hidden flex-shrink-0">
+                <img src="https://i.pravatar.cc/100?u=premium" alt="Profile">
+            </div>
+            <div class="ml-3 hidden lg:block flex-1 overflow-hidden">
+                <p class="text-sm font-bold truncate">Pedro Admin</p>
+                <p class="text-xs text-slate-500 truncate">pedro@agendai.com</p>
+            </div>
+            <i data-lucide="log-out" class="w-4 h-4 text-slate-500 hidden lg:block cursor-pointer hover:text-red-400"></i>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <!-- Top Header -->
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 flex-shrink-0">
+            <div class="flex items-center space-x-4">
+                <div class="relative">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                    <input type="text" placeholder="Pesquisar..." class="pl-10 pr-4 py-2 bg-gray-50 border-none rounded-md text-sm focus:ring-2 focus:ring-blue-500 w-64 lg:w-96">
+                </div>
+            </div>
+            <div class="flex items-center space-x-6">
+                <div class="flex flex-col items-end mr-2">
+                    <span class="text-xs font-semibold text-gray-500 uppercase">Status do Sistema</span>
+                    <span class="text-xs font-bold text-green-600 flex items-center">
+                        <span class="w-2 h-2 bg-green-500 rounded-full mr-1.5 animate-pulse"></span> ONLINE
+                    </span>
+                </div>
+                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-bold transition-colors">
+                    NOVO AGENDAMENTO
+                </button>
+            </div>
+        </header>
+
+        <!-- Page Body -->
+        <main class="flex-1 overflow-y-auto p-8">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h1 class="text-2xl font-black text-gray-900 uppercase tracking-tight">Overview Operacional</h1>
+                        <p class="text-gray-500 text-sm">Dados consolidados da sua unidade principal.</p>
+                    </div>
+                    <div class="flex bg-white border border-gray-200 rounded p-1">
+                        <button class="px-3 py-1 text-xs font-bold bg-gray-100 rounded">Hoje</button>
+                        <button class="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-800">Semana</button>
+                        <button class="px-3 py-1 text-xs font-bold text-gray-500 hover:text-gray-800">Mês</button>
+                    </div>
+                </div>
+
+                <!-- Metrics Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                        <p class="text-xs font-bold text-gray-400 uppercase mb-1">Check-ins Realizados</p>
+                        <h2 class="text-2xl font-black">152</h2>
+                        <div class="mt-4 flex items-center text-xs">
+                            <span class="text-green-600 font-bold">↑ 14%</span>
+                            <span class="text-gray-400 ml-2">vs ontem</span>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                        <p class="text-xs font-bold text-gray-400 uppercase mb-1">Tickets Pendentes</p>
+                        <h2 class="text-2xl font-black text-amber-600">08</h2>
+                        <div class="mt-4 flex items-center text-xs">
+                            <span class="text-red-600 font-bold">↓ 2%</span>
+                            <span class="text-gray-400 ml-2">vs média</span>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                        <p class="text-xs font-bold text-gray-400 uppercase mb-1">Conversão de Lead</p>
+                        <h2 class="text-2xl font-black">64.2%</h2>
+                        <div class="mt-4 flex items-center text-xs">
+                            <span class="text-green-600 font-bold">↑ 5%</span>
+                            <span class="text-gray-400 ml-2">últimos 30 dias</span>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                        <p class="text-xs font-bold text-gray-400 uppercase mb-1">Faturamento Bruto</p>
+                        <h2 class="text-2xl font-black text-blue-600">R$ 14.850</h2>
+                        <div class="mt-4 flex items-center text-xs">
+                            <span class="text-blue-600 font-bold">META 85%</span>
+                            <div class="ml-2 w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div class="w-3/4 h-full bg-blue-500"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Data Table -->
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                        <h3 class="font-bold text-gray-900">Agendamentos em Tempo Real</h3>
+                        <button class="text-gray-400 hover:text-gray-600"><i data-lucide="more-horizontal"></i></button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 border-b border-gray-100">
+                                <tr>
+                                    <th class="px-6 py-3 text-xs font-bold text-gray-400 uppercase">Cliente</th>
+                                    <th class="px-6 py-3 text-xs font-bold text-gray-400 uppercase">Serviço</th>
+                                    <th class="px-6 py-3 text-xs font-bold text-gray-400 uppercase">Horário</th>
+                                    <th class="px-6 py-3 text-xs font-bold text-gray-400 uppercase">Status</th>
+                                    <th class="px-6 py-3 text-xs font-bold text-gray-400 uppercase">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <tr>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center">
+                                            <div class="w-8 h-8 rounded bg-gray-100 flex items-center justify-center font-bold text-xs">JS</div>
+                                            <span class="ml-3 font-semibold text-sm">João Souza</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-600 italic">Limpeza de Pele Profunda</td>
+                                    <td class="px-6 py-4 text-sm font-mono font-bold">09:00 - 10:30</td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-2 py-1 text-[10px] font-black bg-blue-100 text-blue-700 rounded uppercase">Em Andamento</span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <button class="text-gray-400 hover:text-blue-600 transition-colors"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center">
+                                            <div class="w-8 h-8 rounded bg-gray-100 flex items-center justify-center font-bold text-xs">MA</div>
+                                            <span class="ml-3 font-semibold text-sm">Maria Alice</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-600 italic">Massagem Relaxante</td>
+                                    <td class="px-6 py-4 text-sm font-mono font-bold">11:00 - 12:00</td>
+                                    <td class="px-6 py-4">
+                                        <span class="px-2 py-1 text-[10px] font-black bg-green-100 text-green-700 rounded uppercase">Confirmado</span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <button class="text-gray-400 hover:text-blue-600 transition-colors"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

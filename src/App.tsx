@@ -30,10 +30,8 @@ import AdminServicosPage from '@/app/(admin)/servicos/page';
 import AdminProfissionaisPage from '@/app/(admin)/profissionais/page';
 import AdminClientesPage from '@/app/(admin)/clientes/page';
 import AdminEstablishmentConfigPage from '@/app/(admin)/config-estabelecimento/page';
-import AdminReceitasPage from '@/app/(admin)/receitas/page';
-import AdminDespesasPage from '@/app/(admin)/despesas/page';
-import AdminRevenueVsExpensePage from '@/app/(admin)/receita-vs-despesa/page';
-import AdminRelatoriosPage from '@/app/(admin)/relatorios/page';
+import AdminFinanceiroPage from '@/app/(admin)/financeiro/page';
+import AdminWhatsAppPage from '@/app/(admin)/whatsapp/page';
 import AdminConfigPage from '@/app/(admin)/config/page';
 import AgendarPage from '@/app/(client)/agendar/page';
 
@@ -45,15 +43,17 @@ function ProtectedRoute({ children, allowedType }: { children: React.ReactNode, 
 }
 
 import { ToastProvider } from '@/contexts/ToastContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 
 export default function App() {
   return (
-    <ToastProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Public Routes */}
-          <Route element={<AuthLayout />}>
+    <ThemeProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Public Routes */}
+            <Route element={<AuthLayout />}>
             <Route path="/" element={<Navigate to="/login-selection" replace />} />
             <Route path="/login-selection" element={<LoginSelectionPage />} />
             <Route path="/login" element={<LoginPage />} />
@@ -83,10 +83,8 @@ export default function App() {
             <Route path="profissionais" element={<AdminProfissionaisPage />} />
             <Route path="clientes" element={<AdminClientesPage />} />
             <Route path="config-estabelecimento" element={<AdminEstablishmentConfigPage />} />
-            <Route path="receitas" element={<AdminReceitasPage />} />
-            <Route path="despesas" element={<AdminDespesasPage />} />
-            <Route path="receita-vs-despesa" element={<AdminRevenueVsExpensePage />} />
-            <Route path="relatorios" element={<AdminRelatoriosPage />} />
+            <Route path="financeiro" element={<AdminFinanceiroPage />} />
+            <Route path="whatsapp" element={<AdminWhatsAppPage />} />
             <Route path="config" element={<AdminConfigPage />} />
           </Route>
 
@@ -95,5 +93,6 @@ export default function App() {
       </BrowserRouter>
     </AuthProvider>
     </ToastProvider>
+    </ThemeProvider>
   );
 }

@@ -23,8 +23,8 @@ export default function AdminClientesPage() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
 
-  const fetchClientes = async () => {
-    setIsLoading(true);
+  const fetchClientes = async (silent = false) => {
+    if (!silent) setIsLoading(true);
     try {
       // Assuming endpoint for getting clientes
       const commerceId = (user as any)?.id || 1;
@@ -37,7 +37,7 @@ export default function AdminClientesPage() {
       console.error("Erro ao buscar clientes:", err);
       setClientes([]);
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
@@ -71,7 +71,8 @@ export default function AdminClientesPage() {
       setNome('');
       setEmail('');
       showToast('Convite enviado com sucesso!', 'success');
-      fetchClientes();
+      // Refresh the list after a short delay to ensure DB consistency
+      setTimeout(() => fetchClientes(true), 500);
     } catch (err: any) {
       console.error(err);
       showToast(err.message || 'Erro ao convidar cliente.', 'error');

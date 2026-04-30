@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="h-full bg-[#f8fafc]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendai - Glass Sidebar Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4, .font-display { font-family: 'Outfit', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(12px); border-right: 1px solid rgba(255, 255, 255, 0.3); }
+        .glass-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.5); }
+        .animate-blob { animation: blob 7s infinite; }
+        @keyframes blob {
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+    </style>
+</head>
+<body class="h-full overflow-hidden flex bg-slate-50">
+    <!-- Background Blobs -->
+    <div class="fixed top-0 -left-4 w-96 h-96 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+    <div class="fixed top-0 -right-4 w-96 h-96 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" style="animation-delay: 2s;"></div>
+    <div class="fixed -bottom-8 left-20 w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob" style="animation-delay: 4s;"></div>
+
+    <!-- Glass Sidebar -->
+    <aside class="w-64 glass flex flex-col h-full relative z-50">
+        <div class="p-8">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-lg flex items-center justify-center text-white shadow-lg">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                </div>
+                <span class="text-xl font-bold tracking-tight text-slate-900 font-display">Agendai</span>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-4 space-y-2 mt-4">
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-2xl bg-white/60 text-indigo-600 font-bold shadow-sm ring-1 ring-black/5">
+                <i data-lucide="layout-grid" class="w-5 h-5"></i> Dashboard
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-500 hover:bg-white/40 hover:text-slate-900 transition-all">
+                <i data-lucide="calendar" class="w-5 h-5"></i> Agenda
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-500 hover:bg-white/40 hover:text-slate-900 transition-all">
+                <i data-lucide="users" class="w-5 h-5"></i> Clientes
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-500 hover:bg-white/40 hover:text-slate-900 transition-all">
+                <i data-lucide="bar-chart-3" class="w-5 h-5"></i> Relatórios
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-slate-500 hover:bg-white/40 hover:text-slate-900 transition-all">
+                <i data-lucide="settings" class="w-5 h-5"></i> Ajustes
+            </a>
+        </nav>
+
+        <div class="p-4 mt-auto">
+            <div class="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden group">
+                <h4 class="font-bold mb-2 relative z-10">Agendai Pro</h4>
+                <p class="text-[10px] text-white/70 mb-4 relative z-10">Desbloqueie todo o potencial do seu negócio.</p>
+                <button class="w-full bg-white text-indigo-600 py-2 rounded-xl text-xs font-bold relative z-10 hover:scale-105 transition-transform">Upgrade</button>
+                <div class="absolute -right-4 -bottom-4 w-20 h-20 bg-white/10 rounded-full blur-xl"></div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto relative z-10">
+        <!-- Header -->
+        <header class="h-20 px-8 flex items-center justify-between sticky top-0 bg-white/30 backdrop-blur-md border-b border-white/20">
+            <h2 class="text-xl font-bold text-slate-800 font-display">Dashboard Overview</h2>
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex bg-white/50 p-1 rounded-xl ring-1 ring-black/5">
+                    <button class="px-4 py-1.5 rounded-lg bg-white shadow-sm text-xs font-bold text-slate-900">Mensal</button>
+                    <button class="px-4 py-1.5 rounded-lg text-xs font-bold text-slate-500">Semanal</button>
+                </div>
+                <button class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-slate-500 hover:text-indigo-600 transition-colors"><i data-lucide="bell" class="w-5 h-5"></i></button>
+                <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xs ring-4 ring-white shadow-lg">AD</div>
+            </div>
+        </header>
+
+        <div class="p-8 space-y-8">
+            <!-- Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-card p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/50">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center"><i data-lucide="eye" class="w-6 h-6"></i></div>
+                        <span class="text-xs font-bold text-green-500 bg-green-50 px-2 py-1 rounded-lg">+24%</span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-slate-900 font-display">1.420</h3>
+                    <p class="text-slate-500 text-sm font-medium mt-1">Visitas este mês</p>
+                </div>
+                <div class="glass-card p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/50">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center"><i data-lucide="calendar" class="w-6 h-6"></i></div>
+                        <span class="text-xs font-bold text-green-500 bg-green-50 px-2 py-1 rounded-lg">+12%</span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-slate-900 font-display">84</h3>
+                    <p class="text-slate-500 text-sm font-medium mt-1">Agendamentos hoje</p>
+                </div>
+                <div class="glass-card p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/50">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="w-12 h-12 bg-pink-100 text-pink-600 rounded-2xl flex items-center justify-center"><i data-lucide="smile" class="w-6 h-6"></i></div>
+                        <span class="text-xs font-bold text-green-500 bg-green-50 px-2 py-1 rounded-lg">+5%</span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-slate-900 font-display">4.8</h3>
+                    <p class="text-slate-500 text-sm font-medium mt-1">Satisfação média</p>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="glass-card rounded-[2.5rem] p-10">
+                    <h3 class="text-xl font-bold text-slate-900 mb-6 font-display">Próximos Clientes</h3>
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-4 group cursor-pointer">
+                            <div class="w-12 h-12 rounded-2xl bg-slate-100 overflow-hidden ring-2 ring-transparent group-hover:ring-indigo-500 transition-all">
+                                <img src="https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop" alt="User">
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-bold text-slate-900">Marcos Oliveira</p>
+                                <p class="text-xs text-slate-500">Corte & Barba • 14:30</p>
+                            </div>
+                            <button class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all"><i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+                        </div>
+                        <div class="flex items-center gap-4 group cursor-pointer">
+                            <div class="w-12 h-12 rounded-2xl bg-slate-100 overflow-hidden ring-2 ring-transparent group-hover:ring-indigo-500 transition-all">
+                                <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop" alt="User">
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-bold text-slate-900">Ana Beatriz</p>
+                                <p class="text-xs text-slate-500">Manicure Express • 15:00</p>
+                            </div>
+                            <button class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-all"><i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-indigo-900 rounded-[2.5rem] p-10 text-white relative overflow-hidden">
+                    <h3 class="text-2xl font-bold font-display mb-4 relative z-10">Análise de Tendências</h3>
+                    <p class="text-indigo-200 text-sm mb-8 relative z-10 leading-relaxed">Seus clientes preferem agendar nas tardes de quinta-feira. Que tal criar uma promoção para as manhãs de segunda?</p>
+                    <button class="bg-white text-indigo-900 px-8 py-3 rounded-2xl text-sm font-bold shadow-xl shadow-indigo-950/20 relative z-10">Ver Insights</button>
+                    <div class="absolute right-[-10%] bottom-[-10%] w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

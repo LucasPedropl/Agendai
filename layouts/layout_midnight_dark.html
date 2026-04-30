@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="h-full bg-[#0B0F19]">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendai - Midnight Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-active { background: linear-gradient(90deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0) 100%); border-left: 3px solid #6366f1; }
+        .glass-card { background: rgba(31, 41, 55, 0.4); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .glow { box-shadow: 0 0 20px -5px rgba(99, 102, 241, 0.5); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0B0F19; }
+        ::-webkit-scrollbar-thumb { background: #1F2937; border-radius: 10px; }
+    </style>
+</head>
+<body class="h-full text-slate-300 antialiased">
+    <div class="flex h-full">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-[#0F172A] border-r border-white/5 flex flex-col h-full">
+            <div class="p-8">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center text-white glow">
+                        <i data-lucide="zap" class="w-5 h-5"></i>
+                    </div>
+                    <span class="text-xl font-bold text-white tracking-tight">Agendai<span class="text-indigo-500">_</span></span>
+                </div>
+            </div>
+
+            <div class="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-2">Principal</div>
+            <nav class="flex-1 px-2 space-y-1">
+                <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg sidebar-active text-white group transition-all">
+                    <i data-lucide="home" class="w-5 h-5 text-indigo-500"></i>
+                    <span class="text-sm font-medium">Dashboard</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all group">
+                    <i data-lucide="calendar" class="w-5 h-5 group-hover:text-indigo-400"></i>
+                    <span class="text-sm font-medium">Agenda</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all group">
+                    <i data-lucide="users" class="w-5 h-5 group-hover:text-indigo-400"></i>
+                    <span class="text-sm font-medium">Clientes</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all group">
+                    <i data-lucide="package" class="w-5 h-5 group-hover:text-indigo-400"></i>
+                    <span class="text-sm font-medium">Estoque</span>
+                </a>
+            </nav>
+
+            <div class="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-2 mt-6">Administração</div>
+            <nav class="px-2 space-y-1">
+                <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all group">
+                    <i data-lucide="pie-chart" class="w-5 h-5 group-hover:text-indigo-400"></i>
+                    <span class="text-sm font-medium">Relatórios</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-all group">
+                    <i data-lucide="settings" class="w-5 h-5 group-hover:text-indigo-400"></i>
+                    <span class="text-sm font-medium">Configurações</span>
+                </a>
+            </nav>
+
+            <div class="mt-auto p-4">
+                <div class="bg-indigo-600/10 border border-indigo-500/20 rounded-xl p-4">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-2 h-2 bg-indigo-500 rounded-full animate-pulse"></div>
+                        <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider">Sistema Online</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 leading-relaxed mb-3">WhatsApp conectado e pronto para enviar lembretes.</p>
+                    <div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-indigo-500 h-full w-[85%]"></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden">
+            <!-- Topbar -->
+            <header class="h-16 border-b border-white/5 px-8 flex items-center justify-between bg-[#0B0F19]/50 backdrop-blur-xl sticky top-0 z-40">
+                <div class="flex items-center gap-4">
+                    <button class="text-slate-500 hover:text-white transition-colors lg:hidden"><i data-lucide="menu"></i></button>
+                    <h2 class="text-lg font-semibold text-white">Visão Geral</h2>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex bg-[#1F2937]/50 rounded-lg p-1">
+                        <button class="px-4 py-1.5 rounded-md bg-indigo-600 text-xs font-bold text-white shadow-lg">Hoje</button>
+                        <button class="px-4 py-1.5 rounded-md text-xs font-bold text-slate-400 hover:text-white transition-colors">Semana</button>
+                    </div>
+                    <div class="h-6 w-px bg-white/10 mx-2"></div>
+                    <div class="flex items-center gap-3">
+                        <div class="text-right hidden sm:block">
+                            <p class="text-xs font-bold text-white">Barbearia Elite</p>
+                            <p class="text-[10px] text-slate-500">Premium Account</p>
+                        </div>
+                        <img src="https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&h=100&fit=crop" class="w-8 h-8 rounded-full border border-white/10" alt="Avatar">
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="flex-1 overflow-y-auto p-8">
+                <!-- Stats Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+                    <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="w-10 h-10 bg-indigo-500/10 rounded-lg flex items-center justify-center text-indigo-500 border border-indigo-500/20">
+                                <i data-lucide="trending-up" class="w-5 h-5"></i>
+                            </div>
+                            <span class="text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">+14%</span>
+                        </div>
+                        <p class="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">Receita Hoje</p>
+                        <h3 class="text-2xl font-bold text-white">R$ 2.450,00</h3>
+                        <div class="absolute -right-4 -bottom-4 text-indigo-500/5 rotate-12 group-hover:rotate-0 transition-all duration-500">
+                            <i data-lucide="dollar-sign" class="w-24 h-24"></i>
+                        </div>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-500 border border-blue-500/20">
+                                <i data-lucide="calendar-check" class="w-5 h-5"></i>
+                            </div>
+                            <span class="text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">+8</span>
+                        </div>
+                        <p class="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">Agendamentos</p>
+                        <h3 class="text-2xl font-bold text-white">32</h3>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="w-10 h-10 bg-purple-500/10 rounded-lg flex items-center justify-center text-purple-500 border border-purple-500/20">
+                                <i data-lucide="users" class="w-5 h-5"></i>
+                            </div>
+                            <span class="text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">Finalizado</span>
+                        </div>
+                        <p class="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">Clientes Novos</p>
+                        <h3 class="text-2xl font-bold text-white">12</h3>
+                    </div>
+                    <div class="glass-card p-6 rounded-2xl relative overflow-hidden group">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="w-10 h-10 bg-rose-500/10 rounded-lg flex items-center justify-center text-rose-500 border border-rose-500/20">
+                                <i data-lucide="clock" class="w-5 h-5"></i>
+                            </div>
+                            <span class="text-[10px] font-bold text-rose-400 bg-rose-400/10 px-2 py-0.5 rounded-full">-5min</span>
+                        </div>
+                        <p class="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">Espera Média</p>
+                        <h3 class="text-2xl font-bold text-white">12 min</h3>
+                    </div>
+                </div>
+
+                <!-- Main Grid -->
+                <div class="grid grid-cols-12 gap-8">
+                    <!-- Schedule -->
+                    <div class="col-span-12 lg:col-span-8 space-y-6">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-bold text-white">Agenda em Tempo Real</h3>
+                            <div class="flex gap-2">
+                                <button class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-slate-400 hover:bg-indigo-500 hover:text-white transition-all"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                                <button class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-slate-400 hover:bg-indigo-500 hover:text-white transition-all"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="glass-card p-5 rounded-2xl flex items-center justify-between border-l-4 border-l-indigo-500 hover:translate-x-2 transition-all cursor-pointer">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex flex-col items-center justify-center text-indigo-400 font-bold border border-indigo-500/20">
+                                        <span class="text-[10px]">9:00</span>
+                                        <span class="text-xs">AM</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-white">Corte Moderno + Barba</h4>
+                                        <p class="text-xs text-slate-500">Cliente: Rodrigo Gonçalves</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex -space-x-3">
+                                        <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100" class="w-7 h-7 rounded-full border-2 border-[#0B0F19]">
+                                        <div class="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-[10px] font-bold text-white border-2 border-[#0B0F19]">L</div>
+                                    </div>
+                                    <button class="bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-lg text-[10px] font-bold border border-emerald-500/20 uppercase tracking-wider">Confirmado</button>
+                                </div>
+                            </div>
+                            <div class="glass-card p-5 rounded-2xl flex items-center justify-between border-l-4 border-l-amber-500 hover:translate-x-2 transition-all cursor-pointer">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 flex flex-col items-center justify-center text-amber-400 font-bold border border-amber-500/20">
+                                        <span class="text-[10px]">10:30</span>
+                                        <span class="text-xs">AM</span>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-white">Coloração Prime</h4>
+                                        <p class="text-xs text-slate-500">Cliente: Marina Silva</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <button class="bg-amber-500/10 text-amber-400 px-3 py-1 rounded-lg text-[10px] font-bold border border-amber-500/20 uppercase tracking-wider">Aguardando</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel -->
+                    <div class="col-span-12 lg:col-span-4 space-y-8">
+                        <div class="glass-card p-6 rounded-3xl">
+                            <h3 class="font-bold text-white mb-6">Ranking Serviços</h3>
+                            <div class="space-y-6">
+                                <div class="space-y-2">
+                                    <div class="flex justify-between text-xs font-bold mb-1">
+                                        <span class="text-slate-400 uppercase tracking-wider">Corte Masculino</span>
+                                        <span class="text-indigo-400">72%</span>
+                                    </div>
+                                    <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                        <div class="bg-indigo-500 h-full w-[72%] rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex justify-between text-xs font-bold mb-1">
+                                        <span class="text-slate-400 uppercase tracking-wider">Barba VIP</span>
+                                        <span class="text-blue-400">48%</span>
+                                    </div>
+                                    <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                        <div class="bg-blue-500 h-full w-[48%] rounded-full shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="relative rounded-3xl overflow-hidden group h-48">
+                            <img src="https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400" class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                            <div class="absolute inset-0 bg-gradient-to-t from-[#0B0F19] to-transparent p-6 flex flex-col justify-end">
+                                <h4 class="text-white font-bold text-lg mb-1">Campanhas SMS</h4>
+                                <p class="text-xs text-slate-400 mb-4">Alcance 100% dos seus clientes agora.</p>
+                                <button class="bg-indigo-600 text-white py-2 rounded-xl text-[10px] font-bold hover:bg-indigo-500 transition-colors uppercase tracking-widest">Ativar agora</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -54,8 +54,8 @@ export default function AdminServicosPage() {
     return 1; // Fallback
   };
 
-  const fetchServicos = async (id?: number) => {
-    setIsLoading(true);
+  const fetchServicos = async (id?: number, silent = false) => {
+    if (!silent) setIsLoading(true);
     try {
       const activeId = id || comercioId || await fetchComercioId();
       // Usando o endpoint sugerido pelo usuário: /api/Servicos/Todos/{idComercio}
@@ -74,12 +74,12 @@ export default function AdminServicosPage() {
         { id: 2, nome: 'Barba', categoria: 'Barba', duracao: '00:20', preco: 30.00, ativo: true },
       ]);
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
-  const fetchCategorias = async (id?: number) => {
-    setIsLoadingCategorias(true);
+  const fetchCategorias = async (id?: number, silent = false) => {
+    if (!silent) setIsLoadingCategorias(true);
     try {
       const activeId = id || comercioId || await fetchComercioId();
       const data = await fetchApi(`/api/Categorias/Todas/${activeId}`, { // Using commerce ID
@@ -96,7 +96,7 @@ export default function AdminServicosPage() {
         { id: 3, nome: 'Manicure' },
       ]);
     } finally {
-      setIsLoadingCategorias(false);
+      if (!silent) setIsLoadingCategorias(false);
     }
   };
 
@@ -115,7 +115,13 @@ export default function AdminServicosPage() {
     if (servico) {
       setEditingId(servico.id);
       setNome(servico.nome || '');
-      setCategoria(servico.categoria || '');
+      
+      // Como a API não retorna o ID da categoria no ServicoGetDTO, 
+      // buscamos o ID localmente pelo nome para pré-selecionar no modal
+      const firstCatName = servico.categorias?.[0]?.nome;
+      const localCat = categorias.find(c => c.nome === firstCatName);
+      setCategoria(localCat?.id?.toString() || '');
+      
       setDescricao(servico.descricao || '');
       setPreco(servico.preco?.toString() || '');
       setDuracao(servico.duracao || '');
@@ -183,7 +189,7 @@ export default function AdminServicosPage() {
       }
       setIsModalOpen(false);
       showToast(editingId ? 'Serviço atualizado com sucesso!' : 'Serviço criado com sucesso!', 'success');
-      fetchServicos();
+      setTimeout(() => fetchServicos(undefined, true), 500);
     } catch (err: any) {
       console.error("Full Submit Error:", err);
       showToast(err.message || 'Erro ao salvar serviço.', 'error');
@@ -243,7 +249,7 @@ export default function AdminServicosPage() {
       setEditingCategoriaId(null);
       setIsCategoriaModalOpen(false);
       showToast('Categoria salva com sucesso!', 'success');
-      fetchCategorias();
+      setTimeout(() => fetchCategorias(undefined, true), 500);
     } catch (err: any) {
       console.error("Save Category Error:", err);
       showToast(err.message || 'Erro ao salvar categoria.', 'error');
@@ -323,7 +329,11 @@ export default function AdminServicosPage() {
                   servicos.map((servico) => (
                     <tr key={servico.id} className="border-b bg-white hover:bg-gray-50">
                       <td className="whitespace-nowrap px-6 py-4 font-medium text-gray-900">{servico.nome}</td>
-                      <td className="px-6 py-4">{servico.categoria}</td>
+                      <td className="px-6 py-4">
+                        {servico.categorias && servico.categorias.length > 0 
+                          ? servico.categorias[0].nome 
+                          : (servico.categoria || '-')}
+                      </td>
                       <td className="px-6 py-4">{servico.duracao}</td>
                       <td className="px-6 py-4">
                         {typeof servico.preco === 'number' ? `R$ ${servico.preco.toFixed(2)}` : servico.preco}

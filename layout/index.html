@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Protótipos de Layout - Agendai</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center justify-center p-6">
+
+    <header class="text-center mb-16">
+        <h1 class="text-5xl font-black mb-4 tracking-tighter bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">Agendai Design Lab</h1>
+        <p class="text-slate-400 text-lg max-w-2xl mx-auto">Explore as propostas de interface para a nova era do Agendai. Focamos em estética, usabilidade e identidade visual forte.</p>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl w-full">
+        
+        <!-- Opção 1 -->
+        <a href="option1_minimalist.html" class="group relative bg-slate-800 rounded-3xl overflow-hidden border border-slate-700 hover:border-blue-500 transition-all transform hover:-translate-y-2">
+            <div class="h-48 bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center">
+                <i data-lucide="layout" class="w-16 h-16 text-white/50 group-hover:scale-110 transition-transform"></i>
+            </div>
+            <div class="p-8">
+                <h3 class="text-xl font-bold mb-2">1. Minimalista Moderno</h3>
+                <p class="text-slate-400 text-sm mb-6">Limpo, arejado e focado em facilitar a leitura e navegação rápida.</p>
+                <span class="inline-flex items-center text-blue-400 font-bold text-sm uppercase tracking-widest">
+                    Visualizar Protótipo <i data-lucide="arrow-right" class="ml-2 w-4 h-4"></i>
+                </span>
+            </div>
+        </a>
+
+        <!-- Opção 2 -->
+        <a href="option2_professional.html" class="group relative bg-slate-800 rounded-3xl overflow-hidden border border-slate-700 hover:border-emerald-500 transition-all transform hover:-translate-y-2">
+            <div class="h-48 bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center">
+                <i data-lucide="activity" class="w-16 h-16 text-white/50 group-hover:scale-110 transition-transform"></i>
+            </div>
+            <div class="p-8">
+                <h3 class="text-xl font-bold mb-2">2. Profissional SaaS</h3>
+                <p class="text-slate-400 text-sm mb-6">Alta densidade de informação, robusto e ideal para gestão complexa.</p>
+                <span class="inline-flex items-center text-emerald-400 font-bold text-sm uppercase tracking-widest">
+                    Visualizar Protótipo <i data-lucide="arrow-right" class="ml-2 w-4 h-4"></i>
+                </span>
+            </div>
+        </a>
+
+        <!-- Opção 3 -->
+        <a href="option3_lifestyle.html" class="group relative bg-slate-800 rounded-3xl overflow-hidden border border-slate-700 hover:border-amber-500 transition-all transform hover:-translate-y-2">
+            <div class="h-48 bg-gradient-to-br from-stone-400 to-stone-600 flex items-center justify-center">
+                <i data-lucide="sparkles" class="w-16 h-16 text-white/50 group-hover:scale-110 transition-transform"></i>
+            </div>
+            <div class="p-8">
+                <h3 class="text-xl font-bold mb-2">3. Lifestyle Elegante</h3>
+                <p class="text-slate-400 text-sm mb-6">Sofisticado, usa tipografia serifada e tons quentes. Ideal para spas e estética.</p>
+                <span class="inline-flex items-center text-amber-400 font-bold text-sm uppercase tracking-widest">
+                    Visualizar Protótipo <i data-lucide="arrow-right" class="ml-2 w-4 h-4"></i>
+                </span>
+            </div>
+        </a>
+
+        <!-- Opção 7 -->
+        <a href="option7_midnight.html" class="group relative bg-slate-800 rounded-3xl overflow-hidden border border-slate-700 hover:border-indigo-500 transition-all transform hover:-translate-y-2">
+            <div class="h-48 bg-[#020617] flex items-center justify-center border-b border-slate-800">
+                <i data-lucide="terminal" class="w-16 h-16 text-indigo-500/50 group-hover:scale-110 transition-transform"></i>
+            </div>
+            <div class="p-8">
+                <h3 class="text-xl font-bold mb-2">7. Midnight Console</h3>
+                <p class="text-slate-400 text-sm mb-6">Dark mode sofisticado com estética cyberpunk profissional. Alto contraste e foco.</p>
+                <span class="inline-flex items-center text-indigo-400 font-bold text-sm uppercase tracking-widest">
+                    Visualizar Protótipo <i data-lucide="arrow-right" class="ml-2 w-4 h-4"></i>
+                </span>
+            </div>
+        </a>
+
+        <!-- Opção 8 -->
+        <a href="option8_bento.html" class="group relative bg-slate-800 rounded-3xl overflow-hidden border border-slate-700 hover:border-slate-400 transition-all transform hover:-translate-y-2">
+            <div class="h-48 bg-slate-100 flex items-center justify-center border-b border-slate-200">
+                <i data-lucide="box" class="w-16 h-16 text-slate-400 group-hover:scale-110 transition-transform"></i>
+            </div>
+            <div class="p-8">
+                <h3 class="text-xl font-bold mb-2">8. Bento Grid System</h3>
+                <p class="text-slate-400 text-sm mb-6">A tendência bento-box. Organização impecável em blocos independentes e modernos.</p>
+                <span class="inline-flex items-center text-slate-300 font-bold text-sm uppercase tracking-widest">
+                    Visualizar Protótipo <i data-lucide="arrow-right" class="ml-2 w-4 h-4"></i>
+                </span>
+            </div>
+        </a>
+
+        <!-- Opção 9 -->
+        <a href="option9_enterprise.html" class="group relative bg-slate-800 rounded-3xl overflow-hidden border border-slate-700 hover:border-blue-400 transition-all transform hover:-translate-y-2">
+            <div class="h-48 bg-white flex items-center justify-center border-b border-slate-100">
+                <i data-lucide="briefcase" class="w-16 h-16 text-blue-600/50 group-hover:scale-110 transition-transform"></i>
+            </div>
+            <div class="p-8">
+                <h3 class="text-xl font-bold mb-2">9. Enterprise SaaS</h3>
+                <p class="text-slate-400 text-sm mb-6">Visual "Apple/Stripe style". Branco puro, tipografia perfeita e micro-interações.</p>
+                <span class="inline-flex items-center text-blue-400 font-bold text-sm uppercase tracking-widest">
+                    Visualizar Protótipo <i data-lucide="arrow-right" class="ml-2 w-4 h-4"></i>
+                </span>
+            </div>
+        </a>
+
+        <!-- Opção 10 -->
+        <a href="option10_ultimate_mixed.html" class="group relative bg-slate-800 rounded-3xl overflow-hidden border border-slate-700 hover:border-primary transition-all transform hover:-translate-y-2">
+            <div class="h-48 bg-gradient-to-br from-slate-900 to-slate-950 flex items-center justify-center border-b border-slate-800">
+                <div class="flex gap-2">
+                    <div class="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">
+                        <i data-lucide="sun" class="w-6 h-6 text-amber-400"></i>
+                    </div>
+                    <div class="w-12 h-12 rounded-lg bg-white/10 flex items-center justify-center">
+                        <i data-lucide="moon" class="w-6 h-6 text-indigo-400"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="p-8">
+                <h3 class="text-xl font-bold mb-2">10. Ultimate Professional (Dual Theme)</h3>
+                <p class="text-slate-400 text-sm mb-6">A mistura definitiva: elegância Linear, robustez Profissional e alternância real de tema Claro/Escuro.</p>
+                <span class="inline-flex items-center text-primary font-bold text-sm uppercase tracking-widest">
+                    Visualizar Protótipo <i data-lucide="arrow-right" class="ml-2 w-4 h-4"></i>
+                </span>
+            </div>
+        </a>
+
+    </div>
+
+    <footer class="mt-20 text-slate-500 text-sm">
+        Agendai &copy; 2026 - Conceitos de Interface
+    </footer>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

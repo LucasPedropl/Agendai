@@ -8,6 +8,7 @@ interface ToastContextData {
   error: (message: string, duration?: number) => void;
   warning: (message: string, duration?: number) => void;
   info: (message: string, duration?: number) => void;
+  showToast: (message: string, type: ToastType, duration?: number) => void;
 }
 
 const ToastContext = createContext<ToastContextData>({} as ToastContextData);
@@ -42,8 +43,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('global-toast', handleGlobalToast);
   }, [addToast]);
 
+  const showToast = useCallback((message: string, type: ToastType, duration?: number) => {
+    addToast(type, message, duration);
+  }, [addToast]);
+
   return (
-    <ToastContext.Provider value={{ addToast, removeToast, success, error: errorMsg, warning, info }}>
+    <ToastContext.Provider value={{ addToast, removeToast, success, error: errorMsg, warning, info, showToast }}>
       {children}
       <div className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none">
         {toasts.map((toast) => (

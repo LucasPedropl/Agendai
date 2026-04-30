@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendai - Enterprise SaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-item-active {
+            background-color: #f8fafc;
+            color: #2563eb;
+            box-shadow: inset 4px 0 0 #2563eb;
+        }
+    </style>
+</head>
+<body class="bg-white text-slate-900 flex h-screen overflow-hidden">
+
+    <!-- Sidebar Enterprise -->
+    <aside class="w-64 border-r border-slate-200 flex flex-col h-full bg-white">
+        <div class="h-20 flex items-center px-8 border-b border-slate-100">
+            <span class="text-2xl font-black tracking-tight text-blue-600">agendai</span>
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-6">
+            <div class="px-8 mb-4">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Dashboard</p>
+            </div>
+            <a href="#" class="flex items-center space-x-3 px-8 py-3 sidebar-item-active font-semibold">
+                <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+                <span>Visão Geral</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 px-8 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all font-medium">
+                <i data-lucide="calendar" class="w-5 h-5"></i>
+                <span>Agenda Central</span>
+            </a>
+
+            <div class="px-8 mt-8 mb-4">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Management</p>
+            </div>
+            <a href="#" class="flex items-center space-x-3 px-8 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all font-medium">
+                <i data-lucide="users" class="w-5 h-5"></i>
+                <span>Equipe</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 px-8 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all font-medium">
+                <i data-lucide="package" class="w-5 h-5"></i>
+                <span>Serviços & Planos</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 px-8 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all font-medium">
+                <i data-lucide="credit-card" class="w-5 h-5"></i>
+                <span>Pagamentos</span>
+            </a>
+
+            <div class="px-8 mt-8 mb-4">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Growth</p>
+            </div>
+            <a href="#" class="flex items-center space-x-3 px-8 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all font-medium">
+                <i data-lucide="target" class="w-5 h-5"></i>
+                <span>Marketing</span>
+            </a>
+            <a href="#" class="flex items-center space-x-3 px-8 py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-all font-medium">
+                <i data-lucide="message-circle" class="w-5 h-5"></i>
+                <span>WhatsApp CRM</span>
+            </a>
+        </nav>
+
+        <div class="p-6 border-t border-slate-100">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">PS</div>
+                <div class="flex-1 overflow-hidden">
+                    <p class="text-sm font-bold truncate">Pedro Silva</p>
+                    <p class="text-xs text-slate-500">Premium Account</p>
+                </div>
+                <i data-lucide="more-vertical" class="w-4 h-4 text-slate-400 cursor-pointer"></i>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Content -->
+    <div class="flex-1 flex flex-col h-full bg-[#f8fafc]">
+        <!-- Top Nav -->
+        <header class="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-10 flex-shrink-0">
+            <div class="flex items-center space-x-2 text-slate-400 text-sm">
+                <span>Dashboard</span>
+                <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                <span class="text-slate-900 font-semibold">Analytics Real-time</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="bg-slate-100 rounded-full p-1 flex">
+                    <button class="px-4 py-1 text-xs font-bold bg-white rounded-full shadow-sm text-slate-900">Live</button>
+                    <button class="px-4 py-1 text-xs font-bold text-slate-500">Historical</button>
+                </div>
+                <button class="p-2 text-slate-400 hover:text-slate-600"><i data-lucide="search" class="w-5 h-5"></i></button>
+                <button class="p-2 text-slate-400 hover:text-slate-600 relative">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full"></span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main View -->
+        <main class="flex-1 overflow-y-auto p-10">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex justify-between items-end mb-10">
+                    <div>
+                        <h2 class="text-3xl font-bold tracking-tight text-slate-900">Bom dia, Pedro.</h2>
+                        <p class="text-slate-500">Aqui está o resumo do seu estabelecimento para hoje.</p>
+                    </div>
+                    <button class="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-bold text-sm shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all">
+                        GERAR RELATÓRIO
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+                    <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                                <i data-lucide="trending-up" class="w-6 h-6"></i>
+                            </div>
+                            <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">+12.5%</span>
+                        </div>
+                        <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Volume de Vendas</p>
+                        <h3 class="text-3xl font-bold text-slate-900">R$ 14.280,00</h3>
+                    </div>
+                    <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                                <i data-lucide="calendar" class="w-6 h-6"></i>
+                            </div>
+                            <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">+4%</span>
+                        </div>
+                        <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Agendamentos</p>
+                        <h3 class="text-3xl font-bold text-slate-900">142</h3>
+                    </div>
+                    <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="p-3 bg-rose-50 text-rose-600 rounded-xl">
+                                <i data-lucide="clock" class="w-6 h-6"></i>
+                            </div>
+                            <span class="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded">-2%</span>
+                        </div>
+                        <p class="text-slate-500 text-xs font-bold uppercase tracking-wider mb-1">Taxa de No-show</p>
+                        <h3 class="text-3xl font-bold text-slate-900">5.2%</h3>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="px-8 py-6 border-b border-slate-100 flex justify-between items-center">
+                        <h4 class="font-bold text-slate-900">Fila de Atendimento</h4>
+                        <div class="flex space-x-2">
+                            <button class="p-2 border border-slate-200 rounded-lg text-slate-400 hover:text-slate-600"><i data-lucide="filter" class="w-4 h-4"></i></button>
+                            <button class="p-2 border border-slate-200 rounded-lg text-slate-400 hover:text-slate-600"><i data-lucide="download" class="w-4 h-4"></i></button>
+                        </div>
+                    </div>
+                    <div class="p-0">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-widest border-b border-slate-100">
+                                <tr>
+                                    <th class="px-8 py-4">Cliente</th>
+                                    <th class="px-8 py-4">Serviço</th>
+                                    <th class="px-8 py-4">Status</th>
+                                    <th class="px-8 py-4">Profissional</th>
+                                    <th class="px-8 py-4">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-8 py-5">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 rounded-full bg-slate-200"></div>
+                                            <span class="text-sm font-semibold text-slate-900">Marcos Oliveira</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-8 py-5 text-sm text-slate-600 italic">Corte Masculino Premium</td>
+                                    <td class="px-8 py-5">
+                                        <span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-[10px] font-bold uppercase">Confirmado</span>
+                                    </td>
+                                    <td class="px-8 py-5 text-sm text-slate-600">Ricardo Lima</td>
+                                    <td class="px-8 py-5">
+                                        <button class="text-blue-600 hover:text-blue-800 font-bold text-xs uppercase">Check-in</button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-slate-50 transition-colors">
+                                    <td class="px-8 py-5">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 rounded-full bg-slate-200"></div>
+                                            <span class="text-sm font-semibold text-slate-900">Beatriz Santos</span>
+                                        </div>
+                                    </td>
+                                    <td class="px-8 py-5 text-sm text-slate-600 italic">Coloração & Escova</td>
+                                    <td class="px-8 py-5">
+                                        <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-[10px] font-bold uppercase">Em Atendimento</span>
+                                    </td>
+                                    <td class="px-8 py-5 text-sm text-slate-600">Ana Júlia</td>
+                                    <td class="px-8 py-5">
+                                        <button class="text-blue-600 hover:text-blue-800 font-bold text-xs uppercase">Detalhes</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

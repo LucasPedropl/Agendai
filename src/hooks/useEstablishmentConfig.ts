@@ -3,8 +3,6 @@ import { fetchApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 export interface HorarioAtendimento {
-  id?: number;
-  comercioId?: number;
   dias: number[];
   horaInicio: string;
   horaFim: string;
@@ -20,8 +18,7 @@ export interface DiaFechado {
 }
 
 export interface ConfigComercio {
-  id?: number;
-  comercioId?: number;
+  comercioId: number;
   antecedenciaMin: number;
   limiteAgendar: number;
   confirmaAuto: boolean;
@@ -36,26 +33,24 @@ export interface ConfigComercio {
   diasFechados: DiaFechado[];
 }
 
-export interface ComercioClientes {
-  nome: string;
-  telefone: string;
-  ultimaVisita?: string;
-}
-
-export interface UsuarioEmpresa {
-  id?: number;
-  usuarioId: string;
-  comercioId: number;
-  tipoPermissao: number;
-  status: boolean;
-  horarioId?: number;
-  horarioAtendimento?: HorarioAtendimento;
+export interface ComercioConfigFuncionario {
+  idFuncionario: string;
+  nomeFuncionario?: string;
+  idHorarioAtendimento?: number;
+  dias: number[];
+  horaInicio: string;
+  horaFim: string;
+  inicioIntervalo?: string;
+  fimIntervalo?: string;
+  intervalo: boolean;
 }
 
 export interface ComercioConfiguracao {
+  idHorarioAtendimento?: number;
+  idConfigComercio?: number;
   horarioAtendimento?: HorarioAtendimento;
   configuracao?: ConfigComercio;
-  funcionarios?: UsuarioEmpresa[];
+  funcionarios?: ComercioConfigFuncionario[];
 }
 
 export interface ComercioConfg {
@@ -63,16 +58,18 @@ export interface ComercioConfg {
   nome: string;
   endereco: string;
   telefone: string;
-  horaEntradaUtil: string;
-  horaSaidaUtil: string;
-  horaEntradaFimDeSem: string;
-  horaSaidaFimDeSem: string;
+  cnpj?: string;
+  email?: string;
+  descricao?: string;
   notificarAgendamento: boolean;
   lembrarAgendamento: boolean;
   resumoDiario: boolean;
+  instagram?: string;
+  facebook?: string;
+  site?: string;
+  logoUrl?: string;
 }
 
-const IS_DEMO_MODE = false; // TODO: Remover depois
 
 export function useEstablishmentConfig() {
   const { user } = useAuth();
@@ -89,145 +86,83 @@ export function useEstablishmentConfig() {
       setIsLoading(true);
       setError(null);
 
-      if (IS_DEMO_MODE) {
-        setTimeout(() => {
-          const storedConfig = localStorage.getItem('demo_config');
-          const storedBasic = localStorage.getItem('demo_basic');
-          
-          if (storedConfig) {
-            setConfig(JSON.parse(storedConfig));
-          } else {
-            setConfig({
-              horarioAtendimento: {
-                dias: [1, 2, 3, 4, 5],
-                horaInicio: '09:00',
-                horaFim: '18:00',
-                intervalo: true,
-                inicioIntervalo: '12:00',
-                fimIntervalo: '13:00'
-              },
-              configuracao: {
-                antecedenciaMin: 30,
-                limiteAgendar: 30,
-                confirmaAuto: true,
-                tempoDuracaoPadrao: 30,
-                tempoCancelamento: 2,
-                reagendar: true,
-                tempoIntervalo: 15,
-                agendaSimultanea: 1,
-                horarioPorProfissional: false,
-                fechaFeriadosNacionais: true,
-                fechaFeriadosMunicipais: false,
-                diasFechados: []
-              }
-            });
-          }
-          
-          if (storedBasic) {
-            setBasicInfo(JSON.parse(storedBasic));
-          } else {
-            setBasicInfo({
-              id: 1,
-              nome: 'Barbearia Demo',
-              endereco: 'Rua Fictícia, 123',
-              telefone: '(11) 99999-9999',
-              horaEntradaUtil: '09:00',
-              horaSaidaUtil: '18:00',
-              horaEntradaFimDeSem: '09:00',
-              horaSaidaFimDeSem: '13:00',
-              notificarAgendamento: true,
-              lembrarAgendamento: true,
-              resumoDiario: false
-            });
-          }
-          
-          setActiveComercioId(1);
-          setIsLoading(false);
-        }, 500);
-        return;
-      }
-
       try {
-        // First, get the user's comercios to find the correct comercioId
-        const comercios = await fetchApi('/api/Comercios');
-        
-        let actualComercioId = null;
+        // 1. Get the user's commerce
+        const comercios = await fetchApi('/api/Comercios/Admin');
         let basicDataRaw: any = null;
 
         if (Array.isArray(comercios) && comercios.length > 0) {
-          actualComercioId = comercios[0].id;
           basicDataRaw = comercios[0];
         } else if (comercios && !Array.isArray(comercios) && comercios.id) {
-          actualComercioId = comercios.id;
           basicDataRaw = comercios;
         }
 
-        if (!actualComercioId) {
+        if (!basicDataRaw) {
           throw new Error("Nenhum comércio encontrado para este usuário.");
         }
 
+        const actualComercioId = basicDataRaw.id;
         setActiveComercioId(actualComercioId);
 
-        // Como a página ainda não tem GET para as configurações, vamos usar valores padrão
-        const configData: ComercioConfiguracao = {
-          horarioAtendimento: {
-            dias: [1, 2, 3, 4, 5],
-            horaInicio: '09:00',
-            horaFim: '18:00',
-            intervalo: true,
-            inicioIntervalo: '12:00',
-            fimIntervalo: '13:00'
-          },
-          configuracao: {
-            antecedenciaMin: 30,
-            limiteAgendar: 30,
-            confirmaAuto: true,
-            tempoDuracaoPadrao: 30,
-            tempoCancelamento: 2,
-            reagendar: true,
-            tempoIntervalo: 15,
-            agendaSimultanea: 1,
-            horarioPorProfissional: false,
-            fechaFeriadosNacionais: true,
-            fechaFeriadosMunicipais: false,
-            diasFechados: []
-          }
-        };
-        
-        // Adapt basicData from API (which returns Comercio instead of ComercioConfg)
-        let horaEntradaUtil = '09:00';
-        let horaSaidaUtil = '18:00';
-        let horaEntradaFimDeSem = '09:00';
-        let horaSaidaFimDeSem = '13:00';
-
-        if (basicDataRaw.horarioAtendimento && Array.isArray(basicDataRaw.horarioAtendimento)) {
-          basicDataRaw.horarioAtendimento.forEach((horario: any) => {
-            if (horario.dias && horario.dias.length > 2) {
-              horaEntradaUtil = horario.horaInicio || '09:00';
-              horaSaidaUtil = horario.horaFim || '18:00';
-            } else {
-              horaEntradaFimDeSem = horario.horaInicio || '09:00';
-              horaSaidaFimDeSem = horario.horaFim || '13:00';
-            }
-          });
-        }
-
+        // 2. Map basic info
         const basicData: ComercioConfg = {
-          id: basicDataRaw.id || comercioId,
+          id: basicDataRaw.id,
           nome: basicDataRaw.nome || '',
           endereco: basicDataRaw.endereco || '',
           telefone: basicDataRaw.telefone || '',
+          cnpj: basicDataRaw.cnpj || '',
+          email: basicDataRaw.email || '',
+          descricao: basicDataRaw.descricao || '',
           notificarAgendamento: basicDataRaw.notificarAgendamento || false,
           lembrarAgendamento: basicDataRaw.lembrarAgendamento || false,
           resumoDiario: basicDataRaw.resumoDiario || false,
-          horaEntradaUtil,
-          horaSaidaUtil,
-          horaEntradaFimDeSem,
-          horaSaidaFimDeSem
+          instagram: basicDataRaw.instagram || '',
+          facebook: basicDataRaw.facebook || '',
+          site: basicDataRaw.site || '',
+          logoUrl: basicDataRaw.logoUrl || ''
         };
-
-        setConfig(configData);
         setBasicInfo(basicData);
+
+        // 3. Get specific configuration
+        try {
+          const configDataRaw = await fetchApi(`/api/ConfigComercio/${actualComercioId}`);
+          if (configDataRaw) {
+            setConfig({
+              idHorarioAtendimento: configDataRaw.idHorarioAtendimento,
+              idConfigComercio: configDataRaw.idConfigComercio,
+              horarioAtendimento: configDataRaw.horarioAtendimento,
+              configuracao: configDataRaw.configuracao,
+              funcionarios: configDataRaw.funcionarios
+            });
+          }
+        } catch (err: any) {
+          // Se for 404, apenas ignoramos pois significa que o comércio ainda não tem configurações
+          // e permitiremos que ele salve as primeiras agora.
+          if (err.status !== 404 && err.message !== '404') {
+            console.error("Erro ao buscar configurações específicas:", err);
+          }
+          
+          // Inicializa com valores padrão caso não encontre
+          setConfig({
+            horarioAtendimento: {
+              dias: [1, 2, 3, 4, 5],
+              horaInicio: "08:00:00",
+              horaFim: "18:00:00",
+              intervalo: false
+            },
+            configuracao: {
+              antecedenciaMin: 1,
+              limiteAgendar: 30,
+              tempoDuracaoPadrao: 30,
+              confirmaAuto: true,
+              horarioPorProfissional: false,
+              agendaSimultanea: 1,
+              reagendar: true,
+              tempoCancelamento: 24
+            },
+            funcionarios: []
+          });
+        }
       } catch (err: any) {
         setError(err.message || 'Erro ao carregar configurações');
       } finally {
@@ -241,28 +176,76 @@ export function useEstablishmentConfig() {
   }, [comercioId]);
 
   const updateConfig = async (newConfig: ComercioConfiguracao) => {
-    if (IS_DEMO_MODE) {
-      return new Promise<boolean>((resolve) => {
-        setTimeout(() => {
-          localStorage.setItem('demo_config', JSON.stringify(newConfig));
-          setConfig(newConfig);
-          resolve(true);
-        }, 500);
-      });
-    }
-
     if (!activeComercioId) {
       setError('ID do comércio não encontrado.');
       return false;
     }
 
     try {
-      await fetchApi(`/api/Editar-Atendimento/${activeComercioId}`, {
-        method: 'PUT',
-        body: JSON.stringify(newConfig),
+      // Determina se é criação (POST) ou edição (PUT) baseado na presença de IDs
+      const isNew = !newConfig.idConfigComercio || !newConfig.idHorarioAtendimento;
+      
+      // Mapeamento rigoroso para o DTO esperado pelo .NET (PascalCase)
+      const payload = {
+        IdHorarioAtendimento: newConfig.idHorarioAtendimento,
+        IdConfigComercio: newConfig.idConfigComercio,
+        HorarioAtendimento: newConfig.horarioAtendimento ? {
+          Dias: newConfig.horarioAtendimento.dias,
+          HoraInicio: newConfig.horarioAtendimento.horaInicio,
+          HoraFim: newConfig.horarioAtendimento.horaFim,
+          Intervalo: newConfig.horarioAtendimento.intervalo,
+          InicioIntervalo: newConfig.horarioAtendimento.inicioIntervalo,
+          FimIntervalo: newConfig.horarioAtendimento.fimIntervalo
+        } : null,
+        Configuracao: newConfig.configuracao ? {
+          ComercioId: activeComercioId,
+          AntecedenciaMin: newConfig.configuracao.antecedenciaMin,
+          LimiteAgendar: newConfig.configuracao.limiteAgendar,
+          ConfirmaAuto: newConfig.configuracao.confirmaAuto,
+          TempoDuracaoPadrao: newConfig.configuracao.tempoDuracaoPadrao,
+          TempoCancelamento: newConfig.configuracao.tempoCancelamento,
+          Reagendar: newConfig.configuracao.reagendar,
+          TempoIntervalo: newConfig.configuracao.tempoIntervalo,
+          AgendaSimultanea: newConfig.configuracao.agendaSimultanea,
+          HorarioPorProfissional: newConfig.configuracao.horarioPorProfissional,
+          FechaFeriadosNacionais: newConfig.configuracao.fechaFeriadosNacionais,
+          FechaFeriadosMunicipais: newConfig.configuracao.fechaFeriadosMunicipais,
+          DiasFechados: newConfig.configuracao.diasFechados?.map(df => ({
+            Id: df.id,
+            Data: df.data,
+            Descricao: df.descricao
+          })) || []
+        } : null,
+        Funcionarios: newConfig.funcionarios?.map(f => ({
+          IdFuncionario: f.idFuncionario,
+          Dias: f.dias,
+          HoraInicio: f.horaInicio,
+          HoraFim: f.horaFim,
+          Intervalo: f.intervalo,
+          InicioIntervalo: f.inicioIntervalo,
+          FimIntervalo: f.fimIntervalo
+        })) || []
+      };
+
+      const url = isNew 
+        ? '/api/ConfigComercio' 
+        : `/api/ConfigComercio/Editar-Atendimento/${activeComercioId}`;
+        
+      const method = isNew ? 'POST' : 'PUT';
+
+      await fetchApi(url, {
+        method: method,
+        body: JSON.stringify(payload),
         skipToast: true
       } as any);
-      setConfig(newConfig);
+      
+      // Se era novo, precisamos recarregar os dados para obter os IDs gerados pelo banco
+      if (isNew) {
+        window.location.reload(); 
+      } else {
+        setConfig(newConfig);
+      }
+      
       return true;
     } catch (err: any) {
       throw err;
@@ -270,27 +253,34 @@ export function useEstablishmentConfig() {
   };
 
   const updateBasicInfo = async (newBasicInfo: ComercioConfg) => {
-    if (IS_DEMO_MODE) {
-      return new Promise<boolean>((resolve) => {
-        setTimeout(() => {
-          localStorage.setItem('demo_basic', JSON.stringify(newBasicInfo));
-          setBasicInfo(newBasicInfo);
-          resolve(true);
-        }, 500);
-      });
-    }
-
     if (!activeComercioId) {
       setError('ID do comércio não encontrado.');
       return false;
     }
 
     try {
-      await fetchApi(`/api/Editar/${activeComercioId}`, {
+      // ComerciosController Put uses [FromForm], so we use FormData
+      const formData = new FormData();
+      formData.append('Id', String(newBasicInfo.id));
+      formData.append('Nome', newBasicInfo.nome);
+      formData.append('Endereco', newBasicInfo.endereco);
+      formData.append('Telefone', newBasicInfo.telefone);
+      if (newBasicInfo.cnpj) formData.append('CNPJ', newBasicInfo.cnpj);
+      if (newBasicInfo.email) formData.append('Email', newBasicInfo.email);
+      if (newBasicInfo.descricao) formData.append('Descricao', newBasicInfo.descricao);
+      formData.append('NotificarAgendamento', String(newBasicInfo.notificarAgendamento));
+      formData.append('LembrarAgendamento', String(newBasicInfo.lembrarAgendamento));
+      formData.append('ResumoDiario', String(newBasicInfo.resumoDiario));
+      if (newBasicInfo.instagram) formData.append('Instagram', newBasicInfo.instagram);
+      if (newBasicInfo.facebook) formData.append('Facebook', newBasicInfo.facebook);
+      if (newBasicInfo.site) formData.append('Site', newBasicInfo.site);
+
+      await fetchApi(`/api/Comercios/${activeComercioId}`, {
         method: 'PUT',
-        body: JSON.stringify(newBasicInfo),
+        body: formData, // fetchApi should handle FormData correctly
         skipToast: true
       } as any);
+      
       setBasicInfo(newBasicInfo);
       return true;
     } catch (err: any) {

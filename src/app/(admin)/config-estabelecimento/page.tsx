@@ -23,18 +23,33 @@ export default function AdminEstablishmentConfigPage() {
     if (config) setLocalConfig(config);
   }, [basicInfo, config]);
 
-  const handleSave = async () => {
+  const handleSaveConfig = async () => {
+    if (!localConfig) return;
+    
     setIsSaving(true);
     try {
-      if (activeTab === 'informacoes' && localBasicInfo) {
-        await updateBasicInfo(localBasicInfo);
-        toast.success('Informações salvas com sucesso!');
-      } else if (activeTab === 'horarios' && localConfig) {
-        await updateConfig(localConfig);
+      const success = await updateConfig(localConfig);
+      if (success) {
         toast.success('Horários salvos com sucesso!');
       }
     } catch (err: any) {
       toast.error(err.message || 'Erro ao salvar as configurações.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveBasicInfo = async () => {
+    if (!localBasicInfo) return;
+    
+    setIsSaving(true);
+    try {
+      const success = await updateBasicInfo(localBasicInfo);
+      if (success) {
+        toast.success('Informações salvas com sucesso!');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao salvar as informações.');
     } finally {
       setIsSaving(false);
     }
@@ -586,7 +601,7 @@ export default function AdminEstablishmentConfigPage() {
                   <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
                     Clientes devem agendar com pelo menos
                     <select 
-                      value={localConfig?.configuracao?.antecedenciaMin || 2}
+                      value={localConfig?.configuracao?.antecedenciaMin || 1}
                       onChange={(e) => {
                         if (!localConfig?.configuracao) return;
                         setLocalConfig({
@@ -608,15 +623,67 @@ export default function AdminEstablishmentConfigPage() {
                     de antecedência
                   </div>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    checked={localConfig?.configuracao?.antecedenciaMin !== undefined}
-                    onChange={() => {}} // Toggle logic would go here
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
-                </label>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-slate-900 block">Limite para Agendamentos Futuros</span>
+                  <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
+                    Clientes podem agendar com até
+                    <select 
+                      value={localConfig?.configuracao?.limiteAgendar || 30}
+                      onChange={(e) => {
+                        if (!localConfig?.configuracao) return;
+                        setLocalConfig({
+                          ...localConfig,
+                          configuracao: {
+                            ...localConfig.configuracao,
+                            limiteAgendar: parseInt(e.target.value)
+                          }
+                        });
+                      }}
+                      className="h-8 rounded-md border border-gray-200 px-2 outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                    >
+                      <option value={7}>7 dias</option>
+                      <option value={15}>15 dias</option>
+                      <option value={30}>30 dias</option>
+                      <option value={60}>60 dias</option>
+                      <option value={90}>90 dias</option>
+                    </select>
+                    de antecedência máxima
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-slate-900 block">Tempo de Duração Padrão dos Serviços</span>
+                  <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
+                    Duração sugerida de
+                    <select 
+                      value={localConfig?.configuracao?.tempoDuracaoPadrao || 30}
+                      onChange={(e) => {
+                        if (!localConfig?.configuracao) return;
+                        setLocalConfig({
+                          ...localConfig,
+                          configuracao: {
+                            ...localConfig.configuracao,
+                            tempoDuracaoPadrao: parseInt(e.target.value)
+                          }
+                        });
+                      }}
+                      className="h-8 rounded-md border border-gray-200 px-2 outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                    >
+                      <option value={15}>15 minutos</option>
+                      <option value={30}>30 minutos</option>
+                      <option value={45}>45 minutos</option>
+                      <option value={60}>1 hora</option>
+                      <option value={90}>1h 30m</option>
+                      <option value={120}>2 horas</option>
+                    </select>
+                    por atendimento
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
@@ -680,6 +747,119 @@ export default function AdminEstablishmentConfigPage() {
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
                 </label>
               </div>
+
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-slate-900 block">Horários Diferenciados por Profissional</span>
+                  <span className="text-xs text-slate-500 mt-1 block">Permitir que cada profissional tenha seu próprio horário de atendimento</span>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={localConfig?.configuracao?.horarioPorProfissional || false}
+                    onChange={(e) => {
+                      if (!localConfig?.configuracao) return;
+                      setLocalConfig({
+                        ...localConfig,
+                        configuracao: {
+                          ...localConfig.configuracao,
+                          horarioPorProfissional: e.target.checked
+                        }
+                      });
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                </label>
+              </div>
+
+          {localConfig?.configuracao?.horarioPorProfissional && localConfig.funcionarios && localConfig.funcionarios.length > 0 && (
+            <Card className="p-0 border-gray-200 shadow-sm bg-white overflow-hidden animate-in zoom-in-95 duration-200">
+              <div className="p-6 border-b border-gray-100 bg-slate-50/50">
+                <h3 className="text-lg font-bold text-slate-900 flex items-center">
+                  <Users className="h-5 w-5 mr-2 text-slate-700" />
+                  Horários por Profissional
+                </h3>
+                <p className="text-sm text-slate-500 mt-1">Configure o horário individual de cada membro da equipe</p>
+              </div>
+              <div className="p-6 divide-y divide-gray-100">
+                {localConfig.funcionarios.map((func, index) => (
+                  <div key={func.idFuncionario} className="py-6 first:pt-0 last:pb-0">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+                          {func.nomeFuncionario?.charAt(0) || 'P'}
+                        </div>
+                        <div>
+                          <span className="font-bold text-slate-900">{func.nomeFuncionario || 'Profissional'}</span>
+                          <span className="text-xs text-slate-500 block">ID: {func.idFuncionario.substring(0, 8)}...</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div className="flex flex-wrap gap-2">
+                          {days.map((day) => {
+                            const isActive = func.dias.includes(day.id);
+                            return (
+                              <button
+                                key={day.id}
+                                onClick={() => {
+                                  const newFuncs = [...(localConfig.funcionarios || [])];
+                                  const newDias = isActive 
+                                    ? func.dias.filter(d => d !== day.id)
+                                    : [...func.dias, day.id];
+                                  newFuncs[index] = { ...func, dias: newDias };
+                                  setLocalConfig({ ...localConfig, funcionarios: newFuncs });
+                                }}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                  isActive 
+                                    ? 'bg-slate-900 text-white shadow-md' 
+                                    : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+                                }`}
+                              >
+                                {day.label.substring(0, 3)}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1 space-y-1.5">
+                          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Início</label>
+                          <input 
+                            type="time" 
+                            value={func.horaInicio.substring(0, 5)}
+                            onChange={(e) => {
+                              const newFuncs = [...(localConfig.funcionarios || [])];
+                              newFuncs[index] = { ...func, horaInicio: e.target.value + ':00' };
+                              setLocalConfig({ ...localConfig, funcionarios: newFuncs });
+                            }}
+                            className="w-full h-10 rounded-lg border border-gray-200 px-3 text-sm focus:ring-2 focus:ring-slate-900 outline-none transition-all"
+                          />
+                        </div>
+                        <div className="flex-1 space-y-1.5">
+                          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Fim</label>
+                          <input 
+                            type="time" 
+                            value={func.horaFim.substring(0, 5)}
+                            onChange={(e) => {
+                              const newFuncs = [...(localConfig.funcionarios || [])];
+                              newFuncs[index] = { ...func, horaFim: e.target.value + ':00' };
+                              setLocalConfig({ ...localConfig, funcionarios: newFuncs });
+                            }}
+                            className="w-full h-10 rounded-lg border border-gray-200 px-3 text-sm focus:ring-2 focus:ring-slate-900 outline-none transition-all"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
 
               <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
                 <div className="flex-1">
@@ -789,7 +969,7 @@ export default function AdminEstablishmentConfigPage() {
           <div className="flex items-center justify-end gap-4 pt-4">
             <Button variant="outline" className="bg-slate-50">Cancelar</Button>
             <Button 
-              onClick={handleSave}
+              onClick={handleSaveConfig}
               disabled={isSaving}
               className="bg-slate-900 hover:bg-slate-800 text-white"
             >
@@ -842,6 +1022,8 @@ export default function AdminEstablishmentConfigPage() {
                   <input 
                     type="text" 
                     placeholder="00.000.000/0000-00"
+                    value={localBasicInfo?.cnpj || ''}
+                    onChange={(e) => setLocalBasicInfo(prev => prev ? { ...prev, cnpj: e.target.value } : null)}
                     className="w-full h-11 rounded-xl border border-gray-200 px-4 text-sm focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
                   />
                 </div>
@@ -849,7 +1031,9 @@ export default function AdminEstablishmentConfigPage() {
                   <label className="text-sm font-semibold text-slate-700">Descrição/Bio</label>
                   <textarea 
                     rows={3}
-                    defaultValue="A melhor barbearia da região, com profissionais qualificados e ambiente climatizado."
+                    value={localBasicInfo?.descricao || ''}
+                    onChange={(e) => setLocalBasicInfo(prev => prev ? { ...prev, descricao: e.target.value } : null)}
+                    placeholder="Fale um pouco sobre o seu estabelecimento..."
                     className="w-full rounded-xl border border-gray-200 p-4 text-sm focus:ring-2 focus:ring-indigo-600 outline-none transition-all resize-none"
                   />
                 </div>
@@ -889,7 +1073,9 @@ export default function AdminEstablishmentConfigPage() {
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input 
                       type="email" 
-                      defaultValue="contato@agendaai.com"
+                      value={localBasicInfo?.email || ''}
+                      onChange={(e) => setLocalBasicInfo(prev => prev ? { ...prev, email: e.target.value } : null)}
+                      placeholder="contato@estabelecimento.com"
                       className="w-full h-11 rounded-xl border border-gray-200 pl-10 pr-4 text-sm focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
                     />
                   </div>
@@ -907,6 +1093,8 @@ export default function AdminEstablishmentConfigPage() {
                   <input 
                     type="text" 
                     placeholder="@seu_instagram"
+                    value={localBasicInfo?.instagram || ''}
+                    onChange={(e) => setLocalBasicInfo(prev => prev ? { ...prev, instagram: e.target.value } : null)}
                     className="flex-1 h-11 rounded-xl border border-gray-200 px-4 text-sm focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
                   />
                 </div>
@@ -917,6 +1105,8 @@ export default function AdminEstablishmentConfigPage() {
                   <input 
                     type="text" 
                     placeholder="facebook.com/seu_negocio"
+                    value={localBasicInfo?.facebook || ''}
+                    onChange={(e) => setLocalBasicInfo(prev => prev ? { ...prev, facebook: e.target.value } : null)}
                     className="flex-1 h-11 rounded-xl border border-gray-200 px-4 text-sm focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
                   />
                 </div>
@@ -927,6 +1117,8 @@ export default function AdminEstablishmentConfigPage() {
                   <input 
                     type="text" 
                     placeholder="www.seusite.com.br"
+                    value={localBasicInfo?.site || ''}
+                    onChange={(e) => setLocalBasicInfo(prev => prev ? { ...prev, site: e.target.value } : null)}
                     className="flex-1 h-11 rounded-xl border border-gray-200 px-4 text-sm focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
                   />
                 </div>
@@ -979,6 +1171,23 @@ export default function AdminEstablishmentConfigPage() {
                 </label>
               </div>
             </Card>
+
+            <div className="flex justify-end pt-4">
+              <Button 
+                className="w-full h-12 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 lg:w-64"
+                onClick={handleSaveBasicInfo}
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+                    Salvando...
+                  </div>
+                ) : (
+                  'Salvar Informações'
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       )}
