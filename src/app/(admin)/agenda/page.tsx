@@ -32,76 +32,79 @@ export default function AdminAgendaPage() {
 
   const hours = Array.from({ length: 11 }, (_, i) => i + 8); // 8:00 to 18:00
 
-  useEffect(() => {
-    // Fetch data for selects when modal opens
-    if (isModalOpen) {
-      const fetchSelectData = async () => {
-        const commerceId = (user as any)?.id || 1;
-        
-        try {
-          // Fetch real services
-          const servicosData = await fetchApi(`/api/Servicos/Todos/${commerceId}`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-            skipToast: true
-          } as any);
-          
-          if (Array.isArray(servicosData)) {
-            setServicosOptions(servicosData.map(s => ({ value: String(s.id), label: s.nome })));
-          } else {
-            setServicosOptions([]);
-          }
-        } catch (err) {
-          console.error("Erro ao buscar serviços para o select:", err);
-          setServicosOptions([]);
-        }
-
-        try {
-          // Fetch real professionals
-          const profissionaisData = await fetchApi(`/api/ComercioUsuarios/Profissionais/${commerceId}`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-            skipToast: true
-          } as any);
-          
-          if (Array.isArray(profissionaisData)) {
-            setProfissionaisOptions(profissionaisData.map(p => ({ value: String(p.id || p.Id), label: p.nome || p.Nome })));
-          } else {
-            setProfissionaisOptions([]);
-          }
-        } catch (err) {
-          console.error("Erro ao buscar profissionais para o select:", err);
-          setProfissionaisOptions([]);
-        }
-
-        try {
-          // Fetch real clients
-          const clientesData = await fetchApi(`/api/ComercioUsuarios/Clientes/${commerceId}`, {
-            headers: { 'Authorization': `Bearer ${token}` },
-            skipToast: true
-          } as any);
-          
-          if (Array.isArray(clientesData)) {
-            // Defensive mapping: check for various ID property names (id, Id, userId, usuarioId)
-            const options = clientesData
-              .map(c => {
-                const id = c.id || c.Id || c.usuarioId || c.UsuarioId || c.idUsuario;
-                const nome = c.nome || c.Nome || c.userName || c.UserName || "Cliente sem nome";
-                return { value: id ? String(id) : 'undefined', label: String(nome) };
-              })
-              .filter(opt => opt.value !== 'undefined');
-            
-            setClientesOptions(options);
-          } else {
-            setClientesOptions([]);
-          }
-        } catch (err) {
-          console.error("Erro ao buscar clientes para o select:", err);
-          setClientesOptions([]);
-        }
-      };
-
-      fetchSelectData();
+  const fetchSelectData = React.useCallback(async () => {
+    if (!token || !user) return;
+    const commerceId = (user as any)?.id || 1;
+    
+    try {
+      // Fetch real services
+      const servicosData = await fetchApi(`/api/Servicos/Todos/${commerceId}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        skipToast: true
+      } as any);
+      
+      if (Array.isArray(servicosData)) {
+        setServicosOptions(servicosData.map(s => ({ value: String(s.id), label: s.nome })));
+      } else {
+        setServicosOptions([]);
+      }
+    } catch (err) {
+      console.error("Erro ao buscar serviços para o select:", err);
+      setServicosOptions([]);
     }
-  }, [isModalOpen, token, user]);
+
+    try {
+      // Fetch real professionals
+      const profissionaisData = await fetchApi(`/api/ComercioUsuarios/Profissionais/${commerceId}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        skipToast: true
+      } as any);
+      
+      if (Array.isArray(profissionaisData)) {
+        setProfissionaisOptions(
+          profissionaisData
+            .filter(p => (p.status || '').toLowerCase() === 'ativo')
+            .map(p => ({ value: String(p.id || p.Id), label: p.nome || p.Nome }))
+        );
+      } else {
+        setProfissionaisOptions([]);
+      }
+    } catch (err) {
+      console.error("Erro ao buscar profissionais para o select:", err);
+      setProfissionaisOptions([]);
+    }
+
+    try {
+      // Fetch real clients
+      const clientesData = await fetchApi(`/api/ComercioUsuarios/Clientes/${commerceId}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        skipToast: true
+      } as any);
+      
+      if (Array.isArray(clientesData)) {
+        // Defensive mapping: check for various ID property names (id, Id, userId, usuarioId)
+        const options = clientesData
+          .filter(c => (c.status || '').toLowerCase() === 'ativo')
+          .map(c => {
+            const id = c.id || c.Id || c.usuarioId || c.UsuarioId || c.idUsuario;
+            const nome = c.nome || c.Nome || c.userName || c.UserName || "Cliente sem nome";
+            return { value: id ? String(id) : 'undefined', label: String(nome) };
+          })
+          .filter(opt => opt.value !== 'undefined');
+        
+        setClientesOptions(options);
+      } else {
+        setClientesOptions([]);
+      }
+    } catch (err) {
+      console.error("Erro ao buscar clientes para o select:", err);
+      setClientesOptions([]);
+    }
+  }, [token, user]);
+
+  useEffect(() => {
+    fetchSelectData();
+  }, [fetchSelectData]);
 
   const handleCreateAgenda = async (e: React.FormEvent) => {
     e.preventDefault();

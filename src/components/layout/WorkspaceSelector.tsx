@@ -15,14 +15,14 @@ interface WorkspaceSelectorProps {
  */
 export function WorkspaceSelector({ isCollapsed, name, plan, initials }: WorkspaceSelectorProps) {
   return (
-    <div className="px-4 mb-6">
+    <div className={cn("px-4 mb-6 transition-all duration-300", isCollapsed && "px-2")}>
       <button 
         className={cn(
           "w-full flex items-center justify-between p-2 rounded-lg border border-border hover:bg-accent transition-all duration-200 group",
-          isCollapsed && "justify-center p-2"
+          isCollapsed && "justify-center px-1"
         )}
       >
-        <div className="flex items-center gap-3 overflow-hidden">
+        <div className={cn("flex items-center overflow-hidden", !isCollapsed && "gap-3")}>
           <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center text-primary font-bold text-xs flex-shrink-0 shadow-sm border border-primary/20">
             {initials}
           </div>

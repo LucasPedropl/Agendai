@@ -95,42 +95,51 @@ export function AdminLayout() {
     navigate('/');
   };
 
+  const basePath = location.pathname.startsWith('/profissional') ? '/profissional' : '/estabelecimento';
+
   // Navigation configuration
   const navCategories = [
     {
       items: [
-        { to: '/estabelecimento/dashboard', icon: Squares2X2Icon, label: 'Dashboard' },
-        { to: '/estabelecimento/agenda', icon: CalendarIcon, label: 'Agenda' },
-        { to: '/estabelecimento/historico', icon: ClockIcon, label: 'Histórico' },
+        { to: `${basePath}/dashboard`, icon: Squares2X2Icon, label: 'Dashboard', end: true },
+        { to: `${basePath}/agenda`, icon: CalendarIcon, label: 'Agenda' },
+        { to: `${basePath}/historico`, icon: ClockIcon, label: 'Histórico' },
       ]
     },
     {
       title: 'GERENCIAMENTO',
       items: [
-        { to: '/estabelecimento/servicos', icon: BriefcaseIcon, label: 'Serviços' },
-        { to: '/estabelecimento/profissionais', icon: UsersIcon, label: 'Profissionais' },
-        { to: '/estabelecimento/clientes', icon: UserIcon, label: 'Clientes' },
-        ...(!isProfissional ? [{ to: '/estabelecimento/config-estabelecimento', icon: BuildingStorefrontIcon, label: 'Config. Estabelecimento' }] : []),
+        { to: `${basePath}/servicos`, icon: BriefcaseIcon, label: 'Serviços' },
+        ...(!isProfissional ? [{ to: `${basePath}/profissionais`, icon: UsersIcon, label: 'Profissionais' }] : []),
+        { to: `${basePath}/clientes`, icon: UserIcon, label: 'Clientes' },
+        ...(!isProfissional ? [{ to: `${basePath}/config-estabelecimento`, icon: BuildingStorefrontIcon, label: 'Config. Estabelecimento' }] : []),
       ]
     },
     ...(!isProfissional ? [
       {
         title: 'FINANCEIRO',
-        items: [{ to: '/estabelecimento/financeiro', icon: ChartBarIcon, label: 'Gestão Financeira' }]
+        items: [{ to: `${basePath}/financeiro`, icon: ChartBarIcon, label: 'Gestão Financeira' }]
+      },
+      {
+        title: 'OUTROS',
+        items: [
+          { to: `${basePath}/whatsapp`, icon: ChatBubbleBottomCenterTextIcon, label: 'WhatsApp' },
+          { to: `${basePath}/config`, icon: Cog6ToothIcon, label: 'Configurações' },
+        ]
       }
-    ] : []),
-    {
-      title: 'OUTROS',
-      items: [
-        { to: '/estabelecimento/whatsapp', icon: ChatBubbleBottomCenterTextIcon, label: 'WhatsApp' },
-        { to: '/estabelecimento/config', icon: Cog6ToothIcon, label: 'Configurações' },
-      ]
-    }
+    ] : [
+      {
+        title: 'OUTROS',
+        items: [
+          { to: `${basePath}/config`, icon: Cog6ToothIcon, label: 'Configurações' },
+        ]
+      }
+    ])
   ];
 
   const currentPathLabel = navCategories
     .flatMap(cat => cat.items)
-    .find(item => location.pathname.includes(item.to))?.label || "Dashboard";
+    .find(item => location.pathname === item.to || location.pathname.startsWith(item.to + '/'))?.label || "Dashboard";
 
   if (isLoadingCommerce) {
     return (
@@ -183,7 +192,7 @@ export function AdminLayout() {
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">{roleLabel}</p>
                 </div>
                 <button 
-                  onClick={() => { navigate('/estabelecimento/config'); setIsProfileOpen(false); }}
+                  onClick={() => { navigate(`${basePath}/config`); setIsProfileOpen(false); }}
                   className="flex w-full items-center gap-2 px-3 py-2 text-sm text-foreground/70 hover:bg-accent rounded-lg transition-colors text-left"
                 >
                   <UserIcon className="w-4 h-4" />

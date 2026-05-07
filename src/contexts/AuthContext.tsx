@@ -9,24 +9,22 @@ interface AuthContextType extends AuthState {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [authState, setAuthState] = useState<AuthState>({
-    isAuthenticated: false,
-    user: null,
-    token: null,
-    userType: null,
-  });
-
-  useEffect(() => {
+  const [authState, setAuthState] = useState<AuthState>(() => {
     const storedAuth = localStorage.getItem('agendaAi_auth');
     if (storedAuth) {
       try {
-        const parsed = JSON.parse(storedAuth);
-        setAuthState(parsed);
+        return JSON.parse(storedAuth);
       } catch (e) {
         console.error('Failed to parse stored auth', e);
       }
     }
-  }, []);
+    return {
+      isAuthenticated: false,
+      user: null,
+      token: null,
+      userType: null,
+    };
+  });
 
   const login = (user: User, token: string, userType: 'cliente' | 'estabelecimento' | 'profissional') => {
     const newState = { isAuthenticated: true, user, token, userType };

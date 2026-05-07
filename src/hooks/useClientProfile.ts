@@ -1,29 +1,18 @@
 import { useState } from 'react';
 import { fetchApi } from '@/lib/api';
 
-const IS_DEMO_MODE = false; // TODO: Remover depois
-
 export function useClientProfile() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  /**
+   * Obtém os dados de perfil do usuário.
+   */
   const getPerfil = async (userId: string) => {
-    if (IS_DEMO_MODE) {
-      return new Promise<any>((resolve) => {
-        setTimeout(() => {
-          resolve({
-            nome: 'João da Silva',
-            email: 'joao@example.com',
-            telefone: '(11) 98765-4321',
-            dataNascimento: '1990-01-01'
-          });
-        }, 500);
-      });
-    }
-
     try {
       setIsLoading(true);
-      const data = await fetchApi(`/api/Login/Dados-Usuario/${userId}`);
+      // Rota correta identificada no Swagger: /api/Usuario/{id}
+      const data = await fetchApi(`/api/Usuario/${userId}`);
       return data;
     } catch (err: any) {
       setError(err.message);
@@ -33,20 +22,25 @@ export function useClientProfile() {
     }
   };
 
+  /**
+   * Atualiza os dados de perfil do usuário.
+   */
   const updatePerfil = async (userId: string, dados: any) => {
-    if (IS_DEMO_MODE) {
-      return new Promise<boolean>((resolve) => {
-        setTimeout(() => {
-          resolve(true);
-        }, 500);
-      });
-    }
-
     try {
       setIsLoading(true);
-      await fetchApi(`/api/Login/${userId}`, {
+      // Rota correta identificada no Swagger: /api/Usuario/{id}
+      // O corpo deve seguir o schema EditarUsuario
+      await fetchApi(`/api/Usuario/${userId}`, {
         method: 'PUT',
-        body: JSON.stringify(dados)
+        body: JSON.stringify({
+          id: userId,
+          nome: dados.nome,
+          sobrenome: dados.sobrenome,
+          cpf: dados.cpf,
+          telefone: dados.telefone,
+          dataNascimento: dados.dataNascimento,
+          email: dados.email
+        })
       });
       return true;
     } catch (err: any) {
@@ -57,22 +51,14 @@ export function useClientProfile() {
     }
   };
 
+  /**
+   * Obtém as configurações de notificação do usuário.
+   */
   const getConfig = async (userId: string) => {
-    if (IS_DEMO_MODE) {
-      return new Promise<any>((resolve) => {
-        setTimeout(() => {
-          resolve({
-            notificaAgendamento: true,
-            notificaPromo: false,
-            notificaDiaAgendado: true
-          });
-        }, 500);
-      });
-    }
-
     try {
       setIsLoading(true);
-      const data = await fetchApi(`/api/Login/Config-Usuario/${userId}`);
+      // Rota correta identificada no Swagger: /api/Usuario/Config-Usuario/{id}
+      const data = await fetchApi(`/api/Usuario/Config-Usuario/${userId}`);
       return data;
     } catch (err: any) {
       setError(err.message);
@@ -82,18 +68,14 @@ export function useClientProfile() {
     }
   };
 
+  /**
+   * Atualiza as configurações de notificação do usuário.
+   */
   const updateConfig = async (userId: string, config: any) => {
-    if (IS_DEMO_MODE) {
-      return new Promise<boolean>((resolve) => {
-        setTimeout(() => {
-          resolve(true);
-        }, 500);
-      });
-    }
-
     try {
       setIsLoading(true);
-      await fetchApi(`/api/Login/Config-Usuario/${userId}`, {
+      // Rota correta identificada no Swagger: /api/Usuario/Config-Usuario/{id}
+      await fetchApi(`/api/Usuario/Config-Usuario/${userId}`, {
         method: 'PUT',
         body: JSON.stringify(config)
       });

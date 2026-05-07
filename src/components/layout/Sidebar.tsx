@@ -8,6 +8,7 @@ interface NavItem {
   to: string;
   icon: LucideIcon;
   label: string;
+  end?: boolean;
 }
 
 interface NavCategory {
@@ -47,7 +48,7 @@ export function Sidebar({
       )}
     >
       {/* Brand */}
-      <div className={cn("p-6 flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
+      <div className={cn("p-6 flex items-center transition-all duration-300", isCollapsed ? "justify-center px-2" : "justify-between")}>
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/20 flex-shrink-0 transition-transform hover:scale-105">
             <SparklesIcon className="w-5 h-5" />
@@ -92,6 +93,7 @@ export function Sidebar({
                   icon={item.icon} 
                   label={item.label} 
                   isCollapsed={isCollapsed} 
+                  end={item.end}
                 />
               ))}
             </div>

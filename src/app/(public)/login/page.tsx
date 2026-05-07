@@ -62,7 +62,8 @@ export default function LoginPage() {
       login(mockUser, token, type as any);
 
       toast.success(type === 'profissional' ? 'Bem-vindo, Profissional!' : 'Bem-vindo de volta!');
-      navigate(type === 'cliente' ? '/app' : '/estabelecimento/dashboard');
+      const redirectPath = type === 'cliente' ? '/app' : type === 'profissional' ? '/profissional/dashboard' : '/estabelecimento/dashboard';
+      navigate(redirectPath);
     } catch (err: any) {
       console.error(err);
       const errorMessage = err.message || `Erro ao entrar com ${provider === 'google' ? 'Google' : 'Facebook'}. Por favor, tente novamente.`;
@@ -104,7 +105,8 @@ export default function LoginPage() {
       login(mockUser, token, type);
 
       toast.success(type === 'profissional' ? 'Bem-vindo, Profissional!' : 'Bem-vindo de volta!');
-      navigate(type === 'cliente' ? '/app' : '/estabelecimento/dashboard');
+      const redirectPath = type === 'cliente' ? '/app' : type === 'profissional' ? '/profissional/dashboard' : '/estabelecimento/dashboard';
+      navigate(redirectPath);
     } catch (err: any) {
       console.error(err);
       const errorMessage = 'E-mail ou senha incorretos. Você tem certeza que digitou os dados corretamente?';

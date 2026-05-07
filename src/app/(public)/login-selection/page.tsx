@@ -44,7 +44,7 @@ export default function LoginSelectionPage() {
               </CardHeader>
             </Card>
           </Link>
-          <Link to="/app" className="text-center text-sm font-medium text-indigo-600 hover:underline">
+          <Link to="/profissional/dashboard" className="text-center text-sm font-medium text-indigo-600 hover:underline">
             Entrar como Convidado (Demo)
           </Link>
         </div>

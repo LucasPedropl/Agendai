@@ -56,12 +56,17 @@ export function useAppointmentForm(onSuccess?: () => void) {
 
       // Process Professionals
       if (Array.isArray(profissionaisData)) {
-        setProfissionaisOptions(profissionaisData.map(p => ({ value: String(p.id || p.Id), label: p.nome || p.Nome })));
+        setProfissionaisOptions(
+          profissionaisData
+            .filter(p => (p.status || '').toLowerCase() === 'ativo')
+            .map(p => ({ value: String(p.id || p.Id), label: p.nome || p.Nome }))
+        );
       }
 
       // Process Clients
       if (Array.isArray(clientesData)) {
         const options = clientesData
+          .filter(c => (c.status || '').toLowerCase() === 'ativo')
           .map(c => {
             const id = c.id || c.Id || c.usuarioId || c.UsuarioId || c.idUsuario;
             const nome = c.nome || c.Nome || c.userName || c.UserName || "Cliente sem nome";

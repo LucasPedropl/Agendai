@@ -8,16 +8,18 @@ interface SidebarItemProps {
   icon: LucideIcon;
   label: string;
   isCollapsed: boolean;
+  end?: boolean;
 }
 
 /**
  * SidebarItem Component (Dumb)
  * Renders a single navigation link for the sidebar.
  */
-export function SidebarItem({ to, icon: Icon, label, isCollapsed }: SidebarItemProps) {
+export function SidebarItem({ to, icon: Icon, label, isCollapsed, end }: SidebarItemProps) {
   return (
     <NavLink
       to={to}
+      end={end}
       className={({ isActive }) =>
         cn(
           "flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 group relative",
