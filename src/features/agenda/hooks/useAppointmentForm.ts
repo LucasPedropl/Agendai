@@ -35,10 +35,15 @@ export function useAppointmentForm(onSuccess?: () => void) {
     setIsLoadingOptions(true);
 
     try {
+      const listOpts = { skipToast: true, notFoundAsEmpty: true } as RequestInit & {
+        skipToast?: boolean;
+        notFoundAsEmpty?: boolean;
+      };
+
       const [servicosData, profissionaisData, clientesData] = await Promise.all([
         fetchApi(`/api/Servicos/Todos/${comercioId}`, { skipToast: true } as RequestInit),
-        fetchApi(`/api/ComercioUsuarios/Profissionais/${comercioId}`, { skipToast: true } as RequestInit),
-        fetchApi(`/api/ComercioUsuarios/Clientes/${comercioId}`, { skipToast: true } as RequestInit),
+        fetchApi(`/api/ComercioUsuarios/Profissionais/${comercioId}`, listOpts),
+        fetchApi(`/api/ComercioUsuarios/Clientes/${comercioId}`, listOpts),
       ]);
 
       // Process Services
@@ -103,9 +108,10 @@ export function useAppointmentForm(onSuccess?: () => void) {
         observacao,
       };
 
-      await fetchApi(`/api/Agenda/Comercio-Agendar/${comercioId}`, {
+      // Rota real da API: POST /api/Agenda/Comercio-Agendar (sem {id} na URL)
+      await fetchApi('/api/Agenda/Comercio-Agendar', {
         method: 'POST',
-        body: JSON.stringify(payload),
+        body: payload,
         skipToast: true,
       } as RequestInit);
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { fetchApi } from '@/lib/api';
+import { IS_CONFIG_USUARIO_PUT_BLOCKED } from '@/lib/apiHelpers';
 
 export function useClientProfile() {
   const [isLoading, setIsLoading] = useState(false);
@@ -77,10 +78,13 @@ export function useClientProfile() {
   /**
    * Atualiza as configurações de notificação do usuário.
    */
-  const updateConfig = async (userId: string, config: any) => {
+  const updateConfig = async (userId: string, config: Record<string, unknown>) => {
+    if (IS_CONFIG_USUARIO_PUT_BLOCKED) {
+      setError('Salvar preferências de notificação temporariamente indisponível (correção pendente na API).');
+      return false;
+    }
     try {
       setIsLoading(true);
-      // Rota correta identificada no Swagger: /api/Usuario/Config-Usuario/{id}
       await fetchApi(`/api/Usuario/Config-Usuario/${userId}`, {
         method: 'PUT',
         body: config,

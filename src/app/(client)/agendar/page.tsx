@@ -203,12 +203,13 @@ export default function AgendarPage() {
     try {
       await fetchApi('/api/Agenda', {
         method: 'POST',
+        skipToast: true,
         body: {
-          IdProssional: selectedProfessional?.id?.toString() || '',
-          IdUsuario: user.id,
-          Data: selectedDate.toISOString(),
-          Horario: toApiTimeSpan(selectedTime),
-          IdServico: selectedService.id,
+          idProssional: selectedProfessional?.id?.toString() || '',
+          idUsuario: String(user.id),
+          data: selectedDate.toISOString(),
+          horario: toApiTimeSpan(selectedTime),
+          idServico: selectedService.id,
         },
       });
       setStep(5);

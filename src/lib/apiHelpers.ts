@@ -1,5 +1,11 @@
 /** Utilitários para normalizar respostas da API .NET no frontend. */
 
+/** PUT /api/Usuario/Config-Usuario/{guid} retorna 400 até correção no backend. */
+export const IS_CONFIG_USUARIO_PUT_BLOCKED = true;
+
+/** POST Comercio-Agendar grava UsuarioId errado (profissional no lugar do cliente). */
+export const IS_ADMIN_AGENDA_CLIENT_NAME_UNRELIABLE = true;
+
 const NAME_ID_CLAIM =
   'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier';
 

@@ -60,6 +60,11 @@ export async function fetchApi(endpoint: string, options: FetchApiOptions = {}) 
       return [];
     }
 
+    const isLoginRoute = /\/api\/login\//i.test(path);
+    if (response.status === 401 && token && !isLoginRoute) {
+      window.dispatchEvent(new CustomEvent('agendaai:session-expired'));
+    }
+
     const errorData: unknown = await response.json().catch(() => ({}));
     console.error(`API Error (${response.status}):`, errorData);
 

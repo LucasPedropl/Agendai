@@ -19,7 +19,9 @@ import { Button } from '@/components/ui/button';
 import { useClientProfile } from '@/hooks/useClientProfile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { IS_CONFIG_USUARIO_PUT_BLOCKED } from '@/lib/apiHelpers';
 import { motion } from 'motion/react';
+import { AlertCircle } from 'lucide-react';
 
 export default function ClientConfiguracoesPage() {
   const [activeTab, setActiveTab] = useState('perfil');
@@ -53,13 +55,19 @@ export default function ClientConfiguracoesPage() {
     setIsSaving(false);
   };
 
-  const handleSaveConfig = async (newConfig?: any) => {
+  const handleSaveConfig = async (newConfig?: Record<string, unknown>) => {
+    if (IS_CONFIG_USUARIO_PUT_BLOCKED) {
+      toast.warning('Salvar preferências de notificação está temporariamente indisponível. A equipe de backend está corrigindo a API.');
+      return;
+    }
     const dataToSave = newConfig || configData;
     if (!dataToSave || !user?.id) return;
     setIsSaving(true);
     const success = await updateConfig(user.id, dataToSave);
     if (success && !newConfig) {
       toast.success('Configurações atualizadas!');
+    } else if (!success) {
+      toast.error('Não foi possível salvar as preferências de notificação.');
     }
     setIsSaving(false);
   };
@@ -211,6 +219,15 @@ export default function ClientConfiguracoesPage() {
               </div>
               
               <div className="p-8 space-y-8">
+                {IS_CONFIG_USUARIO_PUT_BLOCKED && (
+                  <div className="flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                    <AlertCircle className="h-5 w-5 shrink-0 text-amber-600" />
+                    <p>
+                      As preferências abaixo podem ser visualizadas, mas <strong>ainda não podem ser salvas</strong> —
+                      a API retorna erro ao gravar configurações com ID de usuário (GUID). Correção pendente no backend.
+                    </p>
+                  </div>
+                )}
                 {[
                   { 
                     id: 'notificaAgendamento', 
@@ -233,11 +250,13 @@ export default function ClientConfiguracoesPage() {
                       <span className="text-base font-bold text-slate-900 block">{item.title}</span>
                       <span className="text-sm text-slate-500 mt-1 block">{item.desc}</span>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
+                    <label className={`relative inline-flex items-center ${IS_CONFIG_USUARIO_PUT_BLOCKED ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                       <input 
                         type="checkbox" 
                         checked={configData?.[item.id] || false}
+                        disabled={IS_CONFIG_USUARIO_PUT_BLOCKED}
                         onChange={(e) => {
+                          if (IS_CONFIG_USUARIO_PUT_BLOCKED) return;
                           const newConfig = { ...configData, [item.id]: e.target.checked };
                           setConfigData(newConfig);
                           handleSaveConfig(newConfig);

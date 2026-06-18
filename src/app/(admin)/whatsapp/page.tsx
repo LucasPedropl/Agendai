@@ -24,6 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useComercioId } from '@/hooks/useComercioId';
 import { useToast } from '@/contexts/ToastContext';
 import { motion, AnimatePresence } from 'motion/react';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export default function AdminWhatsAppPage() {
   const { token } = useAuth();
@@ -34,6 +35,7 @@ export default function AdminWhatsAppPage() {
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
 
   const commerceId = comercioId;
 
@@ -72,19 +74,24 @@ export default function AdminWhatsAppPage() {
         setStatus('QRCODE_READY');
         toast.success('QR Code gerado com sucesso!');
       } else {
-        toast.error('Não foi possível gerar o QR Code no momento.');
+        setStatus('ERROR');
+        toast.error('Integração WhatsApp indisponível no momento. Tente novamente mais tarde.');
       }
-    } catch (err: any) {
-      console.error("Erro ao obter QR Code:", err);
-      toast.error(err.message || 'Falha na comunicação com o servidor.');
+    } catch (err: unknown) {
+      console.error('Erro ao obter QR Code:', err);
+      setStatus('ERROR');
+      const message = err instanceof Error ? err.message : 'Falha na comunicação com o servidor.';
+      toast.error(
+        message.includes('QR') || message.includes('Falha')
+          ? 'Integração WhatsApp indisponível. A geração de QR Code depende de correção no backend.'
+          : message
+      );
     } finally {
       setIsActionLoading(false);
     }
   };
 
   const disconnect = async () => {
-    if (!confirm('Deseja realmente desconectar o WhatsApp? Isso interromperá os lembretes automáticos.')) return;
-    
     setIsActionLoading(true);
     try {
       await fetchApi(`/api/WhatsApp/Desconectar/${commerceId}`, {
@@ -96,10 +103,11 @@ export default function AdminWhatsAppPage() {
       setPhoneNumber(null);
       toast.success('WhatsApp desconectado com sucesso.');
     } catch (err) {
-      console.error("Erro ao desconectar:", err);
+      console.error('Erro ao desconectar:', err);
       toast.error('Erro ao processar desconexão.');
     } finally {
       setIsActionLoading(false);
+      setShowDisconnectDialog(false);
     }
   };
 
@@ -156,12 +164,14 @@ export default function AdminWhatsAppPage() {
     },
     ERROR: {
       icon: AlertCircle,
-      title: 'Erro de Conexão',
-      description: 'Ocorreu um problema ao tentar verificar seu status.',
+      title: 'Integração indisponível',
+      description:
+        'O serviço de WhatsApp não está respondendo no momento (falha de comunicação com o provedor externo). ' +
+        'Os lembretes automáticos ficam desativados até a equipe de backend restabelecer a integração.',
       color: 'text-rose-500',
       bgColor: 'bg-rose-50',
       borderColor: 'border-rose-100',
-      badge: 'Erro'
+      badge: 'Indisponível'
     }
   };
 
@@ -186,9 +196,17 @@ export default function AdminWhatsAppPage() {
       {/* Header Section */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-slate-100 pb-8">
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold uppercase tracking-wider">
+          <div
+            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+              status === 'CONNECTED'
+                ? 'bg-emerald-100 text-emerald-700'
+                : status === 'ERROR'
+                  ? 'bg-rose-100 text-rose-700'
+                  : 'bg-slate-100 text-slate-600'
+            }`}
+          >
             <Zap className="h-3 w-3" />
-            Automação Ativa
+            {status === 'CONNECTED' ? 'Automação ativa' : status === 'ERROR' ? 'Integração pausada' : 'Automação'}
           </div>
           <h1 className="text-4xl font-black text-slate-900 tracking-tight">
             WhatsApp <span className="text-indigo-600">Business</span>
@@ -206,6 +224,19 @@ export default function AdminWhatsAppPage() {
           Sincronizar
         </Button>
       </header>
+
+      {status === 'ERROR' && (
+        <div className="flex gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-900">
+          <AlertCircle className="h-5 w-5 shrink-0 text-rose-600" />
+          <div className="space-y-1">
+            <p className="font-semibold">WhatsApp temporariamente indisponível</p>
+            <p className="text-rose-800/90 leading-relaxed">
+              A API não consegue se comunicar com o provedor externo (erro TLS/handshake). Conectar ou gerar QR Code
+              não funcionará até a equipe de backend corrigir a integração. Seus agendamentos continuam normais.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main Status Panel */}
@@ -290,7 +321,7 @@ export default function AdminWhatsAppPage() {
                     <Button 
                       variant="destructive" 
                       className="rounded-2xl px-10 h-14 font-bold shadow-xl shadow-rose-100 hover:shadow-rose-200 transition-all hover:-translate-y-0.5 active:translate-y-0"
-                      onClick={disconnect}
+                      onClick={() => setShowDisconnectDialog(true)}
                       disabled={isActionLoading}
                     >
                       <Unlink className="mr-2 h-5 w-5" />
@@ -300,7 +331,7 @@ export default function AdminWhatsAppPage() {
                     <Button 
                       className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-12 h-14 font-bold shadow-xl shadow-indigo-100 hover:shadow-indigo-200 transition-all hover:-translate-y-0.5 active:translate-y-0"
                       onClick={generateQrCode}
-                      disabled={isActionLoading || status === 'QRCODE_READY'}
+                      disabled={isActionLoading || status === 'QRCODE_READY' || status === 'ERROR'}
                     >
                       {isActionLoading ? (
                         <Loader2 className="h-5 w-5 animate-spin" />
@@ -370,6 +401,17 @@ export default function AdminWhatsAppPage() {
           </Card>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={showDisconnectDialog}
+        onClose={() => setShowDisconnectDialog(false)}
+        onConfirm={disconnect}
+        title="Desconectar WhatsApp"
+        description="Deseja realmente desconectar? Os lembretes automáticos por WhatsApp serão interrompidos até uma nova conexão."
+        confirmLabel="Desconectar"
+        variant="destructive"
+        isLoading={isActionLoading}
+      />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { AuthState, User } from '@/types';
 import { apiPermissaoToUserType, getRoleFromToken } from '@/lib/apiHelpers';
 
@@ -50,11 +50,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('agendaAi_auth', JSON.stringify(newState));
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     const newState = { isAuthenticated: false, user: null, token: null, userType: null };
     setAuthState(newState);
     localStorage.removeItem('agendaAi_auth');
-  };
+    localStorage.removeItem('token');
+  }, []);
+
+  useEffect(() => {
+    const onSessionExpired = () => {
+      logout();
+      window.dispatchEvent(
+        new CustomEvent('global-toast', {
+          detail: {
+            type: 'error',
+            message: 'Sua sessão expirou. Faça login novamente para continuar.',
+          },
+        })
+      );
+    };
+    window.addEventListener('agendaai:session-expired', onSessionExpired);
+    return () => window.removeEventListener('agendaai:session-expired', onSessionExpired);
+  }, [logout]);
 
   return (
     <AuthContext.Provider value={{ ...authState, login, logout }}>

@@ -14,7 +14,7 @@ trigger: always_on
 - **Nunca modifique arquivos da API** (pasta `api/`, repositório clonado, controllers, services, migrations, Swagger, etc.) **a menos que o usuário peça explicitamente**.
 - Repositório da API (somente leitura / clone): https://github.com/UaiPDV/AgendaAI-Prototipo
 - Para testar ou depurar a API, use **exclusivamente o MCP `agendaai`** (`user-agendaai`). Não edite código backend para "corrigir" durante testes.
-- Qualquer bug, contrato incorreto ou comportamento inesperado da API deve ser **registrado** em `docs/registro_erros_api.md` (criar o arquivo se não existir), com: endpoint, método, payload, status HTTP, resposta e impacto no frontend.
+- Qualquer bug, contrato incorreto ou comportamento inesperado da API deve ser **registrado** em `docs/auditoria-api.md` (seção de falhas em produção), com: endpoint, método, payload, status HTTP, resposta e impacto no frontend.
 ---
 ## 2. O que é o MCP AgendaAi
 O MCP `agendaai` é a **ferramenta oficial** para:
@@ -34,7 +34,7 @@ O MCP `agendaai` é a **ferramenta oficial** para:
 | Endpoint sem caso / exploração pontual | `detalhar_endpoint_api` → `chamar_api_dinamica` |
 | Fluxo novo com vários passos dependentes | `chamar_endpoints_lote` (ad-hoc) ou `salvar_caso_teste` (persistir) |
 | Depois de mudança no Swagger | `sincronizar_endpoints_api` → `gerar_relatorio_cobertura` |
-| Erro 4xx/5xx inesperado | `inspecionar_ultima_chamada` → registrar em `docs/registro_erros_api.md` |
+| Erro 4xx/5xx inesperado | `inspecionar_ultima_chamada` → registrar em `docs/auditoria-api.md` |
 **Nunca** teste endpoint por endpoint manualmente via `curl`, `fetch` solto ou scripts próprios se o MCP estiver disponível. **Nunca** chame 68 endpoints um a um sem antes verificar casos existentes e cobertura.
 ---
 ## 4. Fluxo padrão — "testar os endpoints do Agendai"
@@ -100,11 +100,19 @@ listar_categorias_api → listar_rotas_resumidas(category: "Agenda") → executa
 5. `POST /api/Login/Registrar` exige `confirmPassword`.
 6. Respostas da Agenda podem ser **string** (`"Agenda Vazia"`, `"Histórico Vazio"`) em vez de array — trate no frontend e nos asserts.
 7. `POST /api/Login/refresh-token` usa **cookie** `refresh_token`, não Bearer isolado.
-### IDs fixos de QA (ambiente de teste)
+8. Admin agenda: `POST /api/Agenda/Comercio-Agendar` — **sem** `{id}` na URL (Swagger desatualizado).
+9. Se `AutoLogin` do MCP falhar, execute `atualizar_perfil_autenticacao` com credenciais QA abaixo.
+### Credenciais QA (senha: `Senha@123`)
+| Perfil MCP | E-mail |
+|------------|--------|
+| `cliente` | cliente@agendai.dev |
+| `estabelecimento` | novo_estab@agendai.dev |
+| `profissional` | profissional@agendai.dev |
+### IDs fixos de QA (ambiente de teste — jun/2026)
 - `comercioId`: `1`
-- `clienteId`: `8fc484d2-1af0-4999-8799-c13ff37bbb94`
-- `estabelecimentoId`: `25fac5d4-1ab9-40aa-b5a7-0e6f9916823e`
-- `profissionalId`: `cabd5e6d-93dc-4beb-a6de-621855202726`
+- `clienteId`: `5de913ee-b426-4e0c-bbec-ec7b61a3a90f`
+- `profissionalId`: `d158e51e-5075-4b7b-83da-d5134669f009`
+- `servicoId`: `1`
 ### Query params — Agenda
 - `Agenda-Datas`: `ano`, `mes`, `comercioId`, `servicoId`, `profissionalId`
 - `Agenda-Horarios`: `comercioId`, `dataEscolhida`, `servicoId`, `profissionalId`
@@ -136,14 +144,22 @@ Casos MCP prontos: `Dev_AdminTeste_Listar_Usuarios`, `Dev_AdminTeste_Listar_Empr
 ### Asserções (em `salvar_caso_teste`)
 - Operadores: `eq`, `neq`, `contains`, `not_null`
 - Path JSONPath: `$.status`, `$.data.id`
+### Casos prioritários — Agenda (jun/2026)
+- `Fluxo_ComercioUsuarios_Preparar_QA` — vincular prof/cliente ao comércio
+- `Fluxo_Agenda_E2E_Completo` — E2E cliente completo
+- `Fluxo_Agenda_Criar_Confirmar` — cliente agenda + valida listagem
+- `Fluxo_Agenda_Comercio_Agendar` — admin via Comercio-Agendar (sem `{id}`)
+- `Fluxo_Agenda_Comercio_Agendar_Legado` — documenta 404 na rota com `/{id}`
+- `Fluxo_Agenda_Cliente_Datas` — smoke Agenda-Datas/Horarios
+- `Fluxo_Login_Cliente` / `Fluxo_Login_Estabelecimento` — smoke auth via perfil MCP
 ---
 ## 9. Integração frontend ↔ API
 - Consumir via `src/lib/api.ts` (`fetchApi`) — não duplicar lógica HTTP fora dos hooks.
 - Componentes **nunca** chamam API diretamente — use hooks em `src/hooks/` ou `src/features/*/hooks/`.
 - Ao integrar endpoint novo: consultar MCP → validar contrato → implementar hook → usar na página.
-- Bugs de API: corrigir/adaptar no **frontend** (normalização, fallbacks) e registrar em `docs/registro_erros_api.md`. **Não alterar a API.**
+- Bugs de API: corrigir/adaptar no **frontend** (normalização, fallbacks) e registrar em `docs/auditoria-api.md`. **Não alterar a API.**
 Documentação complementar:
-- `docs/relatorio-endpoints-api.md` — auditoria de endpoints
+- `docs/auditoria-api.md` — auditoria de endpoints, erros conhecidos e status de correções
 - `.project-rules/api_agendaai.md` — regras resumidas da API
 ---
 ## 10. O que NÃO fazer
