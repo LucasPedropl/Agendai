@@ -37,8 +37,13 @@ export function ClientLayout() {
     return false;
   });
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
+    if (window.innerWidth < 1024) {
+      setIsMobileSidebarOpen((prev) => !prev);
+      return;
+    }
     const newState = !isCollapsed;
     setIsCollapsed(newState);
     localStorage.setItem('agendai-sidebar-collapsed', JSON.stringify(newState));
@@ -80,8 +85,10 @@ export function ClientLayout() {
 
   return (
     <div className="h-screen bg-background text-foreground flex overflow-hidden">
-      <Sidebar 
+      <Sidebar
         isCollapsed={isCollapsed}
+        isMobileOpen={isMobileSidebarOpen}
+        onMobileClose={() => setIsMobileSidebarOpen(false)}
         navCategories={navCategories}
         userName={user?.nome}
         userRole="Cliente"
@@ -105,6 +112,7 @@ export function ClientLayout() {
           // Client doesn't have "New Appointment" button in the Topbar like Admin,
           // but we can pass it if we want them to have a shortcut.
           onNewAppointment={() => navigate('/app')}
+          showNewAppointment={false}
         />
 
         {/* Profile Dropdown Overlay */}
@@ -141,8 +149,8 @@ export function ClientLayout() {
           )}
         </AnimatePresence>
 
-        <main className="flex-1 overflow-y-auto bg-background/50">
-          <div className="p-6 md:p-10 max-w-7xl mx-auto">
+        <main className="flex-1 overflow-y-auto bg-background/50 pb-20 lg:pb-0">
+          <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto">
             <Outlet />
           </div>
         </main>

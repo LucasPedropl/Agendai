@@ -151,7 +151,7 @@ export default function CadastroPage() {
       cpf: formatCPF(validCpf),
       telefone: formatTelefone(randomPhone),
       dataNascimento: formattedRandomDate,
-      email: formData.email || (isEstabelecimento ? 'jdncbdb2005@gmail.com' : `test_${randomString}@example.com`),
+      email: formData.email || `test_${randomString}@example.com`,
       password: '123123',
       confirmPassword: '123123'
     });
@@ -251,7 +251,8 @@ export default function CadastroPage() {
 
       await fetchApi('/api/Login/Registrar', {
         method: 'POST',
-        body: JSON.stringify(userPayload)
+        body: userPayload,
+        skipToast: true,
       });
       
       setIsSuccess(true);

@@ -18,6 +18,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { fetchApi } from '@/lib/api';
+import { fetchAdminComercios } from '@/lib/apiHelpers';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useNavigate } from 'react-router-dom';
@@ -57,19 +58,16 @@ export default function AdminConfigPage() {
   const loadComercio = async () => {
     setIsLoading(true);
     try {
-      const data = await fetchApi('/api/Comercios', {
-        headers: { 'Authorization': `Bearer ${token}` },
-        skipToast: true
-      } as any);
-      
-      if (Array.isArray(data) && data.length > 0) {
-        setComercio(data[0]);
-        if (data[0].logoUrl) {
-          setPreviewImage(data[0].logoUrl);
+      const list = await fetchAdminComercios(fetchApi);
+      if (list.length > 0) {
+        setComercio(list[0]);
+        const logo = list[0].logoUrl;
+        if (typeof logo === 'string' && logo) {
+          setPreviewImage(logo);
         }
       }
     } catch (err) {
-      console.error("Erro ao carregar comércio:", err);
+      console.warn('Erro ao carregar comércio:', err);
     } finally {
       setIsLoading(false);
     }

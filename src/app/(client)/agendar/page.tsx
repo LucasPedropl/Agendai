@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { fetchApi } from '@/lib/api';
+import { extractHorariosDisponiveis, normalizeApiList, toApiTimeSpan } from '@/lib/apiHelpers';
 import { EstablishmentCard } from '@/components/EstablishmentCard';
 import {
   Search,
@@ -58,10 +59,6 @@ interface Profissional {
   status?: string;
 }
 
-interface AgendaHorariosResponse {
-  horariosDisponiveis: string[];
-}
-
 /**
  * AgendarPage (Smart Component)
  * Fluxo de agendamento em etapas para o cliente.
@@ -115,7 +112,7 @@ export default function AgendarPage() {
     try {
       const [servicesData, professionalsData] = await Promise.all([
         fetchApi(`/api/Servicos/Todos/${est.id}`, { method: 'GET' }),
-        fetchApi(`/api/ComercioUsuarios/Profissionais/${est.id}`, { method: 'GET' }).catch(() => []) // Trata 403/Restrição
+        fetchApi(`/api/ComercioUsuarios/Profissionais-Agendar/${est.id}`, { method: 'GET' }).catch(() => [])
       ]);
 
       setServicos(Array.isArray(servicesData) ? servicesData : []);
@@ -190,8 +187,8 @@ export default function AgendarPage() {
         profissionalId: selectedProfessional?.id?.toString() || '',
         comercioId: selectedEstabelecimento.id.toString(),
       });
-      const data = await fetchApi<AgendaHorariosResponse>(`/api/Agenda/Agenda-Horarios/?${queryParams.toString()}`, { method: 'GET' });
-      setAvailableTimes(data?.horariosDisponiveis || []);
+      const data = await fetchApi(`/api/Agenda/Agenda-Horarios/?${queryParams.toString()}`, { method: 'GET' });
+      setAvailableTimes(extractHorariosDisponiveis(data));
     } catch (err) {
       toast.error('Erro ao carregar horários disponíveis.');
     } finally {
@@ -207,10 +204,10 @@ export default function AgendarPage() {
       await fetchApi('/api/Agenda', {
         method: 'POST',
         body: {
-          IdProssional: selectedProfessional?.id, // Nota: Typo mantido por compatibilidade com API
+          IdProssional: selectedProfessional?.id?.toString() || '',
           IdUsuario: user.id,
           Data: selectedDate.toISOString(),
-          Horario: selectedTime,
+          Horario: toApiTimeSpan(selectedTime),
           IdServico: selectedService.id,
         },
       });

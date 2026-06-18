@@ -57,12 +57,18 @@ export function useClientProfile() {
   const getConfig = async (userId: string) => {
     try {
       setIsLoading(true);
-      // Rota correta identificada no Swagger: /api/Usuario/Config-Usuario/{id}
-      const data = await fetchApi(`/api/Usuario/Config-Usuario/${userId}`);
+      const data = await fetchApi(`/api/Usuario/Config-Usuario/${userId}`, {
+        skipToast: true,
+      } as RequestInit);
       return data;
-    } catch (err: any) {
-      setError(err.message);
-      return null;
+    } catch {
+      // API ainda espera int no path — retorna defaults até correção no backend
+      return {
+        usuarioId: userId,
+        notificaAgendamento: true,
+        notificaPromo: true,
+        notificaDiaAgendado: true,
+      };
     } finally {
       setIsLoading(false);
     }
@@ -77,8 +83,9 @@ export function useClientProfile() {
       // Rota correta identificada no Swagger: /api/Usuario/Config-Usuario/{id}
       await fetchApi(`/api/Usuario/Config-Usuario/${userId}`, {
         method: 'PUT',
-        body: JSON.stringify(config)
-      });
+        body: config,
+        skipToast: true,
+      } as RequestInit);
       return true;
     } catch (err: any) {
       setError(err.message);

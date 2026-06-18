@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, CalendarDays, DollarSign, TrendingUp } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -13,7 +13,6 @@ interface DashboardMetrics {
 }
 
 export default function AdminDashboardPage() {
-  const [isMounted, setIsMounted] = useState(false);
   const [metrics, setMetrics] = useState<DashboardMetrics | null>({
     agendamentosHoje: 12,
     agendamentosSemana: 84,
@@ -35,10 +34,6 @@ export default function AdminDashboardPage() {
     { horario: '15:45', cliente: 'Ana Lúcia', servico: 'Coloração Premium', valor: '220.00' },
     { horario: '17:00', cliente: 'Marcos Silva', servico: 'Hidratação Profunda', valor: '120.00' },
   ]);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   if (isLoading) {
     return <div className="flex h-full items-center justify-center p-8"><div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div></div>;
@@ -124,9 +119,8 @@ export default function AdminDashboardPage() {
             </div>
           </CardHeader>
           <CardContent className="pt-6">
-            <div className="h-[320px] w-full">
-              {isMounted && (
-                <ResponsiveContainer width="100%" height="100%">
+            <div className="h-[300px] w-full min-w-0">
+              <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
                     <XAxis 
@@ -173,8 +167,7 @@ export default function AdminDashboardPage() {
                       dot={false} 
                     />
                   </LineChart>
-                </ResponsiveContainer>
-              )}
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>

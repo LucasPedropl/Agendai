@@ -13,10 +13,22 @@ import {
   ChatBubbleBottomCenterTextIcon,
   ArrowLeftOnRectangleIcon
 } from '@heroicons/react/24/outline';
-import { IconLoader2 } from '@tabler/icons-react';
+import { PageLoader } from '@/components/ui/page-loader';
+import {
+  Squares2X2Icon as MobileDashboardIcon,
+  CalendarIcon as MobileCalendarIcon,
+  ClockIcon as MobileClockIcon,
+  Cog6ToothIcon as MobileConfigIcon,
+} from '@heroicons/react/24/outline';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { fetchApi } from '@/lib/api';
+import {
+  canAccessRoute,
+  fetchAdminComercios,
+  getDashboardPath,
+  resolveUserTypeFromAuth,
+} from '@/lib/apiHelpers';
 import CadastroComercioPage from '@/app/(public)/cadastro-comercio/page';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
@@ -47,12 +59,16 @@ export function AdminLayout() {
   const [isLoadingCommerce, setIsLoadingCommerce] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const roleLabel = userType === 'estabelecimento' ? 'Administrador' : (userType as string) === 'profissional' ? 'Profissional' : 'Estabelecimento';
   const isProfissional = userType === 'profissional';
 
-  // Sidebar Toggle
   const toggleSidebar = () => {
+    if (window.innerWidth < 1024) {
+      setIsMobileSidebarOpen((prev) => !prev);
+      return;
+    }
     const newState = !isCollapsed;
     setIsCollapsed(newState);
     localStorage.setItem('agendai-sidebar-collapsed', JSON.stringify(newState));
@@ -61,34 +77,39 @@ export function AdminLayout() {
   // Commerce verification logic
   useEffect(() => {
     const checkCommerce = async () => {
+      if (!token) {
+        setIsLoadingCommerce(false);
+        return;
+      }
+
+      const tokenUserType = resolveUserTypeFromAuth(token);
+      const requiredType: ('estabelecimento' | 'profissional')[] = isProfissional
+        ? ['profissional']
+        : ['estabelecimento'];
+
+      if (!canAccessRoute(tokenUserType, requiredType)) {
+        navigate(getDashboardPath(tokenUserType), { replace: true });
+        return;
+      }
+
       if (isProfissional) {
         setHasCommerce(true);
         setIsLoadingCommerce(false);
         return;
       }
+
       try {
-        const comercios = await fetchApi('/api/Comercios', {
-          method: 'GET',
-          headers: { 'Authorization': `Bearer ${token}` },
-          skipToast: true
-        } as any);
-        
-        if (!comercios || (Array.isArray(comercios) && (comercios.length === 0 || (comercios.length === 1 && !comercios[0].nome)))) {
-          setHasCommerce(false);
-        } else {
-          setHasCommerce(true);
-        }
-      } catch (err) {
-        console.error("Erro ao verificar comércios:", err);
+        const comercios = await fetchAdminComercios(fetchApi);
+        setHasCommerce(comercios.length > 0 && Boolean(comercios[0]?.nome));
+      } catch {
         setHasCommerce(false);
       } finally {
         setIsLoadingCommerce(false);
       }
     };
 
-    if (token) checkCommerce();
-    else setIsLoadingCommerce(false);
-  }, [token, userType, isProfissional]);
+    checkCommerce();
+  }, [token, userType, isProfissional, navigate]);
 
   const handleLogout = () => {
     logout();
@@ -141,18 +162,27 @@ export function AdminLayout() {
     .flatMap(cat => cat.items)
     .find(item => location.pathname === item.to || location.pathname.startsWith(item.to + '/'))?.label || "Dashboard";
 
+  const mobileNavItems = [
+    { to: `${basePath}/dashboard`, icon: MobileDashboardIcon, label: 'Início' },
+    { to: `${basePath}/agenda`, icon: MobileCalendarIcon, label: 'Agenda' },
+    { to: `${basePath}/historico`, icon: MobileClockIcon, label: 'Histórico' },
+    { to: `${basePath}/config`, icon: MobileConfigIcon, label: 'Config' },
+  ];
+
   if (isLoadingCommerce) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <IconLoader2 className="h-8 w-8 animate-spin text-primary" />
+        <PageLoader label="Carregando workspace..." />
       </div>
     );
   }
 
   return (
     <div className="h-screen bg-background text-foreground flex overflow-hidden">
-      <Sidebar 
+      <Sidebar
         isCollapsed={isCollapsed}
+        isMobileOpen={isMobileSidebarOpen}
+        onMobileClose={() => setIsMobileSidebarOpen(false)}
         navCategories={navCategories}
         userName={user?.nome}
         userRole={roleLabel}
@@ -211,10 +241,10 @@ export function AdminLayout() {
         </AnimatePresence>
 
         <main className={cn(
-          "flex-1 overflow-y-auto bg-background/50",
-          hasCommerce === false && "blur-sm pointer-events-none select-none"
+          'flex-1 overflow-y-auto bg-background/50 pb-20 lg:pb-0',
+          hasCommerce === false && 'blur-sm pointer-events-none select-none'
         )}>
-          <div className="p-6 md:p-10 max-w-7xl mx-auto">
+          <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto">
             {hasCommerce === true && <Outlet />}
           </div>
         </main>
@@ -228,8 +258,26 @@ export function AdminLayout() {
           </div>
         </div>
       )}
-      {/* Global Appointment Modal */}
-      <Modal 
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 border-t border-border bg-background/90 backdrop-blur-lg lg:hidden">
+        {mobileNavItems.map((item) => (
+          <button
+            key={item.to}
+            type="button"
+            onClick={() => navigate(item.to)}
+            className={cn(
+              'flex flex-1 flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-tighter transition-colors',
+              location.pathname === item.to || location.pathname.startsWith(item.to + '/')
+                ? 'text-primary'
+                : 'text-muted-foreground'
+            )}
+          >
+            <item.icon className="h-5 w-5" />
+            {item.label}
+          </button>
+        ))}
+      </nav>
+
+      <Modal
         isOpen={isAppointmentModalOpen} 
         onClose={() => setIsAppointmentModalOpen(false)} 
         title="Novo Agendamento"

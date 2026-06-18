@@ -98,6 +98,18 @@ export function AppointmentForm({ onSuccess, onCancel, initialData, initialTime 
         />
       </div>
 
+      <div className="space-y-2">
+        <label className="text-sm font-semibold text-foreground" htmlFor="observacao">Observação</label>
+        <textarea 
+          id="observacao" 
+          rows={3}
+          value={formState.observacao} 
+          onChange={(e) => setters.setObservacao(e.target.value)}
+          className="flex min-h-[80px] w-full rounded-xl border border-border bg-secondary/30 px-4 py-2 text-sm transition-all placeholder:text-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary/50 disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+          placeholder="Alguma observação importante..."
+        />
+      </div>
+
       <div className="pt-4 flex justify-end gap-3">
         {onCancel && (
           <Button 

@@ -5,17 +5,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
-import { Plus, Edit, Trash2, Settings } from 'lucide-react';
+import { Plus, Edit, Trash2, Clock, Tag } from 'lucide-react';
 import { fetchApi } from '@/lib/api';
+import { normalizeApiList } from '@/lib/apiHelpers';
 import { useAuth } from '@/contexts/AuthContext';
+import { useComercioId } from '@/hooks/useComercioId';
 import { useToast } from '@/contexts/ToastContext';
 import { SearchableSelect } from '@/components/ui/searchable-select';
+import { PageHeader } from '@/components/ui/page-header';
+import { PageLoader } from '@/components/ui/page-loader';
+import { EmptyState } from '@/components/ui/empty-state';
+import { StatusBadge } from '@/components/ui/status-badge';
 
 export default function AdminServicosPage() {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
+  const { comercioId, isLoading: isComercioLoading } = useComercioId();
   const { showToast } = useToast();
   const [servicos, setServicos] = useState<any[]>([]);
-  const [comercioId, setComercioId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [categorias, setCategorias] = useState<any[]>([]);
   const [isLoadingCategorias, setIsLoadingCategorias] = useState(false);
@@ -38,41 +44,22 @@ export default function AdminServicosPage() {
   // Form state - Category
   const [categoriaNome, setCategoriaNome] = useState('');
 
-  const fetchComercioId = async () => {
-    try {
-      const data = await fetchApi('/api/Comercios', {
-        headers: { 'Authorization': `Bearer ${token}` },
-        skipToast: true
-      } as any);
-      if (Array.isArray(data) && data.length > 0) {
-        setComercioId(data[0].id);
-        return data[0].id;
-      }
-    } catch (err) {
-      console.error("Erro ao buscar comércio:", err);
-    }
-    return 1; // Fallback
-  };
-
   const fetchServicos = async (id?: number, silent = false) => {
     if (!silent) setIsLoading(true);
     try {
-      const activeId = id || comercioId || await fetchComercioId();
-      // Usando o endpoint sugerido pelo usuário: /api/Servicos/Todos/{idComercio}
+      const activeId = id ?? comercioId;
+      if (!activeId) {
+        setServicos([]);
+        return;
+      }
       const data = await fetchApi(`/api/Servicos/Todos/${activeId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        skipToast: true
-      } as any);
-      setServicos(Array.isArray(data) ? data : (data ? [data] : []));
+        skipToast: true,
+        notFoundAsEmpty: true,
+      });
+      setServicos(normalizeApiList(data));
     } catch (err) {
-      console.error("Erro ao buscar serviços:", err);
-      // Mock data for display if API fails
-      setServicos([
-        { id: 1, nome: 'Corte de Cabelo', categoria: 'Cabelo', duracao: '00:30', preco: 45.00, ativo: true },
-        { id: 2, nome: 'Barba', categoria: 'Barba', duracao: '00:20', preco: 30.00, ativo: true },
-      ]);
+      console.error('Erro ao buscar serviços:', err);
+      setServicos([]);
     } finally {
       if (!silent) setIsLoading(false);
     }
@@ -81,35 +68,35 @@ export default function AdminServicosPage() {
   const fetchCategorias = async (id?: number, silent = false) => {
     if (!silent) setIsLoadingCategorias(true);
     try {
-      const activeId = id || comercioId || await fetchComercioId();
-      const data = await fetchApi(`/api/Categorias/Todas/${activeId}`, { // Using commerce ID
-        headers: { 'Authorization': `Bearer ${token}` },
-        skipToast: true
-      } as any);
-      setCategorias(Array.isArray(data) ? data : (data ? [data] : []));
+      const activeId = id ?? comercioId;
+      if (!activeId) {
+        setCategorias([]);
+        return;
+      }
+      const data = await fetchApi(`/api/Categorias/Todas/${activeId}`, {
+        skipToast: true,
+        notFoundAsEmpty: true,
+      });
+      setCategorias(normalizeApiList(data));
     } catch (err) {
-      console.error("Erro ao buscar categorias:", err);
-      // Mock data for display if API fails
-      setCategorias([
-        { id: 1, nome: 'Cabelo' },
-        { id: 2, nome: 'Barba' },
-        { id: 3, nome: 'Manicure' },
-      ]);
+      console.error('Erro ao buscar categorias:', err);
+      setCategorias([]);
     } finally {
       if (!silent) setIsLoadingCategorias(false);
     }
   };
 
   useEffect(() => {
-    const init = async () => {
-      if (token) {
-        const id = await fetchComercioId();
-        fetchServicos(id);
-        fetchCategorias(id);
-      }
-    };
-    init();
-  }, [token]);
+    if (isComercioLoading) return;
+    if (!comercioId) {
+      setIsLoading(false);
+      setServicos([]);
+      setCategorias([]);
+      return;
+    }
+    fetchServicos(comercioId);
+    fetchCategorias(comercioId);
+  }, [comercioId, isComercioLoading]);
 
   const openModal = (servico?: any) => {
     if (servico) {
@@ -148,7 +135,13 @@ export default function AdminServicosPage() {
       formattedDuracao = `${duracao}:00`;
     }
 
-    const activeCommerceId = comercioId || await fetchComercioId();
+    if (!comercioId) {
+      showToast('Nenhum comércio vinculado à sua conta.', 'error');
+      setIsSubmitting(false);
+      return;
+    }
+
+    const activeCommerceId = comercioId;
 
     // Find category ID from category name if necessary, 
     // but we'll try to store ID directly in state if it fits better.
@@ -221,7 +214,13 @@ export default function AdminServicosPage() {
     setIsSubmitting(true);
 
     try {
-      const activeCommerceId = comercioId || await fetchComercioId();
+      if (!comercioId) {
+        showToast('Nenhum comércio vinculado à sua conta.', 'error');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const activeCommerceId = comercioId;
       if (editingCategoriaId) {
         await fetchApi(`/api/Categorias/${editingCategoriaId}`, {
           method: 'PUT',
@@ -284,83 +283,94 @@ export default function AdminServicosPage() {
     setIsCategoriaModalOpen(true);
   };
 
-  if (isLoading) {
-    return <div className="flex h-full items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-b-2 border-indigo-600"></div></div>;
+  const getCategoriaNome = (servico: { categorias?: { nome: string }[]; categoria?: string }) =>
+    servico.categorias?.[0]?.nome ?? servico.categoria ?? 'Sem categoria';
+
+  const formatPreco = (preco: number | string | undefined) =>
+    typeof preco === 'number' ? `R$ ${preco.toFixed(2)}` : preco ?? '—';
+
+  const formatDuracao = (duracao: string | undefined) => {
+    if (!duracao) return '—';
+    const parts = duracao.split(':');
+    if (parts.length >= 2) return `${parts[0]}h ${parts[1]}min`;
+    return duracao;
+  };
+
+  if (isLoading || isComercioLoading) {
+    return <PageLoader label="Carregando serviços..." />;
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Serviços</h1>
-          <p className="text-gray-500">Gerencie os serviços oferecidos.</p>
-        </div>
-        <Button className="w-full sm:w-auto" onClick={() => openModal()}>
+      <PageHeader title="Serviços" description="Gerencie os serviços oferecidos pelo estabelecimento.">
+        <Button onClick={() => openModal()}>
           <Plus className="mr-2 h-4 w-4" />
           Novo Serviço
         </Button>
-      </div>
+      </PageHeader>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Serviços</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-gray-500">
-              <thead className="bg-gray-50 text-xs uppercase text-gray-700">
-                <tr>
-                  <th scope="col" className="px-6 py-3">Nome</th>
-                  <th scope="col" className="px-6 py-3">Categoria</th>
-                  <th scope="col" className="px-6 py-3">Duração</th>
-                  <th scope="col" className="px-6 py-3">Preço (R$)</th>
-                  <th scope="col" className="px-6 py-3">Status</th>
-                  <th scope="col" className="px-6 py-3 text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {servicos.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                      Nenhum serviço cadastrado.
-                    </td>
-                  </tr>
-                ) : (
-                  servicos.map((servico) => (
-                    <tr key={servico.id} className="border-b bg-white hover:bg-gray-50">
-                      <td className="whitespace-nowrap px-6 py-4 font-medium text-gray-900">{servico.nome}</td>
-                      <td className="px-6 py-4">
-                        {servico.categorias && servico.categorias.length > 0 
-                          ? servico.categorias[0].nome 
-                          : (servico.categoria || '-')}
-                      </td>
-                      <td className="px-6 py-4">{servico.duracao}</td>
-                      <td className="px-6 py-4">
-                        {typeof servico.preco === 'number' ? `R$ ${servico.preco.toFixed(2)}` : servico.preco}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          servico.ativo ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {servico.ativo ? 'Ativo' : 'Inativo'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <Button variant="ghost" size="icon" className="text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50" onClick={() => openModal(servico)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-900 hover:bg-red-50" onClick={() => handleDelete(servico.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
+      {servicos.length === 0 ? (
+        <EmptyState
+          icon={Tag}
+          title="Nenhum serviço cadastrado"
+          description="Cadastre seu primeiro serviço para disponibilizá-lo na agenda."
+          actionLabel="Novo Serviço"
+          onAction={() => openModal()}
+        />
+      ) : (
+        <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {servicos.map((servico) => (
+            <Card key={servico.id} className="overflow-hidden hover:border-primary/30 transition-colors">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <CardTitle className="text-base truncate">{servico.nome}</CardTitle>
+                    <div className="flex items-center gap-1.5 mt-1.5 text-xs text-muted-foreground">
+                      <Tag className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">{getCategoriaNome(servico)}</span>
+                    </div>
+                  </div>
+                  <StatusBadge
+                    label={servico.ativo !== false ? 'Ativo' : 'Inativo'}
+                    variant={servico.ativo !== false ? 'success' : 'neutral'}
+                  />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {servico.descricao && (
+                  <p className="text-sm text-muted-foreground line-clamp-2">{servico.descricao}</p>
                 )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    {formatDuracao(servico.duracao)}
+                  </div>
+                  <span className="font-bold text-foreground">{formatPreco(servico.preco)}</span>
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => openModal(servico)}
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Editar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
+                    onClick={() => handleDelete(servico.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={editingId ? "Editar Serviço" : "Novo Serviço"}>
         <form onSubmit={handleSubmit} className="space-y-4">

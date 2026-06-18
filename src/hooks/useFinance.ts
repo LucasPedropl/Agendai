@@ -29,9 +29,25 @@ export function useFinance() {
     }
   }, []);
 
+  const getPagamentosEmpresa = useCallback(async (comercioId: number) => {
+    setIsLoading(true);
+    try {
+      const data = await fetchApi(`/api/Pagamentos/Pagamentos-Empresa/${comercioId}`, {
+        skipToast: true,
+      } as RequestInit);
+      return Array.isArray(data) ? data : [];
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar pagamentos');
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   return {
     isLoading,
     error,
-    getPagamentosCliente
+    getPagamentosCliente,
+    getPagamentosEmpresa,
   };
 }

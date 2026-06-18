@@ -3,7 +3,13 @@
 // resolvendo completamente qualquer erro de CORS ("Failed to fetch").
 export const API_URL = '';
 
-export async function fetchApi(endpoint: string, options: RequestInit = {}) {
+export type FetchApiOptions = RequestInit & {
+  skipToast?: boolean;
+  /** Retorna [] em GET 404 sem logar erro (listas vazias na API .NET). */
+  notFoundAsEmpty?: boolean;
+};
+
+export async function fetchApi(endpoint: string, options: FetchApiOptions = {}) {
   let token = localStorage.getItem('token');
   
   if (!token) {
@@ -22,8 +28,13 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
   
   const headers = new Headers(options.headers || {});
 
+  let body = options.body;
+  if (body && typeof body === 'object' && !(body instanceof FormData)) {
+    body = JSON.stringify(body);
+  }
+
   // Only set default content-type if not FormData
-  if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
+  if (!(body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
 
@@ -36,24 +47,42 @@ export async function fetchApi(endpoint: string, options: RequestInit = {}) {
 
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
+    body,
     headers,
   });
 
   const method = options.method?.toUpperCase() || 'GET';
   
-  // Flag to avoid conflicting with manual toasts on some pages, optional
-  const skipToast = (options as any).skipToast;
+  const skipToast = options.skipToast;
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    console.error(`API Error (${response.status}):`, errorData);
-    
-    // Extract validation errors if present (Common in .NET APIs for example)
-    const validationErrors = errorData.errors ? 
-      Object.entries(errorData.errors).map(([key, val]) => `${key}: ${(val as string[]).join(', ')}`).join(' | ') : 
-      '';
+    if (options.notFoundAsEmpty && response.status === 404 && method === 'GET') {
+      return [];
+    }
 
-    const message = errorData.message || errorData.error || validationErrors || `Erro na operação: ${response.status} ${response.statusText}`;
+    const errorData: unknown = await response.json().catch(() => ({}));
+    console.error(`API Error (${response.status}):`, errorData);
+
+    let message = `Erro na operação: ${response.status} ${response.statusText}`;
+
+    if (typeof errorData === 'string' && errorData.trim()) {
+      message = errorData.trim();
+    } else if (errorData && typeof errorData === 'object') {
+      const err = errorData as Record<string, unknown>;
+      const validationErrors = err.errors && typeof err.errors === 'object'
+        ? Object.entries(err.errors as Record<string, string[]>)
+            .map(([key, val]) => `${key}: ${val.join(', ')}`)
+            .join(' | ')
+        : '';
+
+      message =
+        (typeof err.message === 'string' && err.message) ||
+        (typeof err.error === 'string' && err.error) ||
+        (typeof err.detail === 'string' && err.detail) ||
+        (typeof err.title === 'string' && err.title) ||
+        validationErrors ||
+        message;
+    }
     
     if (!skipToast) {
       window.dispatchEvent(new CustomEvent('global-toast', { 

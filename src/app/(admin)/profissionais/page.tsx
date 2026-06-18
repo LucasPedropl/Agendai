@@ -5,35 +5,44 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
-import { Plus, Edit, Trash2, Phone } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
+import { PageLoader } from '@/components/ui/page-loader';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { StatusBadge, getStatusVariant } from '@/components/ui/status-badge';
+import { Plus, Trash2, Phone, Users } from 'lucide-react';
 import { Profissional } from '@/types';
 import { fetchApi } from '@/lib/api';
+import { fetchComercioUsuariosList } from '@/lib/apiHelpers';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useComercioId } from '@/hooks/useComercioId';
 
 export default function AdminProfissionaisPage() {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const { showToast } = useToast();
+  const { comercioId } = useComercioId();
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [isDeactivating, setIsDeactivating] = useState(false);
 
   const fetchProfissionais = async (silent = false) => {
+    if (!comercioId) return;
     if (!silent) setIsLoading(true);
     try {
-      const commerceId = (user as any)?.id || 1;
-      const data = await fetchApi(`/api/ComercioUsuarios/Profissionais/${commerceId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        skipToast: true
-      } as any);
-      setProfissionais(Array.isArray(data) ? data : (data ? [data] : []));
+      const list = await fetchComercioUsuariosList<Profissional>(
+        fetchApi,
+        'Profissionais',
+        comercioId
+      );
+      setProfissionais(list);
     } catch (err) {
-      console.error("Erro ao buscar profissionais:", err);
+      console.error('Erro ao buscar profissionais:', err);
       setProfissionais([]);
     } finally {
       if (!silent) setIsLoading(false);
@@ -41,109 +50,115 @@ export default function AdminProfissionaisPage() {
   };
 
   useEffect(() => {
-    if (token) {
-      fetchProfissionais();
+    if (token && comercioId) fetchProfissionais();
+  }, [token, comercioId]);
+
+  const handleDesativar = async () => {
+    if (!comercioId || !confirmId) return;
+    setIsDeactivating(true);
+    try {
+      await fetchApi(`/Desativar-Usuario/${comercioId}/${confirmId}`, {
+        method: 'DELETE',
+        skipToast: true,
+      } as RequestInit);
+      showToast('Profissional desativado.', 'success');
+      setConfirmId(null);
+      fetchProfissionais(true);
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Erro ao desativar.', 'error');
+    } finally {
+      setIsDeactivating(false);
     }
-  }, [token]);
+  };
 
   const handleInviteProfissional = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
     try {
-      const commerceId = (user as any)?.id || 1;
+      if (!comercioId) return;
       await fetchApi('/api/ComercioUsuarios/Cadastrar-Funcionario-Cliente', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          idComercio: commerceId,
-          nome,
-          email,
-          permissao: 1 // Profissional
-        }),
-        skipToast: true
-      } as any);
-
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ idComercio: comercioId, nome, email, permissao: 1 }),
+        skipToast: true,
+      } as RequestInit);
       setIsModalOpen(false);
       setNome('');
       setEmail('');
-      showToast('Convite enviado com sucesso para o profissional!', 'success');
-      // Refresh with a small delay
+      showToast('Convite enviado com sucesso!', 'success');
       setTimeout(() => fetchProfissionais(true), 500);
-    } catch (err: any) {
-      console.error(err);
-      showToast(err.message || 'Erro ao convidar profissional.', 'error');
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Erro ao convidar profissional.', 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (isLoading) {
-    return <div className="flex h-full items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-b-2 border-indigo-600"></div></div>;
-  }
+  if (isLoading) return <PageLoader label="Carregando profissionais..." />;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Profissionais</h1>
-          <p className="text-gray-500">Gerencie sua equipe e especialidades.</p>
-        </div>
-        <Button className="w-full sm:w-auto" onClick={() => setIsModalOpen(true)}>
+      <PageHeader title="Profissionais" description="Gerencie sua equipe e especialidades.">
+        <Button onClick={() => setIsModalOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Convidar Profissional
         </Button>
-      </div>
+      </PageHeader>
+
+      <ConfirmDialog
+        isOpen={!!confirmId}
+        onClose={() => setConfirmId(null)}
+        onConfirm={handleDesativar}
+        title="Remover profissional"
+        description="O profissional perderá acesso ao estabelecimento. Você pode convidá-lo novamente depois."
+        confirmLabel="Remover"
+        variant="destructive"
+        isLoading={isDeactivating}
+      />
 
       {profissionais.length === 0 ? (
-        <Card className="flex flex-col items-center justify-center py-12 border-dashed">
-          <p className="text-gray-500 mb-4">Nenhum profissional cadastrado.</p>
-          <Button variant="outline" onClick={() => setIsModalOpen(true)}>Adicionar Primeiro Profissional</Button>
-        </Card>
+        <EmptyState
+          icon={Users}
+          title="Nenhum profissional cadastrado"
+          description="Convide profissionais para gerenciar a agenda do estabelecimento."
+          actionLabel="Adicionar Profissional"
+          onAction={() => setIsModalOpen(true)}
+        />
       ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {profissionais.map((profissional) => (
-            <Card key={profissional.id} className="overflow-hidden">
-              <CardHeader className="pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold text-lg">
-                      {profissional.nome.charAt(0)}
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{profissional.nome}</CardTitle>
-                      {profissional.status && (
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium mt-1 ${
-                          profissional.status.toLowerCase() === 'ativo' 
-                            ? 'bg-green-100 text-green-800' 
-                            : profissional.status.toLowerCase() === 'pendente'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {profissional.status}
-                        </span>
-                      )}
-                    </div>
+            <Card key={profissional.id} className="overflow-hidden hover:border-primary/30 transition-colors">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
+                    {profissional.nome.charAt(0)}
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">{profissional.nome}</CardTitle>
+                    {profissional.status && (
+                      <StatusBadge
+                        label={profissional.status}
+                        variant={getStatusVariant(profissional.status)}
+                        className="mt-1"
+                      />
+                    )}
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3 text-sm text-gray-600">
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-gray-400" />
-                    {profissional.telefone || 'Sem telefone'}
-                  </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Phone className="h-4 w-4" />
+                  {profissional.telefone || 'Sem telefone'}
                 </div>
-                <div className="mt-6 flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    <Edit className="mr-2 h-4 w-4" /> Editar
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200">
-                    <Trash2 className="mr-2 h-4 w-4" /> Remover
-                  </Button>
-                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-4 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
+                  onClick={() => setConfirmId(String(profissional.id))}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Remover
+                </Button>
               </CardContent>
             </Card>
           ))}
@@ -152,36 +167,21 @@ export default function AdminProfissionaisPage() {
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Convidar Profissional">
         <form onSubmit={handleInviteProfissional} className="space-y-4">
-          <p className="text-sm text-gray-500">
-            Enviaremos um convite por e-mail para que o profissional realize seu cadastro e tenha acesso ao painel.
+          <p className="text-sm text-muted-foreground">
+            Enviaremos um convite por e-mail para que o profissional realize seu cadastro.
           </p>
           <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="nome">Nome Completo</label>
-            <Input 
-              id="nome" 
-              required 
-              placeholder="Ex: João da Silva" 
-              value={nome} 
-              onChange={(e) => setNome(e.target.value)} 
-            />
+            <Input id="nome" required placeholder="Ex: João da Silva" value={nome} onChange={(e) => setNome(e.target.value)} />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="email">E-mail</label>
-            <Input 
-              id="email" 
-              type="email"
-              required 
-              placeholder="exemplo@email.com" 
-              value={email} 
-              onChange={(e) => setEmail(e.target.value)} 
-            />
+            <Input id="email" type="email" required placeholder="exemplo@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="pt-4 flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
-              Cancelar
-            </Button>
+            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Enviando Convite...' : 'Enviar Convite'}
+              {isSubmitting ? 'Enviando...' : 'Enviar Convite'}
             </Button>
           </div>
         </form>

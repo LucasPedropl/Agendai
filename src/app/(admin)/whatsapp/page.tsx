@@ -19,30 +19,34 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { fetchApi } from '@/lib/api';
+import { mapWhatsAppStatus } from '@/lib/apiHelpers';
 import { useAuth } from '@/contexts/AuthContext';
+import { useComercioId } from '@/hooks/useComercioId';
 import { useToast } from '@/contexts/ToastContext';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function AdminWhatsAppPage() {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
   const toast = useToast();
+  const { comercioId, isLoading: isLoadingComercio } = useComercioId();
   const [status, setStatus] = useState<string>('checking');
   const [qrCode, setQrCode] = useState<string | null>(null);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
 
-  const commerceId = (user as any)?.comercioId || 1;
+  const commerceId = comercioId;
 
   const checkStatus = useCallback(async function(silent = false) {
+    if (!commerceId) return;
     if (!silent) setIsLoading(true);
     try {
       const data = await fetchApi(`/api/WhatsApp/Status/${commerceId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      } as any);
-      
-      setStatus(data.status);
-      setPhoneNumber(data.phone_number || null);
+        skipToast: true,
+      } as RequestInit);
+
+      setStatus(mapWhatsAppStatus(data?.status));
+      setPhoneNumber(data?.phone_number || data?.ntelefone || null);
       
       if (data.status === 'CONNECTED') {
         setQrCode(null);
@@ -53,15 +57,15 @@ export default function AdminWhatsAppPage() {
     } finally {
       if (!silent) setIsLoading(false);
     }
-  }, [commerceId, token]);
+  }, [commerceId]);
 
   const generateQrCode = async () => {
+    if (!commerceId) return;
     setIsActionLoading(true);
     try {
       const data = await fetchApi(`/api/WhatsApp/Obter-QrCode/${commerceId}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-        skipToast: true
-      } as any);
+        skipToast: true,
+      } as RequestInit);
       
       if (data?.qrCode) {
         setQrCode(data.qrCode);
@@ -85,8 +89,7 @@ export default function AdminWhatsAppPage() {
     try {
       await fetchApi(`/api/WhatsApp/Desconectar/${commerceId}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      } as any);
+      });
       
       setStatus('DISCONNECTED');
       setQrCode(null);

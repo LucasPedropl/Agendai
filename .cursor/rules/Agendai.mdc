@@ -1,0 +1,157 @@
+---
+alwaysApply: true
+---
+
+---
+trigger: always_on
+---
+# AgendaAi — Regras do Projeto e MCP
+## 1. Escopo e limites absolutos
+### Frontend (este repositório)
+- Trabalhe em `src/`, `docs/`, `.project-rules/`, componentes, hooks e integrações.
+- O frontend consome a API via proxy (`/api/*` → `https://agendaai.bixs.com.br`).
+### Backend / API — PROIBIDO MODIFICAR
+- **Nunca modifique arquivos da API** (pasta `api/`, repositório clonado, controllers, services, migrations, Swagger, etc.) **a menos que o usuário peça explicitamente**.
+- Repositório da API (somente leitura / clone): https://github.com/UaiPDV/AgendaAI-Prototipo
+- Para testar ou depurar a API, use **exclusivamente o MCP `agendaai`** (`user-agendaai`). Não edite código backend para "corrigir" durante testes.
+- Qualquer bug, contrato incorreto ou comportamento inesperado da API deve ser **registrado** em `docs/registro_erros_api.md` (criar o arquivo se não existir), com: endpoint, método, payload, status HTTP, resposta e impacto no frontend.
+---
+## 2. O que é o MCP AgendaAi
+O MCP `agendaai` é a **ferramenta oficial** para:
+- Descobrir e inspecionar endpoints (catálogo sincronizado com o Swagger)
+- Executar requisições HTTP contra a API remota
+- Rodar casos de teste salvos (regressão e fluxos E2E)
+- Medir cobertura de testes
+- Consultar playbook com lições aprendidas de integrações anteriores
+**O prompt/instruções do MCP NÃO vêm automaticamente na mensagem do usuário.** Você deve **invocar as ferramentas** para obter contexto. Sempre comece pelo MCP quando a tarefa envolver API, endpoints, testes ou integração backend.
+**Servidor MCP:** `user-agendaai` (nome: `agendaai`)
+---
+## 3. Decisão: como testar a API
+| Situação | O que fazer |
+|----------|-------------|
+| Usuário pede "testar endpoints", "regressão", "validar API" | Fluxo padrão (seção 4) — **priorize casos de teste salvos** |
+| Endpoint já tem caso de teste | `executar_caso_teste` com `nameOrId` |
+| Endpoint sem caso / exploração pontual | `detalhar_endpoint_api` → `chamar_api_dinamica` |
+| Fluxo novo com vários passos dependentes | `chamar_endpoints_lote` (ad-hoc) ou `salvar_caso_teste` (persistir) |
+| Depois de mudança no Swagger | `sincronizar_endpoints_api` → `gerar_relatorio_cobertura` |
+| Erro 4xx/5xx inesperado | `inspecionar_ultima_chamada` → registrar em `docs/registro_erros_api.md` |
+**Nunca** teste endpoint por endpoint manualmente via `curl`, `fetch` solto ou scripts próprios se o MCP estiver disponível. **Nunca** chame 68 endpoints um a um sem antes verificar casos existentes e cobertura.
+---
+## 4. Fluxo padrão — "testar os endpoints do Agendai"
+Execute nesta ordem:
+consultar_guia_fluxos → playbook, armadilhas conhecidas
+obter_regras_projeto → regras locais (se houver)
+listar_perfis_autenticacao → IDs de auth (Admin, Cliente, Estabelecimento)
+gerar_relatorio_cobertura → ver o que já está coberto
+listar_casos_teste → casos salvos e status da última execução
+executar_caso_teste → rodar casos relevantes (por módulo ou todos)
+gerar_relatorio_cobertura → confirmar lacunas
+(se lacuna) salvar_caso_teste → criar caso para endpoint órfão
+Para um módulo específico (ex.: Agenda, Login):
+listar_categorias_api → listar_rotas_resumidas(category: "Agenda") → executar casos do módulo
+
+
+---
+## 5. Referência de ferramentas MCP
+### Descoberta e contrato
+| Ferramenta | Quando usar |
+|------------|-------------|
+| `sincronizar_endpoints_api` | Atualizar catálogo após mudanças no Swagger |
+| `listar_categorias_api` | Ver módulos (Agenda, Login, AdminTeste, etc.) |
+| `listar_rotas_resumidas` | Listar rotas (filtros: `category`, `method`) |
+| `detalhar_endpoint_api` | Schema, campos obrigatórios, query params — **antes de chamar** |
+| `consultar_guia_fluxos` | Playbook com fluxos e pegadinhas |
+| `consultar_relatorio_sincronizacao` | Changelog da última sync |
+### Execução HTTP
+| Ferramenta | Quando usar |
+|------------|-------------|
+| `chamar_api_dinamica` | Chamada única. **Substitua `{id}` na rota** (ex: `/api/Usuario/abc-guid`) |
+| `chamar_endpoints_lote` | Vários passos com `{{requestId.campo}}` entre eles |
+| `executar_caso_teste` | Rodar caso salvo. **Obrigatório:** `nameOrId` |
+| `inspecionar_ultima_chamada` | Debug de request/response recentes |
+| `gerar_dados_teste` | CPF, CNPJ, email, nome, telefone válidos |
+### Casos de teste (regressão)
+| Ferramenta | Quando usar |
+|------------|-------------|
+| `listar_casos_teste` | Ver todos os casos e última execução |
+| `salvar_caso_teste` | Criar/atualizar fluxo multi-step |
+| `executar_caso_teste` | Executar (com `variablesOverride` opcional) |
+| `deletar_caso_teste` | Remover caso obsoleto |
+| `gerar_relatorio_cobertura` | Endpoints com/sem teste |
+### Autenticação
+| Ferramenta | Quando usar |
+|------------|-------------|
+| `listar_perfis_autenticacao` | Obter `authProfileId` (Admin, Cliente, Estabelecimento) |
+| `atualizar_perfil_autenticacao` | Atualizar credenciais de um perfil |
+| `configurar_headers_globais` | Headers globais do proxy MCP |
+### Manutenção e documentação
+| Ferramenta | Quando usar |
+|------------|-------------|
+| `obter_regras_projeto` / `listar_regras_projeto` / `salvar_regra_projeto` | Regras persistidas no MCP |
+| `adicionar_nota_playbook` | Registrar descoberta para futuras IAs |
+| `configurar_mcp_categoria` | Instruções por categoria de endpoint |
+| `registrar_entidade_teardown` | Cleanup pós-teste |
+---
+## 6. Regras de chamada HTTP
+1. **Sempre** `detalhar_endpoint_api` antes da primeira chamada a um endpoint desconhecido.
+2. **Substitua placeholders de rota** — `/api/Agenda/{id}` vira `/api/Agenda/1` ou GUID real.
+3. Use `authProfileId` correto por contexto (admin vs cliente vs estabelecimento).
+4. Login **não retorna `id` no body** — extraia `userId` do JWT ou use perfil QA fixo.
+5. `POST /api/Login/Registrar` exige `confirmPassword`.
+6. Respostas da Agenda podem ser **string** (`"Agenda Vazia"`, `"Histórico Vazio"`) em vez de array — trate no frontend e nos asserts.
+7. `POST /api/Login/refresh-token` usa **cookie** `refresh_token`, não Bearer isolado.
+### IDs fixos de QA (ambiente de teste)
+- `comercioId`: `1`
+- `clienteId`: `8fc484d2-1af0-4999-8799-c13ff37bbb94`
+- `estabelecimentoId`: `25fac5d4-1ab9-40aa-b5a7-0e6f9916823e`
+- `profissionalId`: `cabd5e6d-93dc-4beb-a6de-621855202726`
+### Query params — Agenda
+- `Agenda-Datas`: `ano`, `mes`, `comercioId`, `servicoId`, `profissionalId`
+- `Agenda-Horarios`: `comercioId`, `dataEscolhida`, `servicoId`, `profissionalId`
+---
+## 7. AdminTeste — utilitários de DEV/QA (não é produção)
+Endpoints de desenvolvimento. **Não fazem parte do produto.** Use apenas em ambiente de testes.
+| Método | Rota | Uso |
+|--------|------|-----|
+| GET | `/api/AdminTeste/Usuarios` | Lista usuários (inclui dados para `Ativar-Login`) |
+| GET | `/api/AdminTeste/Empresas` | Lista todos os comércios |
+| DELETE | `/api/AdminTeste/Empresas` | ⚠️ Remove empresas em lote |
+| DELETE | `/api/AdminTeste/Deletar-Dados` | ⚠️⚠️ Apaga todo o banco |
+**Fluxo ativação de conta (testes):**
+1. `POST /api/Login/Registrar`
+2. `GET /api/AdminTeste/Usuarios` → usuário com `emailConfirmed: false`
+3. `POST /api/Login/Ativar-Login?userId={id}&token={token}`
+Casos MCP prontos: `Dev_AdminTeste_Listar_Usuarios`, `Dev_AdminTeste_Listar_Empresas`, `Dev_Fluxo_Ativar_Conta`, `Dev_AdminTeste_Reset_Banco`
+**Nunca execute DELETE de AdminTeste sem confirmação explícita do usuário.**
+---
+## 8. Casos de teste — convenções
+### Nomenclatura
+- `Regressao_*` — leitura/CRUD de um módulo
+- `Fluxo_*` — jornada multi-step (criar → confirmar → cancelar)
+- `Dev_*` — utilitários AdminTeste e fluxos de desenvolvimento
+### Placeholders em steps
+- `{{passo_anterior.campo}}` — dado de step anterior
+- `{{$randomCPF}}`, `{{$randomEmail}}` — dados dinâmicos
+- `variablesOverride` em `executar_caso_teste` — sobrescrever variáveis na execução
+### Asserções (em `salvar_caso_teste`)
+- Operadores: `eq`, `neq`, `contains`, `not_null`
+- Path JSONPath: `$.status`, `$.data.id`
+---
+## 9. Integração frontend ↔ API
+- Consumir via `src/lib/api.ts` (`fetchApi`) — não duplicar lógica HTTP fora dos hooks.
+- Componentes **nunca** chamam API diretamente — use hooks em `src/hooks/` ou `src/features/*/hooks/`.
+- Ao integrar endpoint novo: consultar MCP → validar contrato → implementar hook → usar na página.
+- Bugs de API: corrigir/adaptar no **frontend** (normalização, fallbacks) e registrar em `docs/registro_erros_api.md`. **Não alterar a API.**
+Documentação complementar:
+- `docs/relatorio-endpoints-api.md` — auditoria de endpoints
+- `.project-rules/api_agendaai.md` — regras resumidas da API
+---
+## 10. O que NÃO fazer
+- ❌ Modificar código da API/backend sem pedido explícito
+- ❌ Ignorar o MCP e testar com curl/scripts manuais
+- ❌ Chamar endpoints sem `detalhar_endpoint_api` na primeira vez
+- ❌ Executar `AdminTeste` DELETE sem confirmação do usuário
+- ❌ Assumir que login retorna `id` no body
+- ❌ Usar `user.id` como `comercioId` — use `GET /api/Comercios/Admin` ou hook `useComercioId`
+- ❌ Usar `alert()` — feedback via toast/UI
+- ❌ Criar selects sem busca/pesquisa

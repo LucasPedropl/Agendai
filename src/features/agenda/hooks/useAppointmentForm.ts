@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { fetchApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { useComercioId } from '@/hooks/useComercioId';
 
 interface Option {
   value: string;
@@ -9,7 +10,8 @@ interface Option {
 }
 
 export function useAppointmentForm(onSuccess?: () => void) {
-  const { token, user } = useAuth();
+  const { token } = useAuth();
+  const { comercioId } = useComercioId();
   const { success, error } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
@@ -20,6 +22,7 @@ export function useAppointmentForm(onSuccess?: () => void) {
   const [data, setData] = useState('');
   const [horario, setHorario] = useState('');
   const [idServico, setIdServico] = useState('');
+  const [observacao, setObservacao] = useState('');
 
   // Options for selects
   const [clientesOptions, setClientesOptions] = useState<Option[]>([]);
@@ -27,26 +30,15 @@ export function useAppointmentForm(onSuccess?: () => void) {
   const [servicosOptions, setServicosOptions] = useState<Option[]>([]);
 
   const fetchOptions = useCallback(async () => {
-    if (!token || !user) return;
-    
+    if (!token || !comercioId) return;
+
     setIsLoadingOptions(true);
-    const commerceId = (user as any)?.id || 1;
-    
+
     try {
-      // Parallel fetch for better performance
       const [servicosData, profissionaisData, clientesData] = await Promise.all([
-        fetchApi(`/api/Servicos/Todos/${commerceId}`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-          skipToast: true
-        } as any),
-        fetchApi(`/api/ComercioUsuarios/Profissionais/${commerceId}`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-          skipToast: true
-        } as any),
-        fetchApi(`/api/ComercioUsuarios/Clientes/${commerceId}`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-          skipToast: true
-        } as any)
+        fetchApi(`/api/Servicos/Todos/${comercioId}`, { skipToast: true } as RequestInit),
+        fetchApi(`/api/ComercioUsuarios/Profissionais/${comercioId}`, { skipToast: true } as RequestInit),
+        fetchApi(`/api/ComercioUsuarios/Clientes/${comercioId}`, { skipToast: true } as RequestInit),
       ]);
 
       // Process Services
@@ -81,13 +73,18 @@ export function useAppointmentForm(onSuccess?: () => void) {
     } finally {
       setIsLoadingOptions(false);
     }
-  }, [token, user]);
+  }, [token, comercioId, error]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
     if (!idUsuario || idUsuario === 'undefined' || !idProssional || !idServico || !data || !horario) {
       error("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+
+    if (!comercioId) {
+      error('Comércio não identificado');
       return;
     }
 
@@ -98,21 +95,19 @@ export function useAppointmentForm(onSuccess?: () => void) {
       const horarioComSegundos = horario.length === 5 ? `${horario}:00` : horario;
 
       const payload = {
-        IdProssional: idProssional,
-        IdUsuario: idUsuario,
-        Data: dataIso,
-        Horario: horarioComSegundos,
-        IdServico: Number(idServico)
+        idProssional,
+        idUsuario,
+        data: dataIso,
+        horario: horarioComSegundos,
+        idServico: Number(idServico),
+        observacao,
       };
 
-      await fetchApi('/api/Agenda', {
+      await fetchApi(`/api/Agenda/Comercio-Agendar/${comercioId}`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
         body: JSON.stringify(payload),
-        skipToast: true
-      } as any);
+        skipToast: true,
+      } as RequestInit);
 
       success("Agendamento cadastrado com sucesso!");
       resetForm();
@@ -131,14 +126,15 @@ export function useAppointmentForm(onSuccess?: () => void) {
     setData('');
     setHorario('');
     setIdServico('');
+    setObservacao('');
   };
 
   const formState = useMemo(() => ({ 
-    idProssional, idUsuario, data, horario, idServico 
-  }), [idProssional, idUsuario, data, horario, idServico]);
+    idProssional, idUsuario, data, horario, idServico, observacao 
+  }), [idProssional, idUsuario, data, horario, idServico, observacao]);
 
   const setters = useMemo(() => ({ 
-    setIdProssional, setIdUsuario, setData, setHorario, setIdServico 
+    setIdProssional, setIdUsuario, setData, setHorario, setIdServico, setObservacao 
   }), []);
 
   const options = useMemo(() => ({ 

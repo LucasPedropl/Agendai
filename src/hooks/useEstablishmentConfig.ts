@@ -1,57 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { fetchApi } from '@/lib/api';
+import { fetchAdminComercios } from '@/lib/apiHelpers';
+import {
+  buildConfigComercioPayload,
+  createDefaultConfig,
+  isValidConfigResponse,
+  mapConfigFromApi,
+  mergeConfigIdsFromCache,
+  saveConfigWithIdDiscovery,
+  serverConfigExists,
+  type ComercioConfiguracao,
+  type ConfigComercio,
+  type HorarioAtendimento,
+  type ComercioConfigFuncionario,
+  type DiaFechado,
+} from '@/lib/configComercioMappers';
 import { useAuth } from '@/contexts/AuthContext';
 
-export interface HorarioAtendimento {
-  dias: number[];
-  horaInicio: string;
-  horaFim: string;
-  intervalo: boolean;
-  inicioIntervalo?: string;
-  fimIntervalo?: string;
-}
-
-export interface DiaFechado {
-  id?: number;
-  data: string;
-  descricao?: string;
-}
-
-export interface ConfigComercio {
-  comercioId: number;
-  antecedenciaMin: number;
-  limiteAgendar: number;
-  confirmaAuto: boolean;
-  tempoDuracaoPadrao: number;
-  tempoCancelamento: number;
-  reagendar: boolean;
-  tempoIntervalo: number;
-  agendaSimultanea: number;
-  horarioPorProfissional: boolean;
-  fechaFeriadosNacionais: boolean;
-  fechaFeriadosMunicipais: boolean;
-  diasFechados: DiaFechado[];
-}
-
-export interface ComercioConfigFuncionario {
-  idFuncionario: string;
-  nomeFuncionario?: string;
-  idHorarioAtendimento?: number;
-  dias: number[];
-  horaInicio: string;
-  horaFim: string;
-  inicioIntervalo?: string;
-  fimIntervalo?: string;
-  intervalo: boolean;
-}
-
-export interface ComercioConfiguracao {
-  idHorarioAtendimento?: number;
-  idConfigComercio?: number;
-  horarioAtendimento?: HorarioAtendimento;
-  configuracao?: ConfigComercio;
-  funcionarios?: ComercioConfigFuncionario[];
-}
+export type {
+  ComercioConfiguracao,
+  ConfigComercio,
+  HorarioAtendimento,
+  ComercioConfigFuncionario,
+  DiaFechado,
+};
 
 export interface ComercioConfg {
   id: number;
@@ -70,110 +42,102 @@ export interface ComercioConfg {
   logoUrl?: string;
 }
 
+function mapBasicInfo(raw: Record<string, unknown>): ComercioConfg {
+  return {
+    id: Number(raw.id),
+    nome: String(raw.nome ?? ''),
+    endereco: String(raw.endereco ?? ''),
+    telefone: String(raw.telefone ?? ''),
+    cnpj: String(raw.cnpj ?? ''),
+    email: String(raw.email ?? ''),
+    descricao: String(raw.descricao ?? ''),
+    notificarAgendamento: Boolean(raw.notificarAgendamento),
+    lembrarAgendamento: Boolean(raw.lembrarAgendamento),
+    resumoDiario: Boolean(raw.resumoDiario),
+    instagram: String(raw.instagram ?? ''),
+    facebook: String(raw.facebook ?? ''),
+    site: String(raw.site ?? ''),
+    logoUrl: String(raw.logoUrl ?? ''),
+  };
+}
+
+function mergeConfigState(
+  current: ComercioConfiguracao | null,
+  incoming: ComercioConfiguracao
+): ComercioConfiguracao {
+  return {
+    ...current,
+    ...incoming,
+    idHorarioAtendimento: incoming.idHorarioAtendimento ?? current?.idHorarioAtendimento ?? 0,
+    idConfigComercio: incoming.idConfigComercio ?? current?.idConfigComercio ?? 0,
+    horarioAtendimento: incoming.horarioAtendimento ?? current?.horarioAtendimento,
+    configuracao: incoming.configuracao ?? current?.configuracao,
+    funcionarios: incoming.funcionarios ?? current?.funcionarios,
+  };
+}
 
 export function useEstablishmentConfig() {
-  const { user } = useAuth();
+  const { token, userType } = useAuth();
   const [config, setConfig] = useState<ComercioConfiguracao | null>(null);
   const [basicInfo, setBasicInfo] = useState<ComercioConfg | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeComercioId, setActiveComercioId] = useState<number | null>(null);
+  const [hasServerConfig, setHasServerConfig] = useState(false);
 
-  const comercioId = user?.id || 1; // Fallback to 1 for testing
+  const loadConfigForComercio = useCallback(async (comercioId: number) => {
+    try {
+      const configDataRaw = await fetchApi(`/api/ConfigComercio/${comercioId}`, {
+        skipToast: true,
+      });
+
+      if (isValidConfigResponse(configDataRaw) && serverConfigExists(configDataRaw)) {
+        setHasServerConfig(true);
+        setConfig(mergeConfigIdsFromCache(mapConfigFromApi(configDataRaw, comercioId), comercioId));
+        return;
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : '';
+      if (!message.includes('404')) {
+        console.error('Erro ao buscar configurações específicas:', err);
+      }
+    }
+
+    setHasServerConfig(false);
+    setConfig(createDefaultConfig(comercioId));
+  }, []);
+
+  const loadData = useCallback(async () => {
+    if (!token || (userType !== 'estabelecimento' && userType !== 'profissional')) {
+      setIsLoading(false);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const comercios = await fetchAdminComercios(fetchApi);
+      const basicDataRaw = comercios[0];
+
+      if (!basicDataRaw?.id) {
+        throw new Error('Nenhum comércio encontrado para este usuário.');
+      }
+
+      const actualComercioId = basicDataRaw.id;
+      setActiveComercioId(actualComercioId);
+      setBasicInfo(mapBasicInfo(basicDataRaw as Record<string, unknown>));
+      await loadConfigForComercio(actualComercioId);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar configurações');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token, userType, loadConfigForComercio]);
 
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        // 1. Get the user's commerce
-        const comercios = await fetchApi('/api/Comercios/Admin');
-        let basicDataRaw: any = null;
-
-        if (Array.isArray(comercios) && comercios.length > 0) {
-          basicDataRaw = comercios[0];
-        } else if (comercios && !Array.isArray(comercios) && comercios.id) {
-          basicDataRaw = comercios;
-        }
-
-        if (!basicDataRaw) {
-          throw new Error("Nenhum comércio encontrado para este usuário.");
-        }
-
-        const actualComercioId = basicDataRaw.id;
-        setActiveComercioId(actualComercioId);
-
-        // 2. Map basic info
-        const basicData: ComercioConfg = {
-          id: basicDataRaw.id,
-          nome: basicDataRaw.nome || '',
-          endereco: basicDataRaw.endereco || '',
-          telefone: basicDataRaw.telefone || '',
-          cnpj: basicDataRaw.cnpj || '',
-          email: basicDataRaw.email || '',
-          descricao: basicDataRaw.descricao || '',
-          notificarAgendamento: basicDataRaw.notificarAgendamento || false,
-          lembrarAgendamento: basicDataRaw.lembrarAgendamento || false,
-          resumoDiario: basicDataRaw.resumoDiario || false,
-          instagram: basicDataRaw.instagram || '',
-          facebook: basicDataRaw.facebook || '',
-          site: basicDataRaw.site || '',
-          logoUrl: basicDataRaw.logoUrl || ''
-        };
-        setBasicInfo(basicData);
-
-        // 3. Get specific configuration
-        try {
-          const configDataRaw = await fetchApi(`/api/ConfigComercio/${actualComercioId}`);
-          if (configDataRaw) {
-            setConfig({
-              idHorarioAtendimento: configDataRaw.idHorarioAtendimento,
-              idConfigComercio: configDataRaw.idConfigComercio,
-              horarioAtendimento: configDataRaw.horarioAtendimento,
-              configuracao: configDataRaw.configuracao,
-              funcionarios: configDataRaw.funcionarios
-            });
-          }
-        } catch (err: any) {
-          // Se for 404, apenas ignoramos pois significa que o comércio ainda não tem configurações
-          // e permitiremos que ele salve as primeiras agora.
-          if (err.status !== 404 && err.message !== '404') {
-            console.error("Erro ao buscar configurações específicas:", err);
-          }
-          
-          // Inicializa com valores padrão caso não encontre
-          setConfig({
-            horarioAtendimento: {
-              dias: [1, 2, 3, 4, 5],
-              horaInicio: "08:00:00",
-              horaFim: "18:00:00",
-              intervalo: false
-            },
-            configuracao: {
-              antecedenciaMin: 1,
-              limiteAgendar: 30,
-              tempoDuracaoPadrao: 30,
-              confirmaAuto: true,
-              horarioPorProfissional: false,
-              agendaSimultanea: 1,
-              reagendar: true,
-              tempoCancelamento: 24
-            },
-            funcionarios: []
-          });
-        }
-      } catch (err: any) {
-        setError(err.message || 'Erro ao carregar configurações');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (comercioId) {
-      loadData();
-    }
-  }, [comercioId]);
+    loadData();
+  }, [loadData]);
 
   const updateConfig = async (newConfig: ComercioConfiguracao) => {
     if (!activeComercioId) {
@@ -181,75 +145,29 @@ export function useEstablishmentConfig() {
       return false;
     }
 
-    try {
-      // Determina se é criação (POST) ou edição (PUT) baseado na presença de IDs
-      const isNew = !newConfig.idConfigComercio || !newConfig.idHorarioAtendimento;
-      
-      // Mapeamento rigoroso para o DTO esperado pelo .NET (PascalCase)
-      const payload = {
-        IdHorarioAtendimento: newConfig.idHorarioAtendimento,
-        IdConfigComercio: newConfig.idConfigComercio,
-        HorarioAtendimento: newConfig.horarioAtendimento ? {
-          Dias: newConfig.horarioAtendimento.dias,
-          HoraInicio: newConfig.horarioAtendimento.horaInicio,
-          HoraFim: newConfig.horarioAtendimento.horaFim,
-          Intervalo: newConfig.horarioAtendimento.intervalo,
-          InicioIntervalo: newConfig.horarioAtendimento.inicioIntervalo,
-          FimIntervalo: newConfig.horarioAtendimento.fimIntervalo
-        } : null,
-        Configuracao: newConfig.configuracao ? {
-          ComercioId: activeComercioId,
-          AntecedenciaMin: newConfig.configuracao.antecedenciaMin,
-          LimiteAgendar: newConfig.configuracao.limiteAgendar,
-          ConfirmaAuto: newConfig.configuracao.confirmaAuto,
-          TempoDuracaoPadrao: newConfig.configuracao.tempoDuracaoPadrao,
-          TempoCancelamento: newConfig.configuracao.tempoCancelamento,
-          Reagendar: newConfig.configuracao.reagendar,
-          TempoIntervalo: newConfig.configuracao.tempoIntervalo,
-          AgendaSimultanea: newConfig.configuracao.agendaSimultanea,
-          HorarioPorProfissional: newConfig.configuracao.horarioPorProfissional,
-          FechaFeriadosNacionais: newConfig.configuracao.fechaFeriadosNacionais,
-          FechaFeriadosMunicipais: newConfig.configuracao.fechaFeriadosMunicipais,
-          DiasFechados: newConfig.configuracao.diasFechados?.map(df => ({
-            Id: df.id,
-            Data: df.data,
-            Descricao: df.descricao
-          })) || []
-        } : null,
-        Funcionarios: newConfig.funcionarios?.map(f => ({
-          IdFuncionario: f.idFuncionario,
-          Dias: f.dias,
-          HoraInicio: f.horaInicio,
-          HoraFim: f.horaFim,
-          Intervalo: f.intervalo,
-          InicioIntervalo: f.inicioIntervalo,
-          FimIntervalo: f.fimIntervalo
-        })) || []
-      };
+    const mergedConfig = mergeConfigState(config, newConfig);
+    const isNew = !hasServerConfig;
 
-      const url = isNew 
-        ? '/api/ConfigComercio' 
-        : `/api/ConfigComercio/Editar-Atendimento/${activeComercioId}`;
-        
-      const method = isNew ? 'POST' : 'PUT';
-
-      await fetchApi(url, {
-        method: method,
-        body: JSON.stringify(payload),
-        skipToast: true
-      } as any);
-      
-      // Se era novo, precisamos recarregar os dados para obter os IDs gerados pelo banco
-      if (isNew) {
-        window.location.reload(); 
-      } else {
-        setConfig(newConfig);
+    if (isNew) {
+      const payload = buildConfigComercioPayload(mergedConfig, activeComercioId, true);
+      try {
+        await fetchApi('/api/ConfigComercio', {
+          method: 'POST',
+          body: payload,
+          skipToast: true,
+        });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : '';
+        if (!message.includes('400')) throw err;
       }
-      
-      return true;
-    } catch (err: any) {
-      throw err;
+      setHasServerConfig(true);
+    } else {
+      await saveConfigWithIdDiscovery(fetchApi, activeComercioId, mergedConfig);
     }
+
+    setHasServerConfig(true);
+    await loadConfigForComercio(activeComercioId);
+    return true;
   };
 
   const updateBasicInfo = async (newBasicInfo: ComercioConfg) => {
@@ -258,42 +176,39 @@ export function useEstablishmentConfig() {
       return false;
     }
 
-    try {
-      // ComerciosController Put uses [FromForm], so we use FormData
-      const formData = new FormData();
-      formData.append('Id', String(newBasicInfo.id));
-      formData.append('Nome', newBasicInfo.nome);
-      formData.append('Endereco', newBasicInfo.endereco);
-      formData.append('Telefone', newBasicInfo.telefone);
-      if (newBasicInfo.cnpj) formData.append('CNPJ', newBasicInfo.cnpj);
-      if (newBasicInfo.email) formData.append('Email', newBasicInfo.email);
-      if (newBasicInfo.descricao) formData.append('Descricao', newBasicInfo.descricao);
-      formData.append('NotificarAgendamento', String(newBasicInfo.notificarAgendamento));
-      formData.append('LembrarAgendamento', String(newBasicInfo.lembrarAgendamento));
-      formData.append('ResumoDiario', String(newBasicInfo.resumoDiario));
-      if (newBasicInfo.instagram) formData.append('Instagram', newBasicInfo.instagram);
-      if (newBasicInfo.facebook) formData.append('Facebook', newBasicInfo.facebook);
-      if (newBasicInfo.site) formData.append('Site', newBasicInfo.site);
+    const formData = new FormData();
+    formData.append('Id', String(newBasicInfo.id));
+    formData.append('Nome', newBasicInfo.nome);
+    formData.append('Endereco', newBasicInfo.endereco);
+    formData.append('Telefone', newBasicInfo.telefone);
+    if (newBasicInfo.cnpj) formData.append('CNPJ', newBasicInfo.cnpj);
+    if (newBasicInfo.email) formData.append('Email', newBasicInfo.email);
+    if (newBasicInfo.descricao) formData.append('Descricao', newBasicInfo.descricao);
+    formData.append('NotificarAgendamento', String(newBasicInfo.notificarAgendamento));
+    formData.append('LembrarAgendamento', String(newBasicInfo.lembrarAgendamento));
+    formData.append('ResumoDiario', String(newBasicInfo.resumoDiario));
+    if (newBasicInfo.instagram) formData.append('Instagram', newBasicInfo.instagram);
+    if (newBasicInfo.facebook) formData.append('Facebook', newBasicInfo.facebook);
+    if (newBasicInfo.site) formData.append('Site', newBasicInfo.site);
 
-      await fetchApi(`/api/Comercios/${activeComercioId}`, {
-        method: 'PUT',
-        body: formData, // fetchApi should handle FormData correctly
-        skipToast: true
-      } as any);
-      
-      setBasicInfo(newBasicInfo);
-      return true;
-    } catch (err: any) {
-      throw err;
-    }
+    await fetchApi(`/api/Comercios/${activeComercioId}`, {
+      method: 'PUT',
+      body: formData,
+      skipToast: true,
+    });
+
+    setBasicInfo(newBasicInfo);
+    return true;
   };
 
   return {
     config,
     basicInfo,
+    activeComercioId,
     isLoading,
     error,
     updateConfig,
-    updateBasicInfo
+    updateBasicInfo,
+    reload: loadData,
   };
 }

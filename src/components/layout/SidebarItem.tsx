@@ -1,11 +1,10 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SidebarItemProps {
   to: string;
-  icon: LucideIcon;
+  icon: React.ComponentType<{ className?: string }>;
   label: string;
   isCollapsed: boolean;
   end?: boolean;

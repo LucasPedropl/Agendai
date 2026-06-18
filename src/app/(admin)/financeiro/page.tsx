@@ -43,13 +43,16 @@ import {
   Line
 } from 'recharts';
 import { Transacao } from '@/types';
+import { useFinance } from '@/hooks/useFinance';
+import { useComercioId } from '@/hooks/useComercioId';
 
 const COLORS = ['#4f46e5', '#ef4444', '#10b981', '#f59e0b'];
 
 export default function AdminFinanceiroPage() {
+  const { comercioId } = useComercioId();
+  const { getPagamentosEmpresa, isLoading: isLoadingPagamentos } = useFinance();
   const [isMounted, setIsMounted] = useState(false);
   const [transacoes, setTransacoes] = useState<Transacao[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
   // Mock data for charts
@@ -81,11 +84,30 @@ export default function AdminFinanceiroPage() {
     setIsMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (!comercioId) return;
+    getPagamentosEmpresa(comercioId).then((pagamentos) => {
+      const mapped: Transacao[] = pagamentos.map((p: Record<string, unknown>) => ({
+        id: String(p.id ?? ''),
+        descricao: String(p.descricao ?? 'Pagamento de agendamento'),
+        valor: Number(p.valor ?? 0),
+        data: String(p.dataCriacao ?? p.dataPagamento ?? new Date().toISOString()),
+        status:
+          Number(p.statusPagamento) === 1
+            ? 'pago'
+            : Number(p.statusPagamento) === 2
+              ? 'cancelado'
+              : 'pendente',
+      }));
+      setTransacoes(mapped);
+    });
+  }, [comercioId, getPagamentosEmpresa]);
+
   const totalEntradas = transacoes.filter(t => t.valor > 0 && t.status === 'pago').reduce((acc, t) => acc + t.valor, 0);
   const totalSaidas = transacoes.filter(t => t.valor < 0 && t.status === 'pago').reduce((acc, t) => acc + Math.abs(t.valor), 0);
   const saldo = totalEntradas - totalSaidas;
 
-  if (isLoading) {
+  if (isLoadingPagamentos && transacoes.length === 0) {
     return <div className="flex h-full items-center justify-center p-8"><div className="h-8 w-8 animate-spin rounded-full border-b-2 border-indigo-600"></div></div>;
   }
 

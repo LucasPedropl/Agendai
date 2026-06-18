@@ -33,37 +33,44 @@ import AdminFinanceiroPage from '@/app/(admin)/financeiro/page';
 import AdminWhatsAppPage from '@/app/(admin)/whatsapp/page';
 import AdminConfigPage from '@/app/(admin)/config/page';
 import AgendarPage from '@/app/(client)/agendar/page';
+import { ToastProvider } from '@/contexts/ToastContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
+import {
+  resolveUserTypeFromAuth,
+  getDashboardPath,
+  canAccessRoute,
+  type AppUserType,
+} from '@/lib/apiHelpers';
 
-function ProtectedRoute({ children, allowedType }: { children: React.ReactNode, allowedType: 'cliente' | 'estabelecimento' | 'profissional' | ('estabelecimento' | 'profissional')[] }) {
-  const { isAuthenticated, userType } = useAuth();
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+function ProtectedRoute({
+  children,
+  allowedType,
+}: {
+  children: React.ReactNode;
+  allowedType: AppUserType | AppUserType[];
+}) {
+  const { isAuthenticated, token } = useAuth();
+
+  if (!isAuthenticated || !token) {
+    const loginType = Array.isArray(allowedType) ? allowedType[0] : allowedType;
+    return <Navigate to={`/login?type=${loginType}`} replace />;
   }
 
-  if (Array.isArray(allowedType)) {
-    if (!allowedType.includes(userType as any)) {
-      return <Navigate to="/" replace />;
-    }
-  } else if (userType !== allowedType) {
-    return <Navigate to="/" replace />;
+  const tokenUserType = resolveUserTypeFromAuth(token);
+
+  if (!canAccessRoute(tokenUserType, allowedType)) {
+    return <Navigate to={getDashboardPath(tokenUserType)} replace />;
   }
 
   return <>{children}</>;
 }
 
-import { ToastProvider } from '@/contexts/ToastContext';
-import { ThemeProvider } from '@/contexts/ThemeContext';
-
 function AppRoutes() {
-  const { isAuthenticated, userType } = useAuth();
+  const { isAuthenticated, token } = useAuth();
   
   const getRedirectPath = () => {
-    if (!isAuthenticated) return "/login-selection";
-    if (userType === 'cliente') return "/app";
-    if (userType === 'profissional') return "/profissional/dashboard";
-    if (userType === 'estabelecimento') return "/estabelecimento/dashboard";
-    return "/login-selection";
+    if (!isAuthenticated || !token) return '/login-selection';
+    return getDashboardPath(resolveUserTypeFromAuth(token));
   };
 
   return (

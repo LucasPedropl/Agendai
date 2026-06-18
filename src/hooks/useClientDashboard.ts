@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { fetchApi } from '@/lib/api';
+import { normalizeApiList } from '@/lib/apiHelpers';
 
 const IS_DEMO_MODE = false; // TODO: Remover depois
 
@@ -34,7 +35,7 @@ export function useClientDashboard() {
     try {
       setIsLoading(true);
       const data = await fetchApi(`/api/Agenda/Cliente/${userId}`);
-      return data;
+      return normalizeApiList(data);
     } catch (err: any) {
       setError(err.message);
       return [];
@@ -68,7 +69,7 @@ export function useClientDashboard() {
     try {
       setIsLoading(true);
       const data = await fetchApi(`/api/Agenda/Cliente-Historico/${userId}`);
-      return data;
+      return normalizeApiList(data, ['Histórico Vazio']);
     } catch (err: any) {
       setError(err.message);
       return [];
@@ -106,7 +107,7 @@ export function useClientDashboard() {
     try {
       setIsLoading(true);
       const data = await fetchApi(`/api/Avaliacoes/Usuario/${userId}`);
-      return data;
+      return normalizeApiList(data);
     } catch (err: any) {
       setError(err.message);
       return [];

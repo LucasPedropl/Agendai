@@ -1,237 +1,145 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
-import { SearchableSelect } from '@/components/ui/searchable-select';
+import { PageHeader } from '@/components/ui/page-header';
+import { PageLoader } from '@/components/ui/page-loader';
+import { StatusBadge, getStatusVariant } from '@/components/ui/status-badge';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { fetchApi } from '@/lib/api';
-import { useAuth } from '@/contexts/AuthContext';
+import { normalizeApiList } from '@/lib/apiHelpers';
+import { useComercioId } from '@/hooks/useComercioId';
+import { AppointmentForm } from '@/features/agenda/components/AppointmentForm';
+
+interface AgendaItem {
+  id: string;
+  data: string;
+  hora: string;
+  servico: string;
+  cliente: string;
+  status: string;
+}
+
+function mapAgendaItem(raw: Record<string, unknown>, index: number): AgendaItem {
+  return {
+    id: String(raw.id ?? index),
+    data: String(raw.dataAgendamento ?? raw.DataAgendamento ?? ''),
+    hora: String(raw.horaAgendamento ?? raw.HoraAgendamento ?? '00:00:00'),
+    servico: String(raw.servicoNome ?? raw.ServicoNome ?? 'Serviço'),
+    cliente: String(raw.usuarioNome ?? raw.UsuarioNome ?? 'Cliente'),
+    status: String(raw.status ?? raw.Status ?? 'pendente').toLowerCase(),
+  };
+}
 
 export default function AdminAgendaPage() {
-  const { token, user } = useAuth();
+  const { comercioId, isLoading: isLoadingComercio } = useComercioId();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [agendamentos, setAgendamentos] = useState<any[]>([]);
-  
+  const [agendamentos, setAgendamentos] = useState<AgendaItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedTime, setSelectedTime] = useState('');
 
-  // Form state
-  const [idProssional, setIdProssional] = useState('');
-  const [idUsuario, setIdUsuario] = useState('');
-  const [data, setData] = useState('');
-  const [horario, setHorario] = useState('');
-  const [idServico, setIdServico] = useState('');
+  const hours = Array.from({ length: 11 }, (_, i) => i + 8);
 
-  // Options for selects
-  const [clientesOptions, setClientesOptions] = useState<{value: string, label: string}[]>([]);
-  const [profissionaisOptions, setProfissionaisOptions] = useState<{value: string, label: string}[]>([]);
-  const [servicosOptions, setServicosOptions] = useState<{value: string, label: string}[]>([]);
-
-  const hours = Array.from({ length: 11 }, (_, i) => i + 8); // 8:00 to 18:00
-
-  const fetchSelectData = React.useCallback(async () => {
-    if (!token || !user) return;
-    const commerceId = (user as any)?.id || 1;
-    
+  const fetchAgendamentos = React.useCallback(async () => {
+    if (!comercioId) return;
     try {
-      // Fetch real services
-      const servicosData = await fetchApi(`/api/Servicos/Todos/${commerceId}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-        skipToast: true
-      } as any);
-      
-      if (Array.isArray(servicosData)) {
-        setServicosOptions(servicosData.map(s => ({ value: String(s.id), label: s.nome })));
-      } else {
-        setServicosOptions([]);
-      }
+      const data = await fetchApi(`/api/Agenda/Comercio/${comercioId}`, { skipToast: true } as RequestInit);
+      const list = normalizeApiList<Record<string, unknown>>(data, ['Agenda Vazia']);
+      setAgendamentos(list.map(mapAgendaItem));
     } catch (err) {
-      console.error("Erro ao buscar serviços para o select:", err);
-      setServicosOptions([]);
+      console.error('Erro ao buscar agendamentos:', err);
+      setAgendamentos([]);
     }
-
-    try {
-      // Fetch real professionals
-      const profissionaisData = await fetchApi(`/api/ComercioUsuarios/Profissionais/${commerceId}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-        skipToast: true
-      } as any);
-      
-      if (Array.isArray(profissionaisData)) {
-        setProfissionaisOptions(
-          profissionaisData
-            .filter(p => (p.status || '').toLowerCase() === 'ativo')
-            .map(p => ({ value: String(p.id || p.Id), label: p.nome || p.Nome }))
-        );
-      } else {
-        setProfissionaisOptions([]);
-      }
-    } catch (err) {
-      console.error("Erro ao buscar profissionais para o select:", err);
-      setProfissionaisOptions([]);
-    }
-
-    try {
-      // Fetch real clients
-      const clientesData = await fetchApi(`/api/ComercioUsuarios/Clientes/${commerceId}`, {
-        headers: { 'Authorization': `Bearer ${token}` },
-        skipToast: true
-      } as any);
-      
-      if (Array.isArray(clientesData)) {
-        // Defensive mapping: check for various ID property names (id, Id, userId, usuarioId)
-        const options = clientesData
-          .filter(c => (c.status || '').toLowerCase() === 'ativo')
-          .map(c => {
-            const id = c.id || c.Id || c.usuarioId || c.UsuarioId || c.idUsuario;
-            const nome = c.nome || c.Nome || c.userName || c.UserName || "Cliente sem nome";
-            return { value: id ? String(id) : 'undefined', label: String(nome) };
-          })
-          .filter(opt => opt.value !== 'undefined');
-        
-        setClientesOptions(options);
-      } else {
-        setClientesOptions([]);
-      }
-    } catch (err) {
-      console.error("Erro ao buscar clientes para o select:", err);
-      setClientesOptions([]);
-    }
-  }, [token, user]);
+  }, [comercioId]);
 
   useEffect(() => {
-    fetchSelectData();
-  }, [fetchSelectData]);
+    if (comercioId) fetchAgendamentos();
+  }, [comercioId, fetchAgendamentos]);
 
-  const handleCreateAgenda = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!idUsuario || idUsuario === 'undefined' || !idProssional || !idServico || !data || !horario) {
-      console.error('Campos obrigatórios ausentes ou inválidos:', {
-        cliente: !idUsuario || idUsuario === 'undefined',
-        profissional: !idProssional,
-        servico: !idServico,
-        data: !data,
-        horario: !horario
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      // Create a valid ISO date string from the date input
-      const dataIso = new Date(data).toISOString();
-      
-      // Ensure horario has seconds for TimeSpan parsing in .NET if needed
-      const horarioComSegundos = horario.length === 5 ? `${horario}:00` : horario;
-
-      // Use PascalCase for the payload as seen in the reference ViewModels
-      const payload = {
-        IdProssional: idProssional,
-        IdUsuario: idUsuario,
-        Data: dataIso,
-        Horario: horarioComSegundos,
-        IdServico: Number(idServico)
-      };
-
-      console.log('Enviando Payload (PascalCase) para API do Servidor:', payload);
-
-      await fetchApi('/api/Agenda', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(payload),
-        skipToast: true
-      } as any);
-
-      setIsModalOpen(false);
-      setIdProssional('');
-      setIdUsuario('');
-      setData('');
-      setHorario('');
-      setIdServico('');
-      // TODO: Refresh list of agendamentos
-    } catch (err: any) {
-      console.error("Erro ao cadastrar agendamento:", err);
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleOpenModal = (date?: string, time?: string) => {
+    setSelectedDate(date || '');
+    setSelectedTime(time || '');
+    setIsModalOpen(true);
   };
+
+  const dayAppointments = agendamentos.filter((a) => {
+    const appointmentDate = new Date(a.data);
+    return appointmentDate.toDateString() === currentDate.toDateString();
+  });
+
+  if (isLoadingComercio) return <PageLoader label="Carregando agenda..." />;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Agenda</h1>
-          <p className="text-gray-500">Gerencie seus agendamentos diários.</p>
-        </div>
-        <Button className="w-full sm:w-auto" onClick={() => setIsModalOpen(true)}>
+      <PageHeader title="Agenda" description="Gerencie seus agendamentos diários.">
+        <Button onClick={() => handleOpenModal()}>
           <Plus className="mr-2 h-4 w-4" />
           Novo Agendamento
         </Button>
-      </div>
+      </PageHeader>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon">
+        <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4 space-y-0 pb-4">
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="icon" onClick={() => setCurrentDate((d) => new Date(d.setDate(d.getDate() - 1)))}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-base font-semibold text-foreground capitalize min-w-[200px] text-center">
               {currentDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
             </h2>
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" onClick={() => setCurrentDate((d) => new Date(d.setDate(d.getDate() + 1)))}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-          <Button variant="outline" size="sm" className="hidden sm:flex">
+          <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date())}>
             <CalendarIcon className="mr-2 h-4 w-4" />
             Hoje
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-1">
             {hours.map((hour) => {
-              const hourAppointments = agendamentos.filter(a => new Date(a.data).getHours() === hour);
-              
+              const hourAppointments = dayAppointments.filter((a) => parseInt(a.hora.split(':')[0], 10) === hour);
+
               return (
-                <div key={hour} className="flex min-h-[80px] border-t border-gray-100 pt-4">
-                  <div className="w-16 flex-shrink-0 text-right text-sm font-medium text-gray-500 pr-4">
+                <div key={hour} className="flex min-h-[72px] border-t border-border pt-3 first:border-t-0">
+                  <div className="w-14 flex-shrink-0 text-right text-xs font-semibold text-muted-foreground pr-4 pt-1">
                     {hour}:00
                   </div>
                   <div className="flex-1 space-y-2">
                     {hourAppointments.length > 0 ? (
-                      hourAppointments.map((agendamento, idx) => (
-                        <div key={idx} className="rounded-md bg-indigo-50 border border-indigo-100 p-3 shadow-sm cursor-pointer hover:bg-indigo-100 transition-colors">
-                          <div className="flex justify-between items-start">
+                      hourAppointments.map((agendamento) => (
+                        <div
+                          key={agendamento.id}
+                          className="rounded-xl bg-primary/5 border border-primary/15 p-3 transition-all hover:border-primary/30"
+                        >
+                          <div className="flex justify-between items-start gap-2">
                             <div>
-                              <p className="text-sm font-semibold text-indigo-900">{agendamento.servico}</p>
-                              <p className="text-xs text-indigo-700">{agendamento.cliente} • com {agendamento.profissional}</p>
+                              <p className="text-sm font-semibold text-foreground">{agendamento.servico}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {agendamento.cliente} • {agendamento.hora.slice(0, 5)}
+                              </p>
                             </div>
-                            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                              agendamento.status === 'confirmado' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                            }`}>
-                              {agendamento.status}
-                            </span>
+                            <StatusBadge label={agendamento.status} variant={getStatusVariant(agendamento.status)} />
                           </div>
                         </div>
                       ))
                     ) : (
-                      <div 
-                        className="h-full w-full rounded-md border border-dashed border-gray-200 bg-gray-50/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
-                        onClick={() => {
-                          setHorario(`${hour.toString().padStart(2, '0')}:00`);
-                          setData(currentDate.toISOString().split('T')[0]);
-                          setIsModalOpen(true);
-                        }}
+                      <button
+                        type="button"
+                        className="h-12 w-full rounded-xl border border-dashed border-border bg-muted/20 flex items-center justify-center opacity-60 hover:opacity-100 hover:border-primary/30 hover:bg-primary/5 transition-all cursor-pointer"
+                        onClick={() =>
+                          handleOpenModal(
+                            currentDate.toISOString().split('T')[0],
+                            `${hour.toString().padStart(2, '0')}:00`
+                          )
+                        }
                       >
-                        <span className="text-xs text-gray-400">+ Adicionar</span>
-                      </div>
+                        <span className="text-xs text-muted-foreground font-medium">+ Adicionar</span>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -241,71 +149,13 @@ export default function AdminAgendaPage() {
         </CardContent>
       </Card>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Novo Agendamento">
-        <form onSubmit={handleCreateAgenda} className="space-y-4">
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="data">Data</label>
-              <Input 
-                id="data" 
-                type="date"
-                required 
-                value={data} 
-                onChange={(e) => setData(e.target.value)} 
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="horario">Horário</label>
-              <Input 
-                id="horario" 
-                type="time"
-                required 
-                value={horario} 
-                onChange={(e) => setHorario(e.target.value)} 
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="idUsuario">Cliente</label>
-            <SearchableSelect 
-              options={clientesOptions}
-              value={idUsuario}
-              onChange={setIdUsuario}
-              placeholder="Selecione um cliente..."
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="idProssional">Profissional</label>
-            <SearchableSelect 
-              options={profissionaisOptions}
-              value={idProssional}
-              onChange={setIdProssional}
-              placeholder="Selecione um profissional..."
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium" htmlFor="idServico">Serviço</label>
-            <SearchableSelect 
-              options={servicosOptions}
-              value={idServico}
-              onChange={setIdServico}
-              placeholder="Selecione um serviço..."
-            />
-          </div>
-
-          <div className="pt-4 flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Salvando...' : 'Salvar Agendamento'}
-            </Button>
-          </div>
-        </form>
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Novo Agendamento" size="lg">
+        <AppointmentForm
+          onSuccess={() => { setIsModalOpen(false); fetchAgendamentos(); }}
+          onCancel={() => setIsModalOpen(false)}
+          initialData={selectedDate}
+          initialTime={selectedTime}
+        />
       </Modal>
     </div>
   );

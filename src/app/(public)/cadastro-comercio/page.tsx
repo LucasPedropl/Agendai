@@ -2,14 +2,12 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { fetchApi } from '@/lib/api';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface CadastroComercioPageProps {
   onSuccess?: () => void;
 }
 
 export default function CadastroComercioPage({ onSuccess }: CadastroComercioPageProps) {
-  const { token } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -105,18 +103,24 @@ export default function CadastroComercioPage({ onSuccess }: CadastroComercioPage
 
       await fetchApi('/api/Comercios', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: data
+        body: data,
+        skipToast: true,
       });
       
       if (onSuccess) {
         onSuccess();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || 'Erro ao cadastrar comércio. Verifique os dados e tente novamente.');
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('403')) {
+        setError(
+          'Sem permissão para criar comércio. Sua conta precisa ser de Administrador (cadastro como Estabelecimento). ' +
+          'Após reset do banco de testes, pode ser necessário recadastrar em /cadastro/estabelecimento.'
+        );
+      } else {
+        setError(msg || 'Erro ao cadastrar comércio. Verifique os dados e tente novamente.');
+      }
     } finally {
       setIsLoading(false);
     }
