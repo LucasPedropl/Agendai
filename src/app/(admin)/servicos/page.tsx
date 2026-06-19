@@ -16,6 +16,7 @@ import { PageHeader } from '@/components/ui/page-header';
 import { PageLoader } from '@/components/ui/page-loader';
 import { EmptyState } from '@/components/ui/empty-state';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export default function AdminServicosPage() {
   const { token } = useAuth();
@@ -32,6 +33,8 @@ export default function AdminServicosPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingCategoriaId, setEditingCategoriaId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form state - Service
   const [nome, setNome] = useState('');
@@ -191,19 +194,23 @@ export default function AdminServicosPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Tem certeza que deseja excluir este serviço?')) return;
-    
+  const handleDelete = async () => {
+    if (!confirmDeleteId) return;
+    setIsDeleting(true);
     try {
-      await fetchApi(`/api/Servicos/${id}`, {
+      await fetchApi(`/api/Servicos/${confirmDeleteId}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+        headers: { 'Authorization': `Bearer ${token}` },
+        skipToast: true,
+      } as RequestInit);
       showToast('Serviço excluído com sucesso!', 'success');
+      setConfirmDeleteId(null);
       fetchServicos();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       showToast('Erro ao excluir serviço.', 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -361,7 +368,7 @@ export default function AdminServicosPage() {
                     variant="outline"
                     size="sm"
                     className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
-                    onClick={() => handleDelete(servico.id)}
+                    onClick={() => setConfirmDeleteId(servico.id)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -528,6 +535,17 @@ export default function AdminServicosPage() {
           </div>
         </form>
       </Modal>
+
+      <ConfirmDialog
+        isOpen={confirmDeleteId !== null}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={handleDelete}
+        title="Excluir serviço"
+        description="Tem certeza que deseja excluir este serviço? Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        variant="destructive"
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

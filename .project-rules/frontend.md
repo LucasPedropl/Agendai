@@ -1,6 +1,7 @@
 # Regras frontend AgendaAi — integração API
 
-## HTTP
+## Dev server
+- Porta padrão: **5174** (`npm run dev`) — 3000/5173 costumam estar ocupadas
 - Usar `fetchApi` em `src/lib/api.ts` — nunca fetch solto
 - 401 em rota autenticada → logout automático (evento `agendaai:session-expired`)
 - `notFoundAsEmpty: true` em GETs de listas que retornam 404 vazio
