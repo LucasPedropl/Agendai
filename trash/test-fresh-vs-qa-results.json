@@ -1,0 +1,264 @@
+﻿[
+    {
+        "conta":  "qa_cliente",
+        "permissao":  "Cliente",
+        "teste":  "Login",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltc"
+    },
+    {
+        "conta":  "qa_cliente",
+        "permissao":  "Cliente",
+        "teste":  "GET Usuario",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "{\"id\":\"5de913ee-b426-4e0c-bbec-ec7b61a3a90f\",\"nome\":\"Cliente\",\"sobrenome\":\"QA\",\"cpf\":\"66779055080\",\"telefone\":\"279999900"
+    },
+    {
+        "conta":  "qa_cliente",
+        "permissao":  "Cliente",
+        "teste":  "GET Config-Usuario",
+        "ok":  false,
+        "status":  404,
+        "detalhe":  "O servidor remoto retornou um erro: (404) Não Localizado."
+    },
+    {
+        "conta":  "qa_cliente",
+        "permissao":  "Cliente",
+        "teste":  "GET Agenda Cliente",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "[{\"id\":0,\"dataAgendamento\":\"2026-07-20T00:00:00\",\"servicoNome\":\"SvcTestQA\",\"profissionalNome\":\"Prof\"},{\"id\":1,\"dataAgend"
+    },
+    {
+        "conta":  "qa_cliente",
+        "permissao":  "Cliente",
+        "teste":  "GET Cartoes",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  {
+
+                    }
+    },
+    {
+        "conta":  "qa_cliente",
+        "permissao":  "Cliente",
+        "teste":  "GET Pagamentos-Cliente",
+        "ok":  false,
+        "status":  404,
+        "detalhe":  "O servidor remoto retornou um erro: (404) Não Localizado."
+    },
+    {
+        "conta":  "fresh_cliente",
+        "permissao":  "Cliente",
+        "teste":  "Login",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltc"
+    },
+    {
+        "conta":  "fresh_cliente",
+        "permissao":  "Cliente",
+        "teste":  "GET Usuario",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "{\"id\":\"20a9c047-37ea-4270-8fe8-84cf54f6f73b\",\"nome\":\"Fresh\",\"sobrenome\":\"Cliente\",\"cpf\":\"35584477273\",\"telefone\":\"119919"
+    },
+    {
+        "conta":  "fresh_cliente",
+        "permissao":  "Cliente",
+        "teste":  "GET Config-Usuario",
+        "ok":  false,
+        "status":  404,
+        "detalhe":  "O servidor remoto retornou um erro: (404) Não Localizado."
+    },
+    {
+        "conta":  "fresh_cliente",
+        "permissao":  "Cliente",
+        "teste":  "GET Agenda Cliente",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  {
+
+                    }
+    },
+    {
+        "conta":  "fresh_cliente",
+        "permissao":  "Cliente",
+        "teste":  "GET Cartoes",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  {
+
+                    }
+    },
+    {
+        "conta":  "fresh_cliente",
+        "permissao":  "Cliente",
+        "teste":  "GET Pagamentos-Cliente",
+        "ok":  false,
+        "status":  404,
+        "detalhe":  "O servidor remoto retornou um erro: (404) Não Localizado."
+    },
+    {
+        "conta":  "qa_estab",
+        "permissao":  "Admin",
+        "teste":  "Login",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltc"
+    },
+    {
+        "conta":  "qa_estab",
+        "permissao":  "Admin",
+        "teste":  "GET Comercios/Admin",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "[{\"id\":1,\"nome\":\"Comércio eyrb5p\",\"endereco\":\"Rua Teste, 123, Centro\",\"telefone\":\"27919152349\",\"cnpj\":\"12345678000190\",\""
+    },
+    {
+        "conta":  "qa_estab",
+        "permissao":  "Admin",
+        "teste":  "GET ConfigComercio",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "{\"idHorarioAtendimento\":1,\"idConfigComercio\":1,\"horarioAtendimento\":{\"dias\":[1,2,3,4,5],\"horaInicio\":\"08:00:00\",\"horaFim"
+    },
+    {
+        "conta":  "qa_estab",
+        "permissao":  "Admin",
+        "teste":  "GET Profissionais",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "{\"id\":\"d158e51e-5075-4b7b-83da-d5134669f009\",\"nome\":\"Prof\",\"telefone\":\"27999990002\",\"email\":\"profissional@agendai.dev\",\""
+    },
+    {
+        "conta":  "qa_estab",
+        "permissao":  "Admin",
+        "teste":  "GET Clientes",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "[{\"id\":\"5de913ee-b426-4e0c-bbec-ec7b61a3a90f\",\"nome\":\"Cliente\",\"telefone\":\"27999990003\",\"ultimaVisita\":\"2026-08-20T00:00"
+    },
+    {
+        "conta":  "qa_estab",
+        "permissao":  "Admin",
+        "teste":  "GET Comercio Agenda",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "[{\"dataAgendamento\":\"2026-07-20T00:00:00\",\"servicoNome\":\"SvcTestQA\",\"usuarioNome\":\"Cliente\",\"status\":\"Confirmado\",\"horaA"
+    },
+    {
+        "conta":  "qa_estab",
+        "permissao":  "Admin",
+        "teste":  "GET Comercio Historico",
+        "ok":  false,
+        "status":  400,
+        "detalhe":  "O servidor remoto retornou um erro: (400) Solicitação Incorreta."
+    },
+    {
+        "conta":  "fresh_estab",
+        "permissao":  "Admin",
+        "teste":  "Login",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltc"
+    },
+    {
+        "conta":  "fresh_estab",
+        "permissao":  "Admin",
+        "teste":  "GET Comercios/Admin",
+        "ok":  false,
+        "status":  404,
+        "detalhe":  "O servidor remoto retornou um erro: (404) Não Localizado."
+    },
+    {
+        "conta":  "fresh_estab",
+        "permissao":  "Admin",
+        "teste":  "GET ConfigComercio",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "{\"message\":\"Horário de atendimento ou configurações não encontrado.\"}"
+    },
+    {
+        "conta":  "fresh_estab",
+        "permissao":  "Admin",
+        "teste":  "GET Profissionais",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "{\"id\":\"59ee1acf-24fb-4cb9-954e-eace8fc3b29c\",\"nome\":\"Fresh Prof\",\"telefone\":null,\"email\":\"fresh_prof_20260619@mcp-fresh."
+    },
+    {
+        "conta":  "fresh_estab",
+        "permissao":  "Admin",
+        "teste":  "GET Clientes",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "{\"id\":\"20a9c047-37ea-4270-8fe8-84cf54f6f73b\",\"nome\":\"Fresh\",\"telefone\":\"11991923826\",\"ultimaVisita\":\"0001-01-01T00:00:00"
+    },
+    {
+        "conta":  "fresh_estab",
+        "permissao":  "Admin",
+        "teste":  "GET Comercio Agenda",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "{\"agendamentos\":[]}"
+    },
+    {
+        "conta":  "fresh_estab",
+        "permissao":  "Admin",
+        "teste":  "GET Comercio Historico",
+        "ok":  false,
+        "status":  400,
+        "detalhe":  "O servidor remoto retornou um erro: (400) Solicitação Incorreta."
+    },
+    {
+        "conta":  "qa_prof",
+        "permissao":  "Profissional",
+        "teste":  "Login",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltc"
+    },
+    {
+        "conta":  "qa_prof",
+        "permissao":  "Profissional",
+        "teste":  "GET Usuario",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "{\"id\":\"d158e51e-5075-4b7b-83da-d5134669f009\",\"nome\":\"Prof\",\"sobrenome\":\"QA\",\"cpf\":\"52998224725\",\"telefone\":\"27999990002\""
+    },
+    {
+        "conta":  "qa_prof",
+        "permissao":  "Profissional",
+        "teste":  "GET Config-Usuario",
+        "ok":  false,
+        "status":  404,
+        "detalhe":  "O servidor remoto retornou um erro: (404) Não Localizado."
+    },
+    {
+        "conta":  "fresh_prof",
+        "permissao":  "Profissional",
+        "teste":  "Login",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "{\"token\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltc"
+    },
+    {
+        "conta":  "fresh_prof",
+        "permissao":  "Profissional",
+        "teste":  "GET Usuario",
+        "ok":  true,
+        "status":  200,
+        "detalhe":  "{\"id\":\"1c1ae211-3e8e-47b8-8bf6-a7cd51fb98cf\",\"nome\":\"Fresh\",\"sobrenome\":\"Prof\",\"cpf\":\"23653771226\",\"telefone\":\"119859256"
+    },
+    {
+        "conta":  "fresh_prof",
+        "permissao":  "Profissional",
+        "teste":  "GET Config-Usuario",
+        "ok":  false,
+        "status":  404,
+        "detalhe":  "O servidor remoto retornou um erro: (404) Não Localizado."
+    }
+]

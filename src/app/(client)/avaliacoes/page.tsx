@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
-import { useClientDashboard } from '@/hooks/useClientDashboard';
 import { useAuth } from '@/contexts/AuthContext';
+import { useClienteAvaliacoes } from '@/hooks/useClienteQueries';
 import { PageHeader } from '@/components/ui/page-header';
 import { PageLoader } from '@/components/ui/page-loader';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -18,16 +17,9 @@ interface Review {
 
 export default function ClientAvaliacoesPage() {
   const { user } = useAuth();
-  const { getAvaliacoes, isLoading } = useClientDashboard();
-  const [reviews, setReviews] = useState<Review[]>([]);
-
-  useEffect(() => {
-    const load = async () => {
-      const data = await getAvaliacoes(user?.id ? String(user.id) : 'demo-user-id');
-      setReviews(Array.isArray(data) ? data : []);
-    };
-    load();
-  }, [user?.id, getAvaliacoes]);
+  const userId = user?.id ? String(user.id) : undefined;
+  const { data: reviews = [], isPending: isLoading } = useClienteAvaliacoes(userId);
+  const reviewsList = reviews as Review[];
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
@@ -38,7 +30,7 @@ export default function ClientAvaliacoesPage() {
 
       {isLoading ? (
         <PageLoader label="Carregando avaliações..." />
-      ) : reviews.length === 0 ? (
+      ) : reviewsList.length === 0 ? (
         <EmptyState
           icon={Star}
           title="Nenhuma avaliação encontrada"
@@ -46,30 +38,32 @@ export default function ClientAvaliacoesPage() {
         />
       ) : (
         <div className="space-y-4">
-          {reviews.map((review) => (
+          {reviewsList.map((review) => (
             <Card key={review.id} className="p-6 hover:border-primary/20 transition-colors">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                <div>
-                  <h3 className="font-semibold text-foreground text-lg">{review.servico}</h3>
-                  <p className="text-sm text-muted-foreground">com {review.profissional}</p>
-                  <p className="text-sm text-muted-foreground mt-1">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <h3 className="font-semibold text-lg">{review.servico}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Profissional: {review.profissional}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
                     {new Date(review.dataServico).toLocaleDateString('pt-BR')}
                   </p>
                 </div>
-                <div className="flex gap-0.5">
-                  {[1, 2, 3, 4, 5].map((star) => (
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: 5 }).map((_, i) => (
                     <Star
-                      key={star}
+                      key={i}
                       className={`h-5 w-5 ${
-                        star <= review.nota ? 'text-amber-400 fill-amber-400' : 'text-muted'
+                        i < review.nota ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/30'
                       }`}
                     />
                   ))}
                 </div>
               </div>
               {review.comentario && (
-                <p className="text-foreground/80 italic border-l-2 border-primary/30 pl-4">
-                  &ldquo;{review.comentario}&rdquo;
+                <p className="mt-4 text-sm text-muted-foreground border-t pt-4">
+                  {review.comentario}
                 </p>
               )}
             </Card>

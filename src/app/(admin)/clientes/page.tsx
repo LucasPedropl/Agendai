@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,18 +14,19 @@ import { StatusBadge, getStatusVariant } from '@/components/ui/status-badge';
 import { Search, Mail, Phone, Calendar, Plus, Users, UserX } from 'lucide-react';
 import { Cliente } from '@/types';
 import { fetchApi } from '@/lib/api';
-import { fetchComercioUsuariosList } from '@/lib/apiHelpers';
+import { queryKeys } from '@/lib/queryKeys';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useComercioId } from '@/hooks/useComercioId';
+import { useComercioUsuarios } from '@/hooks/useAdminQueries';
 
 export default function AdminClientesPage() {
+  const queryClient = useQueryClient();
   const { token } = useAuth();
   const { showToast } = useToast();
-  const { comercioId } = useComercioId();
-  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const { comercioId, isLoading: isLoadingComercio } = useComercioId();
+  const { data: clientes = [], isPending: isLoading } = useComercioUsuarios(comercioId, 'Clientes');
   const [search, setSearch] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -32,27 +34,11 @@ export default function AdminClientesPage() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
 
-  const fetchClientes = async (silent = false) => {
-    if (!comercioId) return;
-    if (!silent) setIsLoading(true);
-    try {
-      const list = await fetchComercioUsuariosList<Cliente>(
-        fetchApi,
-        'Clientes',
-        comercioId
-      );
-      setClientes(list);
-    } catch (err) {
-      console.error('Erro ao buscar clientes:', err);
-      setClientes([]);
-    } finally {
-      if (!silent) setIsLoading(false);
+  const refreshClientes = () => {
+    if (comercioId) {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.comercioUsuarios('Clientes', comercioId) });
     }
   };
-
-  useEffect(() => {
-    if (token && comercioId) fetchClientes();
-  }, [token, comercioId]);
 
   const handleDesativar = async () => {
     if (!comercioId || !confirmId) return;
@@ -64,7 +50,7 @@ export default function AdminClientesPage() {
       } as RequestInit);
       showToast('Cliente desativado.', 'success');
       setConfirmId(null);
-      fetchClientes(true);
+      refreshClientes();
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Erro ao desativar.', 'error');
     } finally {
@@ -87,7 +73,7 @@ export default function AdminClientesPage() {
       setNome('');
       setEmail('');
       showToast('Convite enviado com sucesso!', 'success');
-      setTimeout(() => fetchClientes(true), 500);
+      refreshClientes();
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Erro ao convidar cliente.', 'error');
     } finally {
@@ -95,12 +81,14 @@ export default function AdminClientesPage() {
     }
   };
 
-  const filtered = clientes.filter((c) => {
+  const clientesList = clientes as Cliente[];
+
+  const filtered = clientesList.filter((c) => {
     const term = search.toLowerCase();
     return c.nome?.toLowerCase().includes(term) || c.email?.toLowerCase().includes(term);
   });
 
-  if (isLoading) return <PageLoader label="Carregando clientes..." />;
+  if (isLoadingComercio || isLoading) return <PageLoader label="Carregando clientes..." />;
 
   return (
     <div className="space-y-6">

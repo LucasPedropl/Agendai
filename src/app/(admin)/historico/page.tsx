@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { CheckCircle2, XCircle, Calendar, Search } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,9 +6,8 @@ import { PageHeader } from '@/components/ui/page-header';
 import { PageLoader } from '@/components/ui/page-loader';
 import { EmptyState } from '@/components/ui/empty-state';
 import { StatusBadge, getStatusVariant } from '@/components/ui/status-badge';
-import { fetchApi } from '@/lib/api';
-import { normalizeApiList } from '@/lib/apiHelpers';
 import { useComercioId } from '@/hooks/useComercioId';
+import { useHistoricoComercio } from '@/hooks/useAdminQueries';
 import { cn } from '@/lib/utils';
 
 interface HistoricoItem {
@@ -23,29 +22,21 @@ export default function AdminHistoryPage() {
   const { comercioId, isLoading: isLoadingComercio } = useComercioId();
   const [activeTab, setActiveTab] = useState('todos');
   const [searchTerm, setSearchTerm] = useState('');
-  const [items, setItems] = useState<HistoricoItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
 
-  const loadHistorico = useCallback(async () => {
-    if (!comercioId) return;
-    setIsLoading(true);
-    try {
-      const statusParam = activeTab === 'concluidos' ? 'Concluido' : activeTab === 'cancelados' ? 'Cancelado' : '';
-      const query = new URLSearchParams({ periodo: 'mes' });
-      if (statusParam) query.set('status', statusParam);
-      const data = await fetchApi(
-        `/api/Agenda/Comercio-Historico/${comercioId}?${query.toString()}`,
-        { skipToast: true } as RequestInit
-      );
-      setItems(normalizeApiList<HistoricoItem>(data, ['Histórico Vazio']));
-    } catch {
-      setItems([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [comercioId, activeTab]);
+  const statusParam = activeTab === 'concluidos' ? 'Concluido' : activeTab === 'cancelados' ? 'Cancelado' : '';
+  const { data: rawItems = [], isPending: isLoadingHistorico } = useHistoricoComercio(comercioId, statusParam);
 
-  useEffect(() => { loadHistorico(); }, [loadHistorico]);
+  const items = useMemo(
+    () =>
+      rawItems.map((row) => ({
+        dataAgendamento: String(row.dataAgendamento ?? ''),
+        servicoNome: String(row.servicoNome ?? ''),
+        usuarioNome: String(row.usuarioNome ?? ''),
+        status: String(row.status ?? ''),
+        horaAgendamento: row.horaAgendamento ? String(row.horaAgendamento) : undefined,
+      })) as HistoricoItem[],
+    [rawItems]
+  );
 
   const filtered = items.filter((item) => {
     const term = searchTerm.toLowerCase();
@@ -67,7 +58,9 @@ export default function AdminHistoryPage() {
     { id: 'cancelados', label: 'Cancelados', count: cancelados },
   ] as const;
 
-  if (isLoadingComercio) return <PageLoader label="Carregando histórico..." />;
+  if (isLoadingComercio || isLoadingHistorico) {
+    return <PageLoader label="Carregando histórico..." />;
+  }
 
   return (
     <div className="space-y-8">
@@ -114,9 +107,7 @@ export default function AdminHistoryPage() {
         </div>
       </div>
 
-      {isLoading ? (
-        <PageLoader fullPage={false} />
-      ) : filtered.length === 0 ? (
+      {filtered.length === 0 ? (
         <EmptyState
           icon={Calendar}
           title="Nenhum agendamento no histórico"

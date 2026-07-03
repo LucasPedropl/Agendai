@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   Calendar, 
   Clock, 
@@ -14,8 +14,8 @@ import {
   CalendarDays,
   Sparkles
 } from 'lucide-react';
-import { useClientDashboard } from '@/hooks/useClientDashboard';
 import { useAuth } from '@/contexts/AuthContext';
+import { useClienteAgendamentos } from '@/hooks/useClienteQueries';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'motion/react';
@@ -34,21 +34,12 @@ interface Agendamento {
 
 export default function ClientDashboardPage() {
   const { user } = useAuth();
-  const { getAgendamentos, isLoading } = useClientDashboard();
+  const userId = user?.id ? String(user.id) : undefined;
+  const { data: agendamentos = [], isPending: isLoading } = useClienteAgendamentos(userId);
   const [activeTab, setActiveTab] = useState('Todos');
-  const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
   const tabs = ['Todos', 'Pendentes', 'Confirmados', 'Concluídos', 'Cancelados'];
 
-  useEffect(() => {
-    loadAgendamentos();
-  }, [user]);
-
-  const loadAgendamentos = async () => {
-    if (user?.id) {
-      const data = await getAgendamentos(user.id);
-      setAgendamentos(Array.isArray(data) ? data : []);
-    }
-  };
+  const agendamentosList = agendamentos as Agendamento[];
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -79,7 +70,7 @@ export default function ClientDashboardPage() {
     }
   };
 
-  const filteredAgendamentos = agendamentos.filter(a => {
+  const filteredAgendamentos = agendamentosList.filter(a => {
     if (activeTab === 'Todos') return true;
     if (activeTab === 'Pendentes') return a.status === 'Pendente';
     if (activeTab === 'Confirmados') return a.status === 'Confirmado';

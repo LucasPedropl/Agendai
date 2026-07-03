@@ -1,41 +1,41 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useComercioContextOptional } from '@/contexts/ComercioContext';
+import { useQuery } from '@tanstack/react-query';
 import { fetchApi } from '@/lib/api';
 import { fetchAdminComercios } from '@/lib/apiHelpers';
+import { queryKeys } from '@/lib/queryKeys';
 import { useAuth } from '@/contexts/AuthContext';
 
 /**
- * Resolve o ID do comércio vinculado ao usuário admin/profissional via /api/Comercios/Admin.
+ * Resolve o ID do comércio vinculado ao usuário admin/profissional.
+ * Dentro do AdminLayout usa cache compartilhado (ComercioContext).
  */
 export function useComercioId() {
+  const ctx = useComercioContextOptional();
   const { token, userType } = useAuth();
-  const [comercioId, setComercioId] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const isAdminArea = userType === 'estabelecimento' || userType === 'profissional';
 
-  const load = useCallback(async () => {
-    if (!token || (userType !== 'estabelecimento' && userType !== 'profissional')) {
-      setComercioId(null);
-      setIsLoading(false);
-      return;
-    }
+  const fallback = useQuery({
+    queryKey: queryKeys.adminComercios,
+    queryFn: () => fetchAdminComercios(fetchApi),
+    enabled: !ctx && Boolean(token) && isAdminArea,
+  });
 
-    setIsLoading(true);
-    setError(null);
-    try {
-      const list = await fetchAdminComercios(fetchApi);
-      setComercioId(list[0]?.id ?? null);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Erro ao carregar comércio';
-      setError(message);
-      setComercioId(null);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [token, userType]);
+  if (ctx) {
+    return {
+      comercioId: ctx.comercioId,
+      isLoading: ctx.isLoading,
+      isFetching: ctx.isFetching,
+      error: ctx.error,
+      reload: ctx.reload,
+    };
+  }
 
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  return { comercioId, isLoading, error, reload: load };
+  const list = fallback.data ?? [];
+  return {
+    comercioId: list[0]?.id ?? null,
+    isLoading: fallback.isPending,
+    isFetching: fallback.isFetching,
+    error: fallback.error instanceof Error ? fallback.error.message : null,
+    reload: () => void fallback.refetch(),
+  };
 }

@@ -6,6 +6,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
+import { QueryProvider } from '@/providers/QueryProvider';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { ClientLayout } from '@/components/layout/ClientLayout';
 import { AdminLayout } from '@/components/layout/AdminLayout';
@@ -131,9 +132,11 @@ export default function App() {
   return (
     <ThemeProvider>
       <ToastProvider>
-        <AuthProvider>
-          <AppRoutes />
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
+        </QueryProvider>
       </ToastProvider>
     </ThemeProvider>
   );

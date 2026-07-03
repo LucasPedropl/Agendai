@@ -84,13 +84,23 @@ export function canAccessRoute(
   return tokenUserType === allowedType;
 }
 
-/** Converte respostas que podem ser array, string vazia ou null em array. */
+/** Converte respostas que podem ser array, objeto com `agendamentos`, string vazia ou null em array. */
 export function normalizeApiList<T>(data: unknown, emptyMarkers: string[] = []): T[] {
   if (Array.isArray(data)) return data as T[];
+  if (data && typeof data === 'object') {
+    const record = data as Record<string, unknown>;
+    const nested = record.agendamentos ?? record.Agendamentos;
+    if (Array.isArray(nested)) return nested as T[];
+  }
   if (typeof data === 'string' && emptyMarkers.some((m) => data.includes(m))) {
     return [];
   }
   return [];
+}
+
+/** Mês atual (1–12) para query `periodo` de Comercio-Historico — API exige inteiro, não string. */
+export function getHistoricoPeriodoAtual(): string {
+  return String(new Date().getMonth() + 1);
 }
 
 /** Lê horários disponíveis independente do casing (camelCase / PascalCase). */

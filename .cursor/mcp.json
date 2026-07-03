@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "agendaai": {
+      "command": "npx",
+      "args": [
+        "tsx",
+        "${workspaceFolder}/.mcp/ServidorMCP/apps/api/src/index.ts"
+      ],
+      "env": {
+        "TARGET_SERVER_ID": "8348e695-a229-408e-be4d-11d2f173b5ae"
+      }
+    }
+  }
+}

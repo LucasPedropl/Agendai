@@ -1,15 +1,17 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Modal } from '@/components/ui/modal';
 import { Plus, Edit, Trash2, Clock, Tag } from 'lucide-react';
 import { fetchApi } from '@/lib/api';
-import { normalizeApiList } from '@/lib/apiHelpers';
+import { queryKeys } from '@/lib/queryKeys';
 import { useAuth } from '@/contexts/AuthContext';
 import { useComercioId } from '@/hooks/useComercioId';
+import { useCategoriasComercio, useServicosComercio } from '@/hooks/useAdminQueries';
 import { useToast } from '@/contexts/ToastContext';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { PageHeader } from '@/components/ui/page-header';
@@ -19,13 +21,12 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export default function AdminServicosPage() {
+  const queryClient = useQueryClient();
   const { token } = useAuth();
   const { comercioId, isLoading: isComercioLoading } = useComercioId();
   const { showToast } = useToast();
-  const [servicos, setServicos] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [categorias, setCategorias] = useState<any[]>([]);
-  const [isLoadingCategorias, setIsLoadingCategorias] = useState(false);
+  const { data: servicos = [], isPending: isLoading } = useServicosComercio(comercioId);
+  const { data: categorias = [], isPending: isLoadingCategorias } = useCategoriasComercio(comercioId);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCategoriaModalOpen, setIsCategoriaModalOpen] = useState(false);
@@ -47,59 +48,17 @@ export default function AdminServicosPage() {
   // Form state - Category
   const [categoriaNome, setCategoriaNome] = useState('');
 
-  const fetchServicos = async (id?: number, silent = false) => {
-    if (!silent) setIsLoading(true);
-    try {
-      const activeId = id ?? comercioId;
-      if (!activeId) {
-        setServicos([]);
-        return;
-      }
-      const data = await fetchApi(`/api/Servicos/Todos/${activeId}`, {
-        skipToast: true,
-        notFoundAsEmpty: true,
-      });
-      setServicos(normalizeApiList(data));
-    } catch (err) {
-      console.error('Erro ao buscar serviços:', err);
-      setServicos([]);
-    } finally {
-      if (!silent) setIsLoading(false);
+  const refreshServicos = () => {
+    if (comercioId) {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.servicos(comercioId) });
     }
   };
 
-  const fetchCategorias = async (id?: number, silent = false) => {
-    if (!silent) setIsLoadingCategorias(true);
-    try {
-      const activeId = id ?? comercioId;
-      if (!activeId) {
-        setCategorias([]);
-        return;
-      }
-      const data = await fetchApi(`/api/Categorias/Todas/${activeId}`, {
-        skipToast: true,
-        notFoundAsEmpty: true,
-      });
-      setCategorias(normalizeApiList(data));
-    } catch (err) {
-      console.error('Erro ao buscar categorias:', err);
-      setCategorias([]);
-    } finally {
-      if (!silent) setIsLoadingCategorias(false);
+  const refreshCategorias = () => {
+    if (comercioId) {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.categorias(comercioId) });
     }
   };
-
-  useEffect(() => {
-    if (isComercioLoading) return;
-    if (!comercioId) {
-      setIsLoading(false);
-      setServicos([]);
-      setCategorias([]);
-      return;
-    }
-    fetchServicos(comercioId);
-    fetchCategorias(comercioId);
-  }, [comercioId, isComercioLoading]);
 
   const openModal = (servico?: any) => {
     if (servico) {
@@ -185,7 +144,7 @@ export default function AdminServicosPage() {
       }
       setIsModalOpen(false);
       showToast(editingId ? 'Serviço atualizado com sucesso!' : 'Serviço criado com sucesso!', 'success');
-      setTimeout(() => fetchServicos(undefined, true), 500);
+      refreshServicos();
     } catch (err: any) {
       console.error("Full Submit Error:", err);
       showToast(err.message || 'Erro ao salvar serviço.', 'error');
@@ -205,7 +164,7 @@ export default function AdminServicosPage() {
       } as RequestInit);
       showToast('Serviço excluído com sucesso!', 'success');
       setConfirmDeleteId(null);
-      fetchServicos();
+      refreshServicos();
     } catch (err: unknown) {
       console.error(err);
       showToast('Erro ao excluir serviço.', 'error');
@@ -255,7 +214,7 @@ export default function AdminServicosPage() {
       setEditingCategoriaId(null);
       setIsCategoriaModalOpen(false);
       showToast('Categoria salva com sucesso!', 'success');
-      setTimeout(() => fetchCategorias(undefined, true), 500);
+      refreshCategorias();
     } catch (err: any) {
       console.error("Save Category Error:", err);
       showToast(err.message || 'Erro ao salvar categoria.', 'error');
@@ -272,7 +231,7 @@ export default function AdminServicosPage() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       showToast('Categoria excluída com sucesso!', 'success');
-      fetchCategorias();
+      refreshCategorias();
     } catch (err: any) {
       console.error(err);
       showToast('Erro ao excluir categoria.', 'error');

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Squares2X2Icon, 
@@ -21,11 +21,10 @@ import {
   Cog6ToothIcon as MobileConfigIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@/contexts/AuthContext';
+import { ComercioProvider, useComercioContext } from '@/contexts/ComercioContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { fetchApi } from '@/lib/api';
 import {
   canAccessRoute,
-  fetchAdminComercios,
   getDashboardPath,
   resolveUserTypeFromAuth,
 } from '@/lib/apiHelpers';
@@ -35,15 +34,21 @@ import { Topbar } from './Topbar';
 import { motion, AnimatePresence } from 'motion/react';
 import { Modal } from '@/components/ui/modal';
 import { AppointmentForm } from '@/features/agenda/components/AppointmentForm';
-
 import { cn } from '@/lib/utils';
+import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { fetchApi } from '@/lib/api';
+import {
+  fetchComercioUsuariosList,
+  getHistoricoPeriodoAtual,
+  normalizeApiList,
+} from '@/lib/apiHelpers';
+import { queryKeys } from '@/lib/queryKeys';
 
-/**
- * AdminLayout (Smart Component)
- * Orchestrates the application shell, authentication state, and commerce verification.
- */
-export function AdminLayout() {
+function AdminLayoutShell() {
   const { logout, user, token, userType } = useAuth();
+  const { comercioId, isLoading: isLoadingCommerce, hasCommerce, reload } = useComercioContext();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
@@ -55,14 +60,60 @@ export function AdminLayout() {
     }
     return false;
   });
-  const [hasCommerce, setHasCommerce] = useState<boolean | null>(null);
-  const [isLoadingCommerce, setIsLoadingCommerce] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const roleLabel = userType === 'estabelecimento' ? 'Administrador' : (userType as string) === 'profissional' ? 'Profissional' : 'Estabelecimento';
   const isProfissional = userType === 'profissional';
+
+  useEffect(() => {
+    if (!token) return;
+    const tokenUserType = resolveUserTypeFromAuth(token);
+    const requiredType: ('estabelecimento' | 'profissional')[] = isProfissional
+      ? ['profissional']
+      : ['estabelecimento'];
+    if (!canAccessRoute(tokenUserType, requiredType)) {
+      navigate(getDashboardPath(tokenUserType), { replace: true });
+    }
+  }, [token, isProfissional, navigate]);
+
+  useEffect(() => {
+    if (!comercioId) return;
+    const periodo = getHistoricoPeriodoAtual();
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.agendaComercio(comercioId),
+      queryFn: async () => {
+        const data = await fetchApi(`/api/Agenda/Comercio/${comercioId}`, { skipToast: true } as RequestInit);
+        return normalizeApiList(data, ['Agenda Vazia']);
+      },
+    });
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.historicoComercio(comercioId, periodo, ''),
+      queryFn: async () => {
+        const data = await fetchApi(
+          `/api/Agenda/Comercio-Historico/${comercioId}?periodo=${periodo}`,
+          { skipToast: true } as RequestInit
+        );
+        return normalizeApiList(data, ['Histórico Vazio']);
+      },
+    });
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.servicos(comercioId),
+      queryFn: async () => {
+        const data = await fetchApi(`/api/Servicos/Todos/${comercioId}`, { skipToast: true } as RequestInit);
+        return normalizeApiList(data);
+      },
+    });
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.comercioUsuarios('Clientes', comercioId),
+      queryFn: () => fetchComercioUsuariosList(fetchApi, 'Clientes', comercioId),
+    });
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.comercioUsuarios('Profissionais', comercioId),
+      queryFn: () => fetchComercioUsuariosList(fetchApi, 'Profissionais', comercioId),
+    });
+  }, [comercioId, queryClient]);
 
   const toggleSidebar = () => {
     if (window.innerWidth < 1024) {
@@ -74,43 +125,6 @@ export function AdminLayout() {
     localStorage.setItem('agendai-sidebar-collapsed', JSON.stringify(newState));
   };
 
-  // Commerce verification logic
-  useEffect(() => {
-    const checkCommerce = async () => {
-      if (!token) {
-        setIsLoadingCommerce(false);
-        return;
-      }
-
-      const tokenUserType = resolveUserTypeFromAuth(token);
-      const requiredType: ('estabelecimento' | 'profissional')[] = isProfissional
-        ? ['profissional']
-        : ['estabelecimento'];
-
-      if (!canAccessRoute(tokenUserType, requiredType)) {
-        navigate(getDashboardPath(tokenUserType), { replace: true });
-        return;
-      }
-
-      if (isProfissional) {
-        setHasCommerce(true);
-        setIsLoadingCommerce(false);
-        return;
-      }
-
-      try {
-        const comercios = await fetchAdminComercios(fetchApi);
-        setHasCommerce(comercios.length > 0 && Boolean(comercios[0]?.nome));
-      } catch {
-        setHasCommerce(false);
-      } finally {
-        setIsLoadingCommerce(false);
-      }
-    };
-
-    checkCommerce();
-  }, [token, userType, isProfissional, navigate]);
-
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -118,7 +132,6 @@ export function AdminLayout() {
 
   const basePath = location.pathname.startsWith('/profissional') ? '/profissional' : '/estabelecimento';
 
-  // Navigation configuration
   const navCategories = [
     {
       items: [
@@ -206,7 +219,6 @@ export function AdminLayout() {
           onNewAppointment={() => setIsAppointmentModalOpen(true)}
         />
 
-        {/* Profile Dropdown Overlay */}
         <AnimatePresence>
           {isProfileOpen && (
             <>
@@ -242,19 +254,18 @@ export function AdminLayout() {
 
         <main className={cn(
           'flex-1 overflow-y-auto bg-background/50 pb-20 lg:pb-0',
-          hasCommerce === false && 'blur-sm pointer-events-none select-none'
+          !hasCommerce && userType === 'estabelecimento' && 'blur-sm pointer-events-none select-none'
         )}>
           <div className="p-4 md:p-8 lg:p-10 max-w-7xl mx-auto">
-            {hasCommerce === true && <Outlet />}
+            {(hasCommerce || isProfissional) && <Outlet />}
           </div>
         </main>
       </div>
 
-      {/* Blocking Overlay for Commerce Setup */}
-      {hasCommerce === false && (
+      {!hasCommerce && userType === 'estabelecimento' && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/40 backdrop-blur-md">
           <div className="bg-background border border-border p-8 rounded-2xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <CadastroComercioPage onSuccess={() => setHasCommerce(true)} />
+            <CadastroComercioPage onSuccess={() => void reload()} />
           </div>
         </div>
       )}
@@ -288,5 +299,13 @@ export function AdminLayout() {
         />
       </Modal>
     </div>
+  );
+}
+
+export function AdminLayout() {
+  return (
+    <ComercioProvider>
+      <AdminLayoutShell />
+    </ComercioProvider>
   );
 }

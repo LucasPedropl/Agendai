@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,17 +14,18 @@ import { StatusBadge, getStatusVariant } from '@/components/ui/status-badge';
 import { Plus, Trash2, Phone, Users } from 'lucide-react';
 import { Profissional } from '@/types';
 import { fetchApi } from '@/lib/api';
-import { fetchComercioUsuariosList } from '@/lib/apiHelpers';
+import { queryKeys } from '@/lib/queryKeys';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useComercioId } from '@/hooks/useComercioId';
+import { useComercioUsuarios } from '@/hooks/useAdminQueries';
 
 export default function AdminProfissionaisPage() {
+  const queryClient = useQueryClient();
   const { token } = useAuth();
   const { showToast } = useToast();
-  const { comercioId } = useComercioId();
-  const [profissionais, setProfissionais] = useState<Profissional[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { comercioId, isLoading: isLoadingComercio } = useComercioId();
+  const { data: profissionais = [], isPending: isLoading } = useComercioUsuarios(comercioId, 'Profissionais');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
@@ -31,27 +33,11 @@ export default function AdminProfissionaisPage() {
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [isDeactivating, setIsDeactivating] = useState(false);
 
-  const fetchProfissionais = async (silent = false) => {
-    if (!comercioId) return;
-    if (!silent) setIsLoading(true);
-    try {
-      const list = await fetchComercioUsuariosList<Profissional>(
-        fetchApi,
-        'Profissionais',
-        comercioId
-      );
-      setProfissionais(list);
-    } catch (err) {
-      console.error('Erro ao buscar profissionais:', err);
-      setProfissionais([]);
-    } finally {
-      if (!silent) setIsLoading(false);
+  const refreshProfissionais = () => {
+    if (comercioId) {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.comercioUsuarios('Profissionais', comercioId) });
     }
   };
-
-  useEffect(() => {
-    if (token && comercioId) fetchProfissionais();
-  }, [token, comercioId]);
 
   const handleDesativar = async () => {
     if (!comercioId || !confirmId) return;
@@ -63,7 +49,7 @@ export default function AdminProfissionaisPage() {
       } as RequestInit);
       showToast('Profissional desativado.', 'success');
       setConfirmId(null);
-      fetchProfissionais(true);
+      refreshProfissionais();
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Erro ao desativar.', 'error');
     } finally {
@@ -86,7 +72,7 @@ export default function AdminProfissionaisPage() {
       setNome('');
       setEmail('');
       showToast('Convite enviado com sucesso!', 'success');
-      setTimeout(() => fetchProfissionais(true), 500);
+      refreshProfissionais();
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Erro ao convidar profissional.', 'error');
     } finally {
@@ -94,7 +80,9 @@ export default function AdminProfissionaisPage() {
     }
   };
 
-  if (isLoading) return <PageLoader label="Carregando profissionais..." />;
+  const profissionaisList = profissionais as Profissional[];
+
+  if (isLoadingComercio || isLoading) return <PageLoader label="Carregando profissionais..." />;
 
   return (
     <div className="space-y-6">
@@ -116,7 +104,7 @@ export default function AdminProfissionaisPage() {
         isLoading={isDeactivating}
       />
 
-      {profissionais.length === 0 ? (
+      {profissionaisList.length === 0 ? (
         <EmptyState
           icon={Users}
           title="Nenhum profissional cadastrado"
@@ -126,7 +114,7 @@ export default function AdminProfissionaisPage() {
         />
       ) : (
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {profissionais.map((profissional) => (
+          {profissionaisList.map((profissional) => (
             <Card key={profissional.id} className="overflow-hidden hover:border-primary/30 transition-colors">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-3">

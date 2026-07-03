@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Modal } from '@/components/ui/modal';
@@ -8,9 +9,10 @@ import { PageHeader } from '@/components/ui/page-header';
 import { PageLoader } from '@/components/ui/page-loader';
 import { StatusBadge, getStatusVariant } from '@/components/ui/status-badge';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, AlertCircle } from 'lucide-react';
-import { fetchApi } from '@/lib/api';
-import { IS_ADMIN_AGENDA_CLIENT_NAME_UNRELIABLE, normalizeApiList } from '@/lib/apiHelpers';
+import { IS_ADMIN_AGENDA_CLIENT_NAME_UNRELIABLE } from '@/lib/apiHelpers';
+import { queryKeys } from '@/lib/queryKeys';
 import { useComercioId } from '@/hooks/useComercioId';
+import { useAgendaComercio } from '@/hooks/useAdminQueries';
 import { AppointmentForm } from '@/features/agenda/components/AppointmentForm';
 
 interface AgendaItem {
@@ -34,30 +36,17 @@ function mapAgendaItem(raw: Record<string, unknown>, index: number): AgendaItem 
 }
 
 export default function AdminAgendaPage() {
+  const queryClient = useQueryClient();
   const { comercioId, isLoading: isLoadingComercio } = useComercioId();
+  const { data: rawList = [], isPending: isLoadingAgenda } = useAgendaComercio(comercioId);
+  const agendamentos = rawList.map(mapAgendaItem);
+
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [agendamentos, setAgendamentos] = useState<AgendaItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTime, setSelectedTime] = useState('');
 
   const hours = Array.from({ length: 11 }, (_, i) => i + 8);
-
-  const fetchAgendamentos = React.useCallback(async () => {
-    if (!comercioId) return;
-    try {
-      const data = await fetchApi(`/api/Agenda/Comercio/${comercioId}`, { skipToast: true } as RequestInit);
-      const list = normalizeApiList<Record<string, unknown>>(data, ['Agenda Vazia']);
-      setAgendamentos(list.map(mapAgendaItem));
-    } catch (err) {
-      console.error('Erro ao buscar agendamentos:', err);
-      setAgendamentos([]);
-    }
-  }, [comercioId]);
-
-  useEffect(() => {
-    if (comercioId) fetchAgendamentos();
-  }, [comercioId, fetchAgendamentos]);
 
   const handleOpenModal = (date?: string, time?: string) => {
     setSelectedDate(date || '');
@@ -65,12 +54,20 @@ export default function AdminAgendaPage() {
     setIsModalOpen(true);
   };
 
+  const refreshAgenda = () => {
+    if (comercioId) {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.agendaComercio(comercioId) });
+    }
+  };
+
   const dayAppointments = agendamentos.filter((a) => {
     const appointmentDate = new Date(a.data);
     return appointmentDate.toDateString() === currentDate.toDateString();
   });
 
-  if (isLoadingComercio) return <PageLoader label="Carregando agenda..." />;
+  if (isLoadingComercio || isLoadingAgenda) {
+    return <PageLoader label="Carregando agenda..." />;
+  }
 
   return (
     <div className="space-y-6">
@@ -162,7 +159,7 @@ export default function AdminAgendaPage() {
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Novo Agendamento" size="lg">
         <AppointmentForm
-          onSuccess={() => { setIsModalOpen(false); fetchAgendamentos(); }}
+          onSuccess={() => { setIsModalOpen(false); refreshAgenda(); }}
           onCancel={() => setIsModalOpen(false)}
           initialData={selectedDate}
           initialTime={selectedTime}

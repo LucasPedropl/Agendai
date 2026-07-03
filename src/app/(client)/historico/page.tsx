@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   History, 
   Search, 
@@ -11,8 +11,8 @@ import {
   Download,
   MoreHorizontal
 } from 'lucide-react';
-import { useClientDashboard } from '@/hooks/useClientDashboard';
 import { useAuth } from '@/contexts/AuthContext';
+import { useClienteHistorico } from '@/hooks/useClienteQueries';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'motion/react';
@@ -31,20 +31,11 @@ interface HistoryItem {
 
 export default function ClientHistoryPage() {
   const { user } = useAuth();
-  const { getHistorico, isLoading } = useClientDashboard();
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const userId = user?.id ? String(user.id) : undefined;
+  const { data: history = [], isPending: isLoading } = useClienteHistorico(userId);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    loadHistorico();
-  }, [user]);
-
-  const loadHistorico = async () => {
-    if (user?.id) {
-      const data = await getHistorico(user.id);
-      setHistory(Array.isArray(data) ? data : []);
-    }
-  };
+  const historyList = history as HistoryItem[];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -71,7 +62,7 @@ export default function ClientHistoryPage() {
     }
   };
 
-  const filteredHistory = history.filter(item => 
+  const filteredHistory = historyList.filter(item =>
     item.servicoNome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (item.estabelecimentoNome || '').toLowerCase().includes(searchTerm.toLowerCase())
   );

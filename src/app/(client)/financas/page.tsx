@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { 
   DollarSign, 
   TrendingUp, 
@@ -13,7 +13,8 @@ import {
   MoreVertical,
   Filter
 } from 'lucide-react';
-import { useFinance, Pagamento } from '@/hooks/useFinance';
+import { Pagamento } from '@/hooks/useFinance';
+import { useClientePagamentos } from '@/hooks/useClienteQueries';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'motion/react';
@@ -21,30 +22,17 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export default function ClientFinancasPage() {
-  const { getPagamentosCliente, isLoading } = useFinance();
-  const [pagamentos, setPagamentos] = useState<Pagamento[]>([]);
-  const [stats, setStats] = useState({
-    totalGasto: 0,
-    servicosRealizados: 0,
-    mediaMensal: 0
-  });
+  const { data: pagamentos = [], isPending: isLoading } = useClientePagamentos();
+  const pagamentosList = pagamentos as Pagamento[];
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    const data = await getPagamentosCliente();
-    setPagamentos(data);
-    
-    // Calculate stats
-    const total = data.reduce((acc, curr) => acc + curr.valor, 0);
-    setStats({
+  const stats = useMemo(() => {
+    const total = pagamentosList.reduce((acc, curr) => acc + curr.valor, 0);
+    return {
       totalGasto: total,
-      servicosRealizados: data.length,
-      mediaMensal: data.length > 0 ? total / 12 : 0 // Estimativa simples
-    });
-  };
+      servicosRealizados: pagamentosList.length,
+      mediaMensal: pagamentosList.length > 0 ? total / 12 : 0,
+    };
+  }, [pagamentosList]);
 
   const getStatusBadge = (status: number) => {
     // Enum mock logic: 0=Pendente, 1=Pago, 2=Cancelado, 3=Estornado
@@ -147,13 +135,13 @@ export default function ClientFinancasPage() {
                   <Skeleton className="h-6 w-24 rounded-full" />
                 </div>
               ))
-            ) : pagamentos.length === 0 ? (
+            ) : pagamentosList.length === 0 ? (
               <div className="p-20 text-center space-y-4">
                 <Receipt className="h-12 w-12 text-muted-foreground mx-auto opacity-20" />
                 <p className="text-muted-foreground">Nenhuma transação registrada até o momento.</p>
               </div>
             ) : (
-              pagamentos.map((pagamento) => (
+              pagamentosList.map((pagamento) => (
                 <motion.div 
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}

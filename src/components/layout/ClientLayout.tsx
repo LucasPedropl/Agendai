@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { 
   CalendarIcon, 
   ClockIcon, 
@@ -13,6 +14,9 @@ import {
   ArrowLeftOnRectangleIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '@/contexts/AuthContext';
+import { fetchApi } from '@/lib/api';
+import { normalizeApiList } from '@/lib/apiHelpers';
+import { queryKeys } from '@/lib/queryKeys';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
@@ -25,6 +29,7 @@ import { cn } from '@/lib/utils';
  */
 export function ClientLayout() {
   const { logout, user } = useAuth();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
@@ -38,6 +43,40 @@ export function ClientLayout() {
   });
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const userId = user?.id ? String(user.id) : undefined;
+    if (userId) {
+      void queryClient.prefetchQuery({
+        queryKey: queryKeys.clienteAgendamentos(userId),
+        queryFn: async () => {
+          const data = await fetchApi(`/api/Agenda/Cliente/${userId}`);
+          return normalizeApiList(data);
+        },
+      });
+      void queryClient.prefetchQuery({
+        queryKey: queryKeys.clienteHistorico(userId),
+        queryFn: async () => {
+          const data = await fetchApi(`/api/Agenda/Cliente-Historico/${userId}`);
+          return normalizeApiList(data, ['Histórico Vazio']);
+        },
+      });
+      void queryClient.prefetchQuery({
+        queryKey: queryKeys.clientePagamentos('self'),
+        queryFn: async () => {
+          const data = await fetchApi('/api/Pagamentos/Pagamentos-Cliente', { skipToast: true } as RequestInit);
+          return Array.isArray(data) ? data : [];
+        },
+      });
+    }
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.comerciosPublicos,
+      queryFn: async () => {
+        const data = await fetchApi('/api/Comercios', { method: 'GET', skipToast: true } as RequestInit);
+        return Array.isArray(data) ? data : [];
+      },
+    });
+  }, [user?.id, queryClient]);
 
   const toggleSidebar = () => {
     if (window.innerWidth < 1024) {

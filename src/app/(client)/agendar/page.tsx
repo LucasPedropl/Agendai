@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { fetchApi } from '@/lib/api';
 import { extractHorariosDisponiveis, normalizeApiList, toApiTimeSpan } from '@/lib/apiHelpers';
+import { useComerciosPublicos } from '@/hooks/useClienteQueries';
 import { EstablishmentCard } from '@/components/EstablishmentCard';
 import {
   Search,
@@ -66,10 +67,10 @@ interface Profissional {
 export default function AgendarPage() {
   // --- State ---
   const [step, setStep] = useState(1);
-  const [estabelecimentos, setEstabelecimentos] = useState<Estabelecimento[]>([]);
+  const { data: estabelecimentos = [], isPending: isLoadingEstabelecimentos } = useComerciosPublicos();
   const [servicos, setServicos] = useState<Servico[]>([]);
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isStepLoading, setIsStepLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   
   const toast = useToast();
@@ -87,28 +88,11 @@ export default function AgendarPage() {
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  // --- Effects ---
-  useEffect(() => {
-    loadEstabelecimentos();
-  }, []);
-
   // --- Data Loading Handlers ---
-
-  const loadEstabelecimentos = async () => {
-    setIsLoading(true);
-    try {
-      const data = await fetchApi('/api/Comercios', { method: 'GET' });
-      setEstabelecimentos(Array.isArray(data) ? data : []);
-    } catch (err) {
-      toast.error('Não foi possível carregar os estabelecimentos.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSelectEstabelecimento = async (est: Estabelecimento) => {
     setSelectedEstabelecimento(est);
-    setIsLoading(true);
+    setIsStepLoading(true);
     try {
       const [servicesData, professionalsData] = await Promise.all([
         fetchApi(`/api/Servicos/Todos/${est.id}`, { method: 'GET' }),
@@ -121,7 +105,7 @@ export default function AgendarPage() {
     } catch (err) {
       toast.error('Erro ao carregar informações do estabelecimento.');
     } finally {
-      setIsLoading(false);
+      setIsStepLoading(false);
     }
   };
 
@@ -132,14 +116,14 @@ export default function AgendarPage() {
 
   const handleSelectProfessional = async (prof: Profissional | null) => {
     setSelectedProfessional(prof);
-    setIsLoading(true);
+    setIsStepLoading(true);
     try {
       await loadAvailableDates(currentMonth, prof);
       setStep(4);
     } catch (err) {
       toast.error('Erro ao carregar datas disponíveis.');
     } finally {
-      setIsLoading(false);
+      setIsStepLoading(false);
     }
   };
 
@@ -179,7 +163,7 @@ export default function AgendarPage() {
 
     setSelectedDate(date);
     setSelectedTime(null);
-    setIsLoading(true);
+    setIsStepLoading(true);
     try {
       const queryParams = new URLSearchParams({
         dataEscolhida: date.toISOString(),
@@ -192,14 +176,14 @@ export default function AgendarPage() {
     } catch (err) {
       toast.error('Erro ao carregar horários disponíveis.');
     } finally {
-      setIsLoading(false);
+      setIsStepLoading(false);
     }
   };
 
   const handleConfirmBooking = async () => {
     if (!selectedTime || !selectedDate || !selectedService || !user) return;
 
-    setIsLoading(true);
+    setIsStepLoading(true);
     try {
       await fetchApi('/api/Agenda', {
         method: 'POST',
@@ -217,11 +201,12 @@ export default function AgendarPage() {
     } catch (err) {
       toast.error('Erro ao realizar agendamento.');
     } finally {
-      setIsLoading(false);
+      setIsStepLoading(false);
     }
   };
 
-  const filteredEstabelecimentos = estabelecimentos.filter(
+  const estabelecimentosList = estabelecimentos as Estabelecimento[];
+  const filteredEstabelecimentos = estabelecimentosList.filter(
     (est) =>
       est.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       est.endereco.toLowerCase().includes(searchTerm.toLowerCase())
@@ -323,7 +308,7 @@ export default function AgendarPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {isLoading ? (
+        {isLoadingEstabelecimentos ? (
           [1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-48 w-full rounded-3xl" />)
         ) : (
           filteredEstabelecimentos.map((est) => (
@@ -533,7 +518,7 @@ export default function AgendarPage() {
                 Horários para {selectedDate ? format(selectedDate, "dd 'de' MMMM", { locale: ptBR }) : '...'}
               </h3>
 
-              {isLoading ? (
+              {isStepLoading ? (
                 <div className="grid grid-cols-3 gap-3">
                   {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-12 rounded-xl" />)}
                 </div>
@@ -579,10 +564,10 @@ export default function AgendarPage() {
                 </div>
                 <Button
                   className="w-full h-14 rounded-2xl text-lg font-bold shadow-xl shadow-primary/20"
-                  disabled={!selectedTime || isLoading}
+                  disabled={!selectedTime || isStepLoading}
                   onClick={handleConfirmBooking}
                 >
-                  {isLoading ? 'Processando...' : 'Confirmar Agendamento'}
+                  {isStepLoading ? 'Processando...' : 'Confirmar Agendamento'}
                 </Button>
                 <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1">
                   <ShieldCheck className="w-3 h-3" /> Pagamento será realizado no estabelecimento
