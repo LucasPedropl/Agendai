@@ -1,20 +1,37 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Agendai - Diretrizes de Desenvolvimento e Arquitetura
 
-# Run and deploy your AI Studio app
+Bem-vindo ao **Agendai**! Este documento serve como guia de onboarding técnico para desenvolvedores e agentes de IA, descrevendo a stack tecnológica, a estrutura e a arquitetura básica da aplicação de agendamentos.
 
-This contains everything you need to run your app locally.
+---
 
-View your app in AI Studio: https://ai.studio/apps/5e454c0d-2ccd-4f0b-8246-0f6ca5c34e7f
+## 1. Visão Geral do Projeto
+O Agendai é o sistema de agendamento online integrado do ecossistema UaiPDV, permitindo que clientes agendem horários e serviços diretamente com os estabelecimentos comerciais integrados.
 
-## Run Locally
+---
 
-**Prerequisites:**  Node.js
+## 2. Stack Tecnológica
+* **Interface (Core)**: React (Vite) & TypeScript.
+* **Estilização**: Tailwind CSS.
+* **Roteamento**: `react-router-dom` ou equivalente.
+* **Backend Local**: A pasta `/api` na raiz de `apps/Agendai` contém as rotinas e endpoints do serviço de agendamento.
 
+---
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 3. Estrutura de Diretórios
+```
+apps/Agendai/
+├── src/                  # Código-fonte principal do Frontend (Componentes, Páginas, Hooks, Services)
+├── api/                  # Endpoints de API e Integrações locais do Agendamento
+├── docs/                 # Documentação e especificações de comportamento
+├── public/               # Assets estáticos globais (favicon, etc.)
+├── package.json          # Dependências do projeto e scripts de execução
+├── vite.config.ts        # Configuração do Vite e roteamento de proxies
+└── tsconfig.json         # Configurações do compilador TypeScript
+```
+
+---
+
+## 4. Diretrizes de Atuação
+* **Estilo e UI**: Respeite os padrões de layout responsivos e estilizações sob o Tailwind CSS já existentes no projeto.
+* **Consistência de Tipos**: Use TypeScript em modo estrito, mapeando interfaces e tipos correspondentes no diretório apropriado dentro de `src/`.
+* **API e Integrações**: Ao lidar com rotas da API em `apps/Agendai/api`, garanta que as modificações mantenham a conformidade com o contrato de consumo do frontend, testando endpoints de forma segura antes de commitá-los.
