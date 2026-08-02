@@ -21,6 +21,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { Modal } from '@/components/ui/modal';
+import { Input } from '@/components/ui/input';
+import { fetchApi } from '@/lib/api';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/queryKeys';
 
 interface Agendamento {
   id: number;
@@ -38,8 +44,66 @@ export default function ClientDashboardPage() {
   const { data: agendamentos = [], isPending: isLoading } = useClienteAgendamentos(userId);
   const [activeTab, setActiveTab] = useState('Todos');
   const tabs = ['Todos', 'Pendentes', 'Confirmados', 'Concluídos', 'Cancelados'];
+  const queryClient = useQueryClient();
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  
+  // Reagendamento state
+  const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState('');
+  const [rescheduleTime, setRescheduleTime] = useState('');
+  const [isRescheduling, setIsRescheduling] = useState(false);
+
+  const [selectedAgendamentoId, setSelectedAgendamentoId] = useState<number | null>(null);
 
   const agendamentosList = agendamentos as Agendamento[];
+
+  const handleCancelAgendamento = async () => {
+    if (!selectedAgendamentoId) return;
+    try {
+      await fetchApi(`/api/Agenda/Cancelar/${selectedAgendamentoId}`, { method: 'DELETE' });
+      if (userId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.clienteAgendamentos(userId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.clienteHistorico(userId) });
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setCancelModalOpen(false);
+      setSelectedAgendamentoId(null);
+    }
+  };
+
+  const handleReschedule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedAgendamentoId || !rescheduleDate || !rescheduleTime) return;
+    
+    setIsRescheduling(true);
+    try {
+      // payload mocked as the backend ignores it for now, but we send it correctly anyway
+      const payload = {
+        data: rescheduleDate,
+        horario: rescheduleTime
+      };
+      
+      await fetchApi(`/api/Agenda/Reagendar/${selectedAgendamentoId}`, { 
+        method: 'PUT',
+        body: payload
+      });
+      
+      if (userId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.clienteAgendamentos(userId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.clienteHistorico(userId) });
+      }
+      setRescheduleModalOpen(false);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsRescheduling(false);
+      setSelectedAgendamentoId(null);
+      setRescheduleDate('');
+      setRescheduleTime('');
+    }
+  };
 
   const getStatusConfig = (status: string) => {
     switch (status) {
@@ -231,11 +295,29 @@ export default function ClientDashboardPage() {
 
                     {/* Action */}
                     <div className="pt-4 border-t border-border/50 flex gap-3">
-                      <Button variant="outline" className="flex-1 rounded-xl h-10 font-bold text-xs">
-                        Detalhes
-                      </Button>
+                      {(agendamento.status === 'Pendente' || agendamento.status === 'Confirmado') && (
+                        <Button 
+                          variant="outline" 
+                          className="flex-1 rounded-xl h-10 font-bold text-xs hover:bg-primary/5 hover:text-primary hover:border-primary/20"
+                          onClick={() => {
+                            setSelectedAgendamentoId(agendamento.id);
+                            setRescheduleDate(agendamento.dataAgendamento.split('T')[0] || '');
+                            setRescheduleTime('');
+                            setRescheduleModalOpen(true);
+                          }}
+                        >
+                          Reagendar
+                        </Button>
+                      )}
                       {agendamento.status === 'Pendente' && (
-                        <Button variant="ghost" className="flex-1 rounded-xl h-10 font-bold text-xs text-red-500 hover:text-red-600 hover:bg-red-50">
+                        <Button 
+                          variant="ghost" 
+                          className="flex-1 rounded-xl h-10 font-bold text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
+                          onClick={() => {
+                            setSelectedAgendamentoId(agendamento.id);
+                            setCancelModalOpen(true);
+                          }}
+                        >
                           Cancelar
                         </Button>
                       )}
@@ -247,6 +329,69 @@ export default function ClientDashboardPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmDialog
+        isOpen={cancelModalOpen}
+        onClose={() => {
+          setCancelModalOpen(false);
+          setSelectedAgendamentoId(null);
+        }}
+        onConfirm={handleCancelAgendamento}
+        title="Cancelar Agendamento"
+        description="Tem certeza que deseja cancelar este agendamento? Esta ação não pode ser desfeita."
+        confirmLabel="Sim, cancelar"
+        cancelLabel="Voltar"
+        variant="destructive"
+      />
+
+      <Modal
+        isOpen={rescheduleModalOpen}
+        onClose={() => {
+          setRescheduleModalOpen(false);
+          setSelectedAgendamentoId(null);
+        }}
+        title="Reagendar Serviço"
+      >
+        <form onSubmit={handleReschedule} className="space-y-6">
+          <p className="text-sm text-muted-foreground">
+            Escolha a nova data e horário para o seu agendamento.
+          </p>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-foreground">Nova Data</label>
+              <Input 
+                type="date" 
+                required 
+                value={rescheduleDate}
+                onChange={(e) => setRescheduleDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-foreground">Novo Horário</label>
+              <Input 
+                type="time" 
+                required 
+                value={rescheduleTime}
+                onChange={(e) => setRescheduleTime(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-border">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setRescheduleModalOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isRescheduling}>
+              {isRescheduling ? 'Salvando...' : 'Confirmar Reagendamento'}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

@@ -7,9 +7,22 @@ export type FetchApiOptions = RequestInit & {
   skipToast?: boolean;
   /** Retorna [] em GET 404 sem logar erro (listas vazias na API .NET). */
   notFoundAsEmpty?: boolean;
+  _retry?: boolean;
 };
 
-export async function fetchApi(endpoint: string, options: FetchApiOptions = {}) {
+let isRefreshing = false;
+let refreshSubscribers: ((token: string | null) => void)[] = [];
+
+function subscribeTokenRefresh(cb: (token: string | null) => void) {
+  refreshSubscribers.push(cb);
+}
+
+function onRefreshed(token: string | null) {
+  refreshSubscribers.forEach(cb => cb(token));
+  refreshSubscribers = [];
+}
+
+export async function fetchApi(endpoint: string, options: FetchApiOptions = {}): Promise<any> {
   let token = localStorage.getItem('token');
   
   if (!token) {
@@ -61,8 +74,74 @@ export async function fetchApi(endpoint: string, options: FetchApiOptions = {}) 
     }
 
     const isLoginRoute = /\/api\/login\//i.test(path);
-    if (response.status === 401 && token && !isLoginRoute) {
-      window.dispatchEvent(new CustomEvent('agendaai:session-expired'));
+    
+    if (response.status === 401 && token && !isLoginRoute && !options._retry) {
+      if (!isRefreshing) {
+        isRefreshing = true;
+        try {
+          const refreshRes = await fetch(`${API_URL}/api/Login/refresh-token`, {
+            method: 'POST',
+            credentials: 'include', // API needs the refresh_token cookie
+          });
+          
+          if (refreshRes.ok) {
+            const data = await refreshRes.json().catch(() => null);
+            let newToken = null;
+            if (data && typeof data === 'object') {
+              // The API audit says: "Retorna access_token + refresh_token"
+              newToken = data.access_token || data.token;
+            }
+            
+            if (newToken) {
+              localStorage.setItem('token', newToken);
+              const storedAuthRaw = localStorage.getItem('agendaAi_auth');
+              if (storedAuthRaw) {
+                try {
+                  const storedAuth = JSON.parse(storedAuthRaw);
+                  storedAuth.token = newToken;
+                  localStorage.setItem('agendaAi_auth', JSON.stringify(storedAuth));
+                } catch (e) {}
+              }
+              
+              isRefreshing = false;
+              onRefreshed(newToken);
+              
+              // Remove the old Authorization header before retrying
+              const retryOptions = { ...options, _retry: true };
+              if (retryOptions.headers) {
+                const newHeaders = new Headers(retryOptions.headers);
+                newHeaders.delete('Authorization');
+                retryOptions.headers = newHeaders;
+              }
+              return fetchApi(endpoint, retryOptions);
+            }
+          }
+          throw new Error('Refresh token failed');
+        } catch (error) {
+          isRefreshing = false;
+          onRefreshed(null);
+          window.dispatchEvent(new CustomEvent('agendaai:session-expired'));
+          throw error;
+        }
+      } else {
+        // Wait for the ongoing refresh
+        const newToken = await new Promise<string | null>(resolve => {
+          subscribeTokenRefresh(resolve);
+        });
+        
+        if (newToken) {
+          const retryOptions = { ...options, _retry: true };
+          if (retryOptions.headers) {
+            const newHeaders = new Headers(retryOptions.headers);
+            newHeaders.delete('Authorization');
+            retryOptions.headers = newHeaders;
+          }
+          return fetchApi(endpoint, retryOptions);
+        } else {
+          window.dispatchEvent(new CustomEvent('agendaai:session-expired'));
+          throw new Error('Sessão expirada');
+        }
+      }
     }
 
     const errorData: unknown = await response.json().catch(() => ({}));

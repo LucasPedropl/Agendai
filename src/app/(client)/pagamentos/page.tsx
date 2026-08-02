@@ -71,6 +71,12 @@ export default function ClientPagamentosPage() {
     e.preventDefault();
     if (!user?.id) return;
 
+    // BLOQUEIO TEMPORÁRIO (API não consegue deserializar o modelo Cartao)
+    toast.error('O cadastro de novos cartões está temporariamente indisponível. Por favor, utilize outra forma de pagamento.');
+    setIsModalOpen(false);
+    return;
+
+    /*
     setIsSubmitting(true);
     try {
       const [mes, ano] = validade.split('/');
@@ -100,6 +106,7 @@ export default function ClientPagamentosPage() {
     } finally {
       setIsSubmitting(false);
     }
+    */
   };
 
   return (

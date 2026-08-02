@@ -224,6 +224,11 @@ export default function CadastroPage() {
       return;
     }
 
+    if (getTipoPermissao() === 2) {
+      setError('O cadastro de estabelecimentos está temporariamente restrito por motivos de segurança.');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
     
