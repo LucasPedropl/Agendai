@@ -36,32 +36,45 @@ const profiles = [
 export default function LoginSelectionPage() {
   return (
     <div className="w-full">
-      <div className="mb-10 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+      <div className="mb-8 text-center sm:mb-10">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl md:text-4xl">
           Como você deseja entrar?
         </h1>
-        <p className="mt-3 text-muted-foreground">Selecione o seu perfil para continuar</p>
+        <p className="mt-3 text-sm text-muted-foreground sm:text-base">
+          Selecione o seu perfil para continuar
+        </p>
       </div>
 
-      <div className="grid w-full gap-5 md:grid-cols-3">
+      <div className="grid w-full grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-3">
         {profiles.map((profile, index) => (
           <motion.div
             key={profile.type}
+            className="min-w-0"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
           >
             <Link to={profile.to} className="group block h-full">
-              <Card className={`h-full p-6 transition-all duration-300 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/5 bg-gradient-to-br ${profile.gradient}`}>
-                <CardHeader className="text-center p-0">
-                  <div className={`mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl transition-all duration-300 ${profile.iconBg}`}>
-                    <profile.icon className="h-8 w-8" />
+              <Card
+                className={`h-full bg-gradient-to-br p-5 transition-all duration-300 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/5 sm:p-6 ${profile.gradient}`}
+              >
+                <CardHeader className="flex h-full flex-col p-0 text-left sm:text-center">
+                  <div className="flex items-start gap-4 sm:flex-col sm:items-center">
+                    <div
+                      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition-all duration-300 sm:mb-4 sm:h-16 sm:w-16 ${profile.iconBg}`}
+                    >
+                      <profile.icon className="h-6 w-6 sm:h-8 sm:w-8" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="mb-1 text-lg sm:mb-3 sm:text-xl">
+                        {profile.title}
+                      </CardTitle>
+                      <CardDescription className="text-sm leading-relaxed">
+                        {profile.description}
+                      </CardDescription>
+                    </div>
                   </div>
-                  <CardTitle className="text-xl mb-3">{profile.title}</CardTitle>
-                  <CardDescription className="text-sm leading-relaxed">
-                    {profile.description}
-                  </CardDescription>
-                  <div className="mt-6 flex items-center justify-center gap-1 text-sm font-semibold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="mt-4 flex items-center gap-1 text-sm font-semibold text-primary opacity-100 transition-opacity sm:mt-6 sm:justify-center sm:opacity-0 sm:group-hover:opacity-100">
                     Continuar <ArrowRight className="h-4 w-4" />
                   </div>
                 </CardHeader>

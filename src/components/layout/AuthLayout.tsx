@@ -1,5 +1,6 @@
-import { Outlet, Link } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Sparkles, Calendar, Users, TrendingUp } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const features = [
   { icon: Calendar, text: 'Agendamentos inteligentes' },
@@ -8,6 +9,9 @@ const features = [
 ];
 
 export function AuthLayout() {
+  const { pathname } = useLocation();
+  const isWideContent = pathname.includes('login-selection');
+
   return (
     <div className="min-h-screen flex bg-background">
       <div className="hidden lg:flex w-1/2 auth-gradient text-white p-12 flex-col justify-between relative overflow-hidden">
@@ -49,14 +53,14 @@ export function AuthLayout() {
         </p>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-12">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 lg:p-12">
         <div className="lg:hidden flex items-center gap-2 mb-8">
           <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center text-primary-foreground">
             <Sparkles className="w-5 h-5" />
           </div>
           <span className="text-xl font-extrabold">Agendai</span>
         </div>
-        <div className="w-full max-w-md">
+        <div className={cn('w-full', isWideContent ? 'max-w-5xl' : 'max-w-md')}>
           <Outlet />
         </div>
         <p className="mt-8 text-xs text-muted-foreground lg:hidden">
