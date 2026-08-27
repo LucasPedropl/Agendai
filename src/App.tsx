@@ -32,6 +32,7 @@ import AdminClientesPage from '@/app/(admin)/clientes/page';
 import AdminEstablishmentConfigPage from '@/app/(admin)/config-estabelecimento/page';
 import AdminFinanceiroPage from '@/app/(admin)/financeiro/page';
 import AdminWhatsAppPage from '@/app/(admin)/whatsapp/page';
+import AdminIntegracoesPage from '@/app/(admin)/integracoes/page';
 import AdminConfigPage from '@/app/(admin)/config/page';
 import AgendarPage from '@/app/(client)/agendar/page';
 import { ToastProvider } from '@/contexts/ToastContext';
@@ -108,6 +109,7 @@ function AppRoutes() {
           <Route path="clientes" element={<AdminClientesPage />} />
           <Route path="config-estabelecimento" element={<AdminEstablishmentConfigPage />} />
           <Route path="financeiro" element={<AdminFinanceiroPage />} />
+          <Route path="integracoes" element={<AdminIntegracoesPage />} />
           <Route path="whatsapp" element={<AdminWhatsAppPage />} />
           <Route path="config" element={<AdminConfigPage />} />
         </Route>

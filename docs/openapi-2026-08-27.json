@@ -1,0 +1,4151 @@
+{
+  "openapi": "3.0.4",
+  "info": {
+    "title": "AgendaAi",
+    "version": "1.0"
+  },
+  "paths": {
+    "/api/AdminTeste/Usuarios": {
+      "get": {
+        "tags": [
+          "AdminTeste"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/AdminTeste/Empresas": {
+      "get": {
+        "tags": [
+          "AdminTeste"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "AdminTeste"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/AdminTeste/Deletar-Dados": {
+      "delete": {
+        "tags": [
+          "AdminTeste"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Agenda/Agenda-Datas": {
+      "get": {
+        "tags": [
+          "Agenda"
+        ],
+        "summary": "Busca os dias disponíveis para agendamento do cliente.",
+        "description": "Exemplo de chamada: GET /Agenda/Agenda-Datas\r\nO método GET retorna os dias disponíveis para agendamento do cliente.\r\n\r\n**Retornos:**\r\n\r\n* BadRequest(\"Data inválida.\")\r\n\r\n* Ok(diasDisponiveis)\r\n",
+        "parameters": [
+          {
+            "name": "comercioId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "profissionalId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "servicoId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "mes",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "ano",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Agenda/Agenda-Horarios": {
+      "get": {
+        "tags": [
+          "Agenda"
+        ],
+        "summary": "Busca os horários disponíveis baseado na data e serviço para agendamento do cliente.",
+        "description": "Exemplo de chamada: GET /Agenda/Agenda-Horarios\r\nO método GET retorna os horários disponíveis para agendamento do cliente.\r\n\r\n**Retornos:**\r\n\r\n* BadRequest(\"Serviço não encontrado!\")\r\n\r\n* Ok(horariosDisponiveis)\r\n",
+        "parameters": [
+          {
+            "name": "comercioId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "profissionalId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "servicoId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "dataEscolhida",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Agenda/Cliente/{id}": {
+      "get": {
+        "tags": [
+          "Agenda"
+        ],
+        "summary": "Busca os clientes agendados.",
+        "description": "Exemplo de chamada: GET /Agenda/Cliente/{id}\r\nO método GET retorna os clientes agendados.\r\n\r\n**Retornos:**\r\n\r\n* BadRequest(\"ID inválido.\")\r\n\r\n* Ok(agendaViews)\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Agenda/Cliente-Historico/{id}": {
+      "get": {
+        "tags": [
+          "Agenda"
+        ],
+        "summary": "Busca os históricos de clientes agendados.",
+        "description": "Exemplo de chamada: GET /Agenda/Cliente-Historico/{id}\r\nO método GET retorna os históricos de clientes agendados.\r\n\r\n**Retornos:**\r\n\r\n* BadRequest(\"ID inválido.\")\r\n\r\n* Ok(agendaHistoricoViews)\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Agenda/Comercio/{id}": {
+      "get": {
+        "tags": [
+          "Agenda"
+        ],
+        "summary": "Busca a agenda do comércio.",
+        "description": "Exemplo de chamada: GET /Agenda/Comercio/{id}\r\nO método GET retorna a agenda do comércio.\r\n\r\n**Retornos:**\r\n\r\n* Ok(\"Agenda Vazia\")\r\n\r\n* Ok(agendaViews)\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Agenda/Comercio-Historico/{id}/{periodo}/{status}/{profissional}": {
+      "get": {
+        "tags": [
+          "Agenda"
+        ],
+        "summary": "Busca o histórico de agenda do comércio.",
+        "description": "Exemplo de chamada: GET /Agenda/Comercio-Historico/{id}/{periodo}/{status?}/{profissional?}\r\nPara a chamada int id, int periodo, string? status, string? profissional\r\nO método GET retorna o histórico de agenda do comércio.\r\n\r\n**Retornos:**\r\n\r\n* Ok(\"Histórico Vazio\")\r\n\r\n* Ok(agendaViews)\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "periodo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "status",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "profissional",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Agenda": {
+      "post": {
+        "tags": [
+          "Agenda"
+        ],
+        "summary": "Salva o agendamento do cliente, incluindo observações para definir cliente não cadastrado.\r\n\r\nNão é necessario passar o IdUsuario\r\n",
+        "description": "Exemplo de chamada: POST /Agenda\r\nO método POST salva um novo agendamento.\r\n\r\n**Retornos:**\r\n\r\n* BadRequest(\"Dados de agendamento inválidos.\")\r\n\r\n* BadRequest(\"Dados Incorretos ou não preenchidos!\")\r\n\r\n* BadRequest(\"Você não tem permissão para agendar para outro usuário.\")\r\n\r\n* BadRequest(\"Erro ao Agendar!\")\r\n\r\n* Ok(\"Agendamento Realizado!\")\r\n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgendamentoView"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgendamentoView"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgendamentoView"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Agenda/Comercio-Agendar": {
+      "post": {
+        "tags": [
+          "Agenda"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgendamentoView"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgendamentoView"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgendamentoView"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Agenda/Cliente-Confirma-Agenda": {
+      "post": {
+        "tags": [
+          "Agenda"
+        ],
+        "summary": "Realiza a confirmação do horário do cliente.",
+        "description": "Exemplo de chamada: POST /Agenda/Cliente-Confirma-Agenda/{id}\r\nO método POST confirma um agendamento existente.\r\n\r\n**Retornos:**\r\n\r\n* NotFound(\"Agendamento não encontrado.\")\r\n\r\n* BadRequest(\"Operação inválida.\")\r\n\r\n* Ok(\"Agendamento realizado com sucesso.\")\r\n\r\n* Ok(\"Agendamento recusado com sucesso.\")\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "boolean"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "boolean"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Agenda/Reagendar/{id}": {
+      "put": {
+        "tags": [
+          "Agenda"
+        ],
+        "summary": "Realiza o reagendamento do cliente.",
+        "description": "Exemplo de chamada: PUT /Agenda/Reagendar/{id}\r\nO método PUT atualiza um agendamento existente.\r\n\r\n**Retornos:**\r\n\r\n* NotFound(\"Agendamento não encontrado.\")\r\n\r\n* Ok(\"Agendamento reagendado com sucesso.\")\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgendamentoView"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgendamentoView"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgendamentoView"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Agenda/Comercio-Cancela/{id}": {
+      "delete": {
+        "tags": [
+          "Agenda"
+        ],
+        "summary": "Realiza o cancelamento do horário do cliente.",
+        "description": "Exemplo de chamada: DELETE /Agenda/Cliente-Cancela/{id}\r\nO método DELETE cancela um agendamento existente.\r\n\r\n**Retornos:**\r\n\r\n* NotFound(\"Agendamento não encontrado.\")\r\n\r\n* BadRequest(\"Operação inválida.\")\r\n\r\n* Ok(\"Agendamento cancelado com sucesso.\")\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "boolean"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "boolean"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Agenda/Cancelar/{id}": {
+      "delete": {
+        "tags": [
+          "Agenda"
+        ],
+        "summary": "Realiza a confirmação do horário do cliente.",
+        "description": "Exemplo de chamada: POST /Agenda/Cliente-Confirma-Agenda/{id}\r\nO método POST confirma um agendamento existente.\r\n\r\n**Retornos:**\r\n\r\n* NotFound(\"Agendamento não encontrado.\")\r\n\r\n* NotFound(\"Configuração do comércio não encontrada.\")\r\n* BadRequest($\"O agendamento só pode ser cancelado com pelo menos {tempoCancelamento} hora(s) de antecedência.\")\r\n\r\n* Ok(\"Cancelado com Sucesso!\")\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Avaliacoes/Empresa/{id}": {
+      "get": {
+        "tags": [
+          "Avaliacoes"
+        ],
+        "summary": "Obtém as avaliações de um comércio específico.",
+        "description": "Exemplo de chamada: GET /Avaliacoes/Empresa/idComercio\r\n\r\n**Retorno:**\r\n\r\n* NotFound(\"Nenhuma avaliação encontrada para a empresa especificada.\") caso não haja avaliações cadastradas para o comércio especificado.\r\n\r\n* Ok(listadeavaliacoes) caso haja avaliações cadastradas para o comércio especificado.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Avaliacoes/Usuario/{id}": {
+      "get": {
+        "tags": [
+          "Avaliacoes"
+        ],
+        "summary": "Obtém as avaliações de um usuário específico.",
+        "description": "Exemplo de chamada: GET /Avaliacoes/Usuario/idUsuario\r\n\r\n**Retorno:**\r\n\r\n* BadRequest(\"ID inválido.\")\r\n* NotFound(\"Nenhuma avaliação encontrada para a empresa especificada.\") caso não haja avaliações cadastradas para o usuário especificado.\r\n\r\n* Ok(listadeavaliacoes) caso haja avaliações cadastradas para o usuário especificado.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Avaliacoes/{id}": {
+      "put": {
+        "tags": [
+          "Avaliacoes"
+        ],
+        "summary": "Atualiza uma avaliação de um usuário específico.",
+        "description": "Exemplo de chamada: PUT /Avaliacoes/idAvaliacao     Deve passar o idAvalicao no link e no corpo da requisição campo Id.\r\n \r\n**Retorno:**\r\n\r\n* BadRequest(\"ID da avaliação não corresponde.\")\r\n* NotFound(\"Avaliação não encontrada.\") caso não haja avaliações cadastradas para o usuário especificado.\r\n\r\n* Ok(\"Avaliação realizada!\")\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvaliacaoNota"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvaliacaoNota"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvaliacaoNota"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Cartoes/Todos/{id}": {
+      "get": {
+        "tags": [
+          "Cartoes"
+        ],
+        "summary": "Busca a lista de cartões de um usuário existente.",
+        "description": "Exemplo de chamada: GET /Cartoes/Todos/idUsuario\r\nNa chamada GET deve ser informado o id do usuário para o qual se deseja obter a lista de cartões. O método GET retorna a lista de cartões do usuário especificado.\r\n\r\n**Retornos:**\r\n\r\n* NotFound(\"Nenhum cartão encontrado para este usuário.\") caso não haja cartões cadastrados para o usuário especificado.\r\n\r\n* Ok(cartoesView) caso haja cartões cadastrados para o usuário especificado.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Cartoes/{id}": {
+      "get": {
+        "tags": [
+          "Cartoes"
+        ],
+        "summary": "Busca um cartão específico de um usuário existente.",
+        "description": "Exemplo de chamada: GET /Cartoes/{id}\r\nNa chamada GET deve ser informado o id do cartão para o qual se deseja obter os detalhes. O método GET retorna os detalhes do cartão especificado.\r\n\r\n**Retornos:**\r\n\r\n* NotFound(\"Nenhum cartão encontrado para este usuário.\") caso não haja cartões cadastrados para o usuário especificado.\r\n\r\n* Ok(cartoesView) caso haja cartões cadastrados para o usuário especificado.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Cartoes"
+        ],
+        "summary": "Deleta um cartão existente para um usuário existente.",
+        "description": "Exemplo de chamada: DELETE /Cartoes/5\r\nNa chamada DELETE deve ser informado o ID do cartão a ser deletado. O método DELETE retorna um status indicando o sucesso ou falha da operação.\r\n\r\n**Retornos:**\r\n\r\n* BadRequest(\"Dados inválidos.\") caso os dados do cartão sejam inválidos.\r\n\r\n* Unauthorized(\"Usuário não autorizado.\") caso o usuário não esteja autorizado a deletar o cartão.\r\n\r\n* Ok(\"Deletado com sucesso!\") caso o cartão seja deletado com sucesso.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Cartoes": {
+      "post": {
+        "tags": [
+          "Cartoes"
+        ],
+        "summary": "Cadastra um novo cartão para um usuário existente.",
+        "description": "Exemplo de chamada: POST /Cartoes\r\nNa chamada POST deve ser informado o objeto CartaoPost com os dados do cartão a ser cadastrado. O método POST retorna os detalhes do cartão cadastrado.\r\n\r\n**Retornos:**\r\n\r\n* BadRequest(\"Dados inválidos.\") caso os dados do cartão sejam inválidos.\r\n\r\n* Unauthorized(\"Usuário não autorizado.\") caso o usuário não esteja autorizado a cadastrar o cartão.\r\n\r\n* Ok(novoCartao) caso o cartão seja cadastrado com sucesso.\r\n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CartaoPost"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CartaoPost"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CartaoPost"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Categorias/Todas/{id}": {
+      "get": {
+        "tags": [
+          "Categorias"
+        ],
+        "summary": "Obtém as categorias de serviços de um comércio específico.",
+        "description": "Exemplo de chamada: GET /Categorias/idComercio\r\n\r\n**Retorno:**\r\n\r\n* Ok(listadecategorias) caso haja categorias de serviços cadastradas para o comércio especificado.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Categorias/{id}": {
+      "get": {
+        "tags": [
+          "Categorias"
+        ],
+        "summary": "Obtém a categoria específica de serviços de um comércio específico.",
+        "description": "Exemplo de chamada: GET /Categorias/idCategoria\r\n\r\n**Retorno:**\r\n\r\n* Ok(categoria) caso a categoria de serviços seja encontrada para o comércio especificado.\r\n\r\n* NotFound(\"Categoria não encontrada.\") caso a categoria de serviços não seja encontrada para o comércio especificado.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Categorias"
+        ],
+        "summary": "Atualiza as informações de uma categoria de serviços existente para um comércio específico.",
+        "description": "Exemplo de chamada: PUT /Categorias/idCategoria\r\nNa chamada PUT deve ser informado o id da categoria a ser atualizada, e no corpo da requisição deve ser enviado um objeto JSON com as informações atualizadas da categoria e não é necessário informar o idComercio. O método PUT atualiza as informações da categoria existente no banco de dados, e retorna a categoria atualizada.\r\n\r\n**Retorno:**\r\n\r\n* NotFound(\"Categoria não encontrada.\")\r\n* Ok(categoria) caso a categoria de serviços seja encontrada e atualizada\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoriaDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoriaDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoriaDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Categorias"
+        ],
+        "summary": "Desativa a categoria de serviços de um comércio específico.",
+        "description": "Exemplo de chamada: DELETE /Categorias/idCategoria\r\nNa chamada DELETE é necessário informar o id da categoria a ser desativada. O método DELETE não remove a categoria do banco de dados, apenas marca a categoria como inativa, para que ela não seja mais exibida nas consultas de categorias ativas.\r\n\r\n**Retorno:**\r\n\r\n* NotFound(\"Categoria não encontrada.\") caso a categoria de serviços não seja encontrada\r\n\r\n* Ok(\"Categoria deletada!\") caso a categoria de serviços seja encontrada e desativada com sucesso.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Categorias": {
+      "post": {
+        "tags": [
+          "Categorias"
+        ],
+        "summary": "Cadastra as informações de uma nova categoria de serviços para um comércio específico.",
+        "description": "Exemplo de chamada: POST /Categorias/\r\n\r\n**Retorno:**\r\n\r\n* Ok(categoria) caso a categoria de serviços seja encontrada para o comércio especificado.\r\n\r\n* BadRequest(\"Categoria inválida.\") caso o objeto enviado no corpo da requisição seja nulo.\r\n\r\n* BadRequest(ModelState) caso o modelo enviado no corpo da requisição seja preenchido errado.\r\n\r\n* StatusCode(500, $\"Erro ao criar categoria: {ex.Message}\") caso ocorra um erro inesperado durante a criação da categoria de serviços.\r\n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoriaDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoriaDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoriaDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ChavesPix": {
+      "get": {
+        "tags": [
+          "ChavesPix"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ChavesPix"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChavePixPost"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChavePixPost"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChavePixPost"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChavePix"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChavePix"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChavePix"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ChavesPix/{idchavepix}": {
+      "get": {
+        "tags": [
+          "ChavesPix"
+        ],
+        "parameters": [
+          {
+            "name": "idchavepix",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChavePix"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChavePix"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChavePix"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ChavesPix"
+        ],
+        "parameters": [
+          {
+            "name": "idchavepix",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChavePixPut"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChavePixPut"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChavePixPut"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ChavesPix"
+        ],
+        "parameters": [
+          {
+            "name": "idchavepix",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Comercios": {
+      "get": {
+        "tags": [
+          "Comercios"
+        ],
+        "summary": "Busca as informações de todos os comercios existentes ativos.",
+        "description": "Exemplo de chamada: GET /Comercios\r\nO método GET retorna uma lista de comercios ativos.\r\n\r\n**Retornos:**\r\n\r\n* NotFound(\"Nenhum comércio encontrado.\") caso não haja comercios ativos cadastrados no sistema.\r\n\r\n* Ok(listadeempresas) caso haja comercios ativos cadastrados no sistema.\r\n",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Comercios"
+        ],
+        "summary": "Cadastra as informações de um comercio não existente.",
+        "description": "Exemplo de chamada: POST /Comercios\r\nO método POST cria as informações do comércio especificado.\r\n\r\n**Retornos:**\r\n\r\n* BadRequest(\"Você deve preencher todos os campos!\") caso os dados do comércio não sejam válidos.\r\n\r\n* NotFound(\"Erro, usuário não encontrado!\") caso o usuário não seja encontrado.\r\n\r\n* Ok(comercio) caso o comércio seja criado com sucesso.\r\n",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Nome": {
+                    "type": "string"
+                  },
+                  "Endereco": {
+                    "type": "string"
+                  },
+                  "Telefone": {
+                    "type": "string"
+                  },
+                  "CNPJ": {
+                    "type": "string"
+                  },
+                  "Email": {
+                    "type": "string"
+                  },
+                  "Descricao": {
+                    "type": "string"
+                  },
+                  "Instagram": {
+                    "type": "string"
+                  },
+                  "Facebook": {
+                    "type": "string"
+                  },
+                  "Site": {
+                    "type": "string"
+                  },
+                  "Image": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "NotificarAgendamento": {
+                    "type": "boolean"
+                  },
+                  "LembrarAgendamento": {
+                    "type": "boolean"
+                  },
+                  "ResumoDiario": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "encoding": {
+                "Nome": {
+                  "style": "form"
+                },
+                "Endereco": {
+                  "style": "form"
+                },
+                "Telefone": {
+                  "style": "form"
+                },
+                "CNPJ": {
+                  "style": "form"
+                },
+                "Email": {
+                  "style": "form"
+                },
+                "Descricao": {
+                  "style": "form"
+                },
+                "Instagram": {
+                  "style": "form"
+                },
+                "Facebook": {
+                  "style": "form"
+                },
+                "Site": {
+                  "style": "form"
+                },
+                "Image": {
+                  "style": "form"
+                },
+                "NotificarAgendamento": {
+                  "style": "form"
+                },
+                "LembrarAgendamento": {
+                  "style": "form"
+                },
+                "ResumoDiario": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Comercios/Admin": {
+      "get": {
+        "tags": [
+          "Comercios"
+        ],
+        "summary": "Busca as informações de todos os comercios existentes para um usuário específico do tipo Admin.",
+        "description": "Exemplo de chamada: GET /Comercios/Admin\r\nO método GET retorna uma lista de comercios ativos para o usuário especificado.\r\n\r\n**Retornos:**\r\n\r\n* NotFound(\"Nenhum comércio encontrado.\") caso não haja comercios ativos cadastrados no sistema para o usuário especificado.\r\n\r\n* Ok(listadeempresas) caso haja comercios ativos cadastrados no sistema para o usuário especificado.\r\n",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Comercios/status-acesso": {
+      "get": {
+        "tags": [
+          "Comercios"
+        ],
+        "summary": "Busca as informações de um controle de acesso de um comércio.",
+        "description": "Exemplo de chamada: GET /Comercios/status-acesso\r\nO método GET retorna as informações do comércio especificado.\r\n\r\n**Retornos:**\r\n\r\n* NotFound(\"Nenhum comercio vinculado como administrador\") caso o comércio especificado não seja encontrado no sistema.\r\n\r\n* NotFound(\"Controle de acesso não encontrado.\") caso o controle de acesso do comércio especificado não seja encontrado no sistema.\r\n\r\n* Ok(DadosEmpresa) caso o comércio especificado seja encontrado no sistema.\r\n",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Comercios/{id}": {
+      "get": {
+        "tags": [
+          "Comercios"
+        ],
+        "summary": "Busca as informações de um comercio existente.",
+        "description": "Exemplo de chamada: GET /Comercios/idComercio\r\nNa chamada GET deve ser informado o id do comércio para o qual se deseja obter as informações. O método GET retorna as informações do comércio especificado.\r\n\r\n**Retornos:**\r\n\r\n* NotFound(\"Comércio não encontrado.\") caso o comércio especificado não seja encontrado no sistema.\r\n\r\n* Ok(DadosEmpresa) caso o comércio especificado seja encontrado no sistema.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Comercios"
+        ],
+        "summary": "Atualiza as informações de um comercio existente.",
+        "description": "Exemplo de chamada: PUT /Comercios/idComercio\r\nO método PUT atualiza as informações do comércio especificado.\r\n\r\n**Retornos:**\r\n\r\n* BadRequest(\"Você deve preencher todos os campos!\") caso os dados do comércio não sejam válidos.\r\n\r\n* NotFound(\"Comércio não encontrado.\") caso o comércio não seja encontrado.\r\n\r\n* Ok(comercio) caso o comércio seja atualizado com sucesso.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "Id": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "Nome": {
+                    "type": "string"
+                  },
+                  "Endereco": {
+                    "type": "string"
+                  },
+                  "Telefone": {
+                    "type": "string"
+                  },
+                  "CNPJ": {
+                    "type": "string"
+                  },
+                  "Email": {
+                    "type": "string"
+                  },
+                  "Descricao": {
+                    "type": "string"
+                  },
+                  "Instagram": {
+                    "type": "string"
+                  },
+                  "Facebook": {
+                    "type": "string"
+                  },
+                  "Site": {
+                    "type": "string"
+                  },
+                  "Image": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "NotificarAgendamento": {
+                    "type": "boolean"
+                  },
+                  "LembrarAgendamento": {
+                    "type": "boolean"
+                  },
+                  "ResumoDiario": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "encoding": {
+                "Id": {
+                  "style": "form"
+                },
+                "Nome": {
+                  "style": "form"
+                },
+                "Endereco": {
+                  "style": "form"
+                },
+                "Telefone": {
+                  "style": "form"
+                },
+                "CNPJ": {
+                  "style": "form"
+                },
+                "Email": {
+                  "style": "form"
+                },
+                "Descricao": {
+                  "style": "form"
+                },
+                "Instagram": {
+                  "style": "form"
+                },
+                "Facebook": {
+                  "style": "form"
+                },
+                "Site": {
+                  "style": "form"
+                },
+                "Image": {
+                  "style": "form"
+                },
+                "NotificarAgendamento": {
+                  "style": "form"
+                },
+                "LembrarAgendamento": {
+                  "style": "form"
+                },
+                "ResumoDiario": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Comercios"
+        ],
+        "summary": "Desativa um comércio existente.",
+        "description": "Exemplo de chamada: DELETE /Comercios/{idEmpresa}\r\nO método DELETE desativa o comércio especificado.\r\n\r\n**Retornos:**\r\n\r\n* BadRequest(\"Comercio não encontrado!\")  caso o comércio não seja encontrado.\r\n\r\n* NotFound(\"Erro ao Desativar Comercio!\")\r\n\r\n* Ok(\"Comercio desativado!\") caso o comércio seja desativado com sucesso.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Comercios/solicitar-acesso": {
+      "post": {
+        "tags": [
+          "Comercios"
+        ],
+        "summary": "Cria ou atualiza os dados de um controle de acesso específico, dando permissão a uso do sistema apibixs whatsapp ou pagamento.",
+        "description": "Exemplo de chamada: Put /ControleAcesso/idControle\r\n mais a informação de controle de acesso no corpo da requisição.\r\n\r\n**Tipos de permissão:**\r\n\r\n* Payment - Permissão para uso do sistema de pagamento.\r\n\r\n* Whatsapp - Permissão para uso do sistema de whatsapp.\r\n \r\n**Estado das permissões:**\r\n\r\n* Ativo - Permissão concedida. Valor = 0\r\n\r\n* Inativo - Permissão não concedida. Valor = 1\r\n\r\n* Solicitado - Permissão solicitada, mas ainda não concedida. Valor = 2\r\n\r\n**Retorno:**\r\n\r\n* Ok(new { message = \"Controle de acesso criado com sucesso.\", idcontrole = controle.IdControle }) mostrnado o controle e se todas as permissões foram solicitadas.\r\n\r\n* BadRequest(\"Usuário não é administrador de nenhuma empresa.\") caso o usuário não seja administrador de nenhuma empresa.\r\n\r\n* BadRequest(\"Já existe um controle de acesso para esta empresa.\") caso já exista um controle de acesso ativo ou solicitado para a empresa.\r\n\r\n* BadRequest(\"Erro ao criar acesso.\") caso ocorra algum erro ao criar o acesso.\r\n\r\n* BadRequest(\"Usuário não encontrado.\") quando o usuário não for encontrado.\r\n\r\n* Unauthorized(\"Senha incorreta\") caso a senha informada esteja incorreta.\r\n\r\n*",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ControleViewPost"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ControleViewPost"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ControleViewPost"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ComercioUsuarios/Clientes/{id}": {
+      "get": {
+        "tags": [
+          "ComercioUsuarios"
+        ],
+        "summary": "Busca a lista de clientes de um comercio existente.",
+        "description": "Exemplo de chamada: GET /Comercios/Clientes/idComercio\r\nNa chamada GET deve ser informado o id do comércio para o qual se deseja obter a lista de clientes. O método GET retorna a lista de clientes do comércio especificado.\r\n\r\n**Retornos:**\r\n\r\n* NotFound(\"Nenhum cliente encontrado para este comércio.\") caso não haja clientes cadastrados para o comércio especificado.\r\n\r\n* Ok(clientesView) caso haja clientes cadastrados para o comércio especificado.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ComercioUsuarios/Profissionais-Agendar/{id}": {
+      "get": {
+        "tags": [
+          "ComercioUsuarios"
+        ],
+        "summary": "Busca a lista de profissionais de um comercio existente.",
+        "description": "Exemplo de chamada: GET /Comercios/Profissionais/idComercio\r\nNa chamada GET deve ser informado o id do comércio para o qual se deseja obter a lista de profissionais. O método GET retorna a lista de profissionais do comércio especificado.\r\n\r\n**Retornos:**\r\n\r\n* NotFound(\"Nenhum profissional encontrado para este comércio.\") caso não haja profissionais cadastrados para o comércio especificado.\r\n\r\n* Ok(profissionaisView) caso haja profissionais cadastrados para o comércio especificado.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ComercioUsuarios/Profissionais/{id}": {
+      "get": {
+        "tags": [
+          "ComercioUsuarios"
+        ],
+        "summary": "Busca a lista de profissionais de um comercio existente.",
+        "description": "Exemplo de chamada: GET /Comercios/Profissionais/idComercio\r\nNa chamada GET deve ser informado o id do comércio para o qual se deseja obter a lista de profissionais. O método GET retorna a lista de profissionais do comércio especificado.\r\n\r\n**Retornos:**\r\n\r\n* NotFound(\"Nenhum profissional encontrado para este comércio.\") caso não haja profissionais cadastrados para o comércio especificado.\r\n\r\n* Ok(profissionaisView) caso haja profissionais cadastrados para o comércio especificado.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ComercioUsuarios/Cadastrar-Funcionario-Cliente": {
+      "post": {
+        "tags": [
+          "ComercioUsuarios"
+        ],
+        "summary": "Cadastra um usuário ao comercio.",
+        "description": "Exemplo de chamada: POST /Cadastrar-Funcionario-Cliente/\r\nNa chamada POST deve ser informado o id do comércio para o qual se deseja cadastrar o usuário. O método POST cadastra o usuário especificado ao comércio.\r\n\r\n**Tipos de permissão:** \r\n\r\n* Admin=2\r\n \r\n* Profissional=1 \r\n \r\n* Cliente=0. \r\n\r\n**Retornos:** \r\n\r\n* BadRequest(\"Erro ao criar usuario\")\r\n\r\n* BadRequest(\"Email já cadastrado\")\r\n\r\n* BadRequest(\"Erro ao tentar cadastrar!\")\r\n\r\n* Ok(\"Usuário adicionado!\") para usuarios que já possuem cadastro no sistema, mas não estão vinculados ao comercio.\r\n\r\n* Ok(\"Email para ativação enviado! Verifique seu e-mail para confirmar.\") para usuarios que ainda não possuem cadastro no sistema.\r\n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComercioAddUser"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComercioAddUser"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComercioAddUser"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ComercioUsuarios/Desativar-Usuario/{idEmpresa}/{id}": {
+      "delete": {
+        "tags": [
+          "ComercioUsuarios"
+        ],
+        "summary": "Desativa um usuário de um comércio específico.",
+        "description": "Exemplo de chamada: DELETE /Desativar-Usuario/{idComercio}/{id}\r\nNa chamada DELETE deve ser informado o id do comércio e o id do usuário para o qual se deseja desativar. O método DELETE desativa o usuário especificado no comércio.\r\n\r\n**Retornos:** \r\n\r\n* BadRequest(\"Usuário não encontrado!\")\r\n\r\n* NotFound(\"Erro ao deletar usuário!\")\r\n\r\n* Ok(\"Usuário Desativado!\").\r\n",
+        "parameters": [
+          {
+            "name": "idEmpresa",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ConfigComercio/{id}": {
+      "get": {
+        "tags": [
+          "ConfigComercio"
+        ],
+        "summary": "Busca as configurações de um comercio existente.",
+        "description": "Exemplo de chamada: GET ConfigComercio/idComercio\r\nNa chamada GET deve ser informado o id do comércio para o qual se deseja obter as configurações. O método GET retorna as configurações do comércio especificado.\r\n\r\n**Retornos:**\r\n\r\n* NotFound(\"Comércio não encontrado.\") caso o comércio especificado não seja encontrado no sistema.\r\n\r\n* Ok(DadosEmpresa) caso o comércio especificado seja encontrado no sistema.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ConfigComercio": {
+      "post": {
+        "tags": [
+          "ConfigComercio"
+        ],
+        "summary": "Cadastra as informações de configuração de um comercio existente.",
+        "description": "Exemplo de chamada: POST /ConfigComercio\r\nNa chamada POST deve ser informado o id do comércio para o qual se deseja cadastrar as informações de configuração. O método POST cadastra as informações de configuração do comércio especificado.\r\n\r\nSomente passar o horário de funcionários caso seja diferente, Deixar em branco para horário igual do estabelecimento.\r\n\r\n**Retornos:**\r\n\r\n* BadRequest(\"Configuração de comércio inválida.\") caso a configuração do comércio seja inválida.\r\n\r\n* BadRequest(\"Configuração de horário de atendimento inválida.\") caso a configuração do horário de atendimento seja inválida.\r\n\r\n* NotFound(\"Erro, usuário não encontrado!\") caso o usuário não seja encontrado.\r\n\r\n* NotFound(\"Comércio não encontrado!\") caso o comércio não seja encontrado.\r\n\r\n* BadRequest(\"Erro ao tentar salvar configurações!\") caso ocorra um erro ao salvar as configurações.\r\n\r\n* Ok(\"Configurações salvas com sucesso!\") caso a configuração do comércio seja cadastrada com sucesso.\r\n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComercioConfigu"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComercioConfigu"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComercioConfigu"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ConfigComercio/Editar-Atendimento/{id}": {
+      "put": {
+        "tags": [
+          "ConfigComercio"
+        ],
+        "summary": "Atualiza as informações de configuração de um comercio existente.",
+        "description": "Exemplo de chamada: PUT /ConfigComercio\r\nNa chamada PUT deve ser informado o id do comércio para o qual se deseja atualizar as informações de configuração. O método PUT atualiza as informações de configuração do comércio especificado.\r\n\r\nSomente passar o horário de funcionários caso seja diferente, Deixar em branco para horário igual do estabelecimento.\r\n\r\n**Retornos:**\r\n\r\n* BadRequest(\"Configuração de comércio inválida.\") caso a configuração do comércio seja inválida.\r\n\r\n* BadRequest(\"Configuração de horário de atendimento inválida.\") caso a configuração do horário de atendimento seja inválida.\r\n\r\n* BadRequest(\"Erro ao tentar atualizar!\").\r\n\r\n* NotFound(\"Configurações de atendimento não encontrado.\") caso o comércio não seja encontrado.\r\n\r\n* BadRequest(\"Erro ao tentar salvar configurações!\") caso ocorra um erro ao salvar as configurações.\r\n\r\n* Ok(\"Configurações salvas com sucesso!\") caso a configuração do comércio seja cadastrada com sucesso.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComercioConfigUpdate"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComercioConfigUpdate"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComercioConfigUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ControleAcessos": {
+      "get": {
+        "tags": [
+          "ControleAcessos"
+        ],
+        "summary": "Obtém a lista de usuários que solicitaram acesso a bixs de um comércio específico.",
+        "description": "Exemplo de chamada: GET /ControleAcesso\r\n\r\n**Retorno:**\r\n\r\n* Ok(listausuarios) caso haja usuarios que solicitaram acesso.\r\n",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ControleAcessos/{idcontrole}": {
+      "get": {
+        "tags": [
+          "ControleAcessos"
+        ],
+        "summary": "Obtém os dados de um controle de acesso específico.",
+        "description": "Exemplo de chamada: GET /ControleAcesso/idControle\r\n\r\n**Retorno:**\r\n\r\n* Ok(ControleAcesso) caso haja controle de acesso cadastrado para o comércio especificado.\r\n\r\n* NotFound(\"Controle de acesso não encontrado.\") caso não haja controle de acesso cadastrado para o comércio especificado.\r\n",
+        "parameters": [
+          {
+            "name": "idcontrole",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ControleAcesso"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ControleAcesso"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ControleAcesso"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ControleAcessos"
+        ],
+        "summary": "Atualiza os dados de um controle de acesso específico, dando permissão a uso do sistema apibixs whatsapp ou pagamento.",
+        "description": "Exemplo de chamada: Put /ControleAcesso/idControle\r\n mais a informação de controle de acesso no corpo da requisição.\r\n\r\n**Tipos de permissão:**\r\n\r\n* Payment - Permissão para uso do sistema de pagamento.\r\n\r\n* Whatsapp - Permissão para uso do sistema de whatsapp.\r\n \r\n**Estado das permissões:**\r\n\r\n* Ativo - Permissão concedida. Valor = 0\r\n\r\n* Inativo - Permissão não concedida. Valor = 1\r\n\r\n* Solicitado - Permissão solicitada, mas ainda não concedida. Valor = 2\r\n\r\n**Retorno:**\r\n\r\n* Ok(mensagem) mostrnado que atualizou o controle e se todas as permissões foram concedidas.\r\n\r\n* NotFound(\"Controle de acesso não encontrado.\") caso não haja controle de acesso cadastrado para o comércio especificado.\r\n\r\n* BadRequest(\"Não é possível atualizar IdBixs do Usuario não encontrado.\") caso o controle de acesso não tenha um IdBixs associado.\r\n\r\n* BadRequest(\"Erro ao ativar acesso.\") caso ocorra algum erro ao ativar o acesso.\r\n\r\n* BadRequest(\"ID do controle de acesso não corresponde.\") caso o idcontrole passado na URL não corresponda ao IdControle no corpo da requisição.\r\n",
+        "parameters": [
+          {
+            "name": "idcontrole",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ControleViewPut"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ControleViewPut"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ControleViewPut"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ControleAcessos"
+        ],
+        "summary": "Deleta os dados de um controle de acesso específico.",
+        "description": "Exemplo de chamada: DELETE /ControleAcesso/idControle\r\n\r\n**Retorno:**\r\n\r\n* Ok(\"Controle de acesso deletado com sucesso.\") caso o controle de acesso seja deletado com sucesso.\r\n\r\n* NotFound() caso o controle de acesso não seja encontrado.\r\n",
+        "parameters": [
+          {
+            "name": "idcontrole",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Login/Acesso": {
+      "post": {
+        "tags": [
+          "Login"
+        ],
+        "summary": "Busca o login do usuário.",
+        "description": "Exemplo de chamada: POST /Login/Acesso\r\nO método POST retorna um token de acesso para o usuário autenticado.\r\n\r\n**Retornos:**\r\n\r\n* BadRequest(\"Usuario não encontrado ou inativo\") caso o usuário não seja encontrado ou esteja inativo.\r\n\r\n* Unauthorized(\"Senha ou usuário incorreta\") caso a senha ou o usuário estejam incorretos.\r\n\r\n* Ok(token) caso o usuário seja autenticado com sucesso.\r\n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Login"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Login"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Login"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Login/google-login": {
+      "post": {
+        "tags": [
+          "Login"
+        ],
+        "summary": "Busca o login do usuário utilizando o Google.",
+        "description": "Exemplo de chamada: POST /Login/GoogleLogin\r\nO método POST retorna um token de acesso para o usuário autenticado via Google.\r\n\r\n**Retornos:**\r\n\r\n* Unauthorized(\"Token do Google inválido ou expirado.\") caso o token do Google seja inválido ou expirado.\r\n\r\n* StatusCode(500, \"Configuração do Google Client ID ausente.\")\r\n\r\n* BadRequest(result.Errors) caso ocorra algum erro ao criar o usuário.\r\n\r\n* Ok(token) caso o usuário seja autenticado com sucesso.\r\n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginGoogle"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginGoogle"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginGoogle"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Login/facebook-login": {
+      "post": {
+        "tags": [
+          "Login"
+        ],
+        "summary": "Busca o login do usuário utilizando o Facebook.",
+        "description": "Exemplo de chamada: POST /Login/FacebookLogin\r\nO método POST retorna um token de acesso para o usuário autenticado via Facebook.\r\n\r\n**Retornos:**\r\n\r\n* Unauthorized(\"Token do Facebook inválido ou expirado.\") caso o token do Facebook seja inválido ou expirado.\r\n\r\n* StatusCode(500, \"Configurações do Facebook ausentes.\")\r\n\r\n* Unauthorized(\"Token inválido.\")\r\n\r\n* BadRequest(\"É necessário permitir o acesso ao e-mail no Facebook.\")\r\n\r\n* StatusCode(500, $\"Erro interno ao processar login do Facebook: {ex.Message}\")\r\n\r\n* BadRequest(result.Errors) caso ocorra algum erro ao criar o usuário.\r\n\r\n* Ok(token) caso o usuário seja autenticado com sucesso.\r\n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FacebookLogin"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FacebookLogin"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/FacebookLogin"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Login/Registrar": {
+      "post": {
+        "tags": [
+          "Login"
+        ],
+        "summary": "Registra o usuário no sistema.",
+        "description": "Exemplo de chamada: POST /Login/Registrar\r\nPara cadastrar um usuário novo sem filiar a um comércio existente, envie o JSON com \"ComercioId\": 0 e o \"TipoPermissao\" desejado (Cliente, Profissional ou Admin).\r\n\r\n**Tipos de permissão:**\r\n\r\n* Cliente= 0: Usuário comum do sistema.\r\n\r\n* Profissional= 1: Usuário com permissões avançadas.\r\n\r\n* Admin= 2: Usuário com todas as permissões.\r\n\r\nO método POST retorna uma mensagem informando o resultado da operação.\r\n\r\n**Retornos:**\r\n\r\n* BadRequest(\"Erro ao criar usuario\")\r\n\r\n* BadRequest(\"Senha e Confirmar Senha não conferem\")\r\n\r\n* BadRequest(\"Email já cadastrado\")\r\n\r\n* BadRequest(ModelState) caso o modelo seja inválido preenchimento incorreto.\r\n\r\n* Ok(\"Usuário criado! Verifique seu e-mail para confirmar.\") caso seja um novo usuário.\r\n\r\n* Ok(\"Usuário criado!\") caso seja um usuário vinculado a um comércio existente.\r\n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Registrar"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Registrar"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Registrar"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Login/Ativar-Login": {
+      "post": {
+        "tags": [
+          "Login"
+        ],
+        "summary": "Confirma o registro do Usuário.",
+        "description": "Exemplo de chamada: POST /Login/Ativar-Login\r\nO método POST retorna uma mensagem.\r\n\r\n**Retornos:**\r\n\r\n* BadRequest(\"Dados inválidos.\")\r\n\r\n* NotFound(\"Usuário não encontrado.\")\r\n\r\n* BadRequest(\"Erro ao confirmar e-mail.\", errors = result.Errors)\r\n\r\n* Ok(\"E-mail confirmado com sucesso!\")\r\n",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Login/Logout": {
+      "post": {
+        "tags": [
+          "Login"
+        ],
+        "summary": "Faz log-out do Usuário.",
+        "description": "Exemplo de chamada: POST /Login/Logout\r\nO método POST retorna uma mensagem.\r\n\r\n**Retornos:**\r\n\r\n* Ok(\"Logout realizado com sucesso e sessões encerradas.\")\r\n",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Login/refresh-token": {
+      "post": {
+        "tags": [
+          "Login"
+        ],
+        "summary": "Renova o token do Usuário.",
+        "description": "Exemplo de chamada: POST /Login/Refresh-Token\r\nO método POST retorna uma mensagem.\r\n\r\n**Retornos:**\r\n\r\n* Unauthorized(\"Token inválido ou expirado.\")\r\n\r\n* Unauthorized(\"Usuário não encontrado.\")\r\n\r\n* Ok(\"Token renovado!\")\r\n",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Pagamentos/Pagamentos-Cliente": {
+      "get": {
+        "tags": [
+          "Pagamentos"
+        ],
+        "summary": "Busca os pagamentos do cliente.",
+        "description": "Exemplo de chamada: GET /Pagamentos/Pagamentos-Cliente\r\nO método GET retorna os pagamentos do cliente.\r\n\r\n**Retornos:**\r\n\r\n* NotFound(\"Nenhum pagamento encontrado para este cliente.\")\r\n\r\n* Ok(pagamentos)\r\n",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Pagamentos/Pagamentos-Empresa/{id}": {
+      "get": {
+        "tags": [
+          "Pagamentos"
+        ],
+        "summary": "Busca os pagamentos dos clientes.",
+        "description": "Exemplo de chamada: GET /Pagamentos/Pagamentos-Empresa/{id}\r\nO método GET retorna os pagamentos dos clientes.\r\n\r\n**Retornos:**\r\n\r\n* NotFound(\"Nenhum pagamento encontrado para está empresa!\")\r\n\r\n* Ok(pagamentos)\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Pagamentos/{id}": {
+      "get": {
+        "tags": [
+          "Pagamentos"
+        ],
+        "summary": "Busca as informações de um pagamento específico.",
+        "description": "Exemplo de chamada: GET /Pagamentos/{id}\r\nO método GET retorna as informações de um pagamento específico.\r\n\r\n**Retornos:**\r\n\r\n* NotFound(\"Pagamento não encontrado!\")\r\n\r\n* Ok(pagamento)\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Pagamentos/Confirmar/{id}": {
+      "get": {
+        "tags": [
+          "Pagamentos"
+        ],
+        "summary": "Confirma o pagamento de um agendamento específico.",
+        "description": "Exemplo de chamada: GET /Pagamentos/Confirmar/{id}\r\nO método GET confirma o pagamento de um agendamento específico.\r\n\r\n**Retornos:**\r\n\r\n* NotFound(\"Pagamento não encontrado!\")\r\n\r\n* Ok(\"Pagamento Confirmado!\")\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagamentoRepasse"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagamentoRepasse"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagamentoRepasse"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Pagamentos": {
+      "post": {
+        "tags": [
+          "Pagamentos"
+        ],
+        "summary": "Salva as informações de um pagamento específico.",
+        "description": "Exemplo de chamada: POST /Pagamentos\r\nO método POST salva as informações de um pagamento específico.\r\n\r\n**Tipo de Pagamento:**\r\n\r\n* Dinheiro - Valor = 0\r\n\r\n* Cartão de Crédito - Valor = 1\r\n\r\n* Boleto - Valor = 2\r\n\r\n* PIX - Valor = 3\r\n\r\n* PIX Caixa - Valor = 4\r\n\r\n**Retornos:**\r\n\r\n* NotFound(\"Pagamento não encontrado!\")\r\n\r\n* BadRequest(\"Dados não preenchidos!\")\r\n\r\n* NotFound(\"Agendamento não encontrado!\")\r\n\r\n* BadRequest(\"Dados do cartão de crédito não preenchidos corretamente!\")\r\n\r\n* BadRequest(\"Método de pagamento não implementado ainda!\")\r\n\r\n* Ok(\"Pagamento em Processamento!\")\r\n para pagamentos com cartão de crédito\r\n\r\n* Ok(\"Pagamento Registrado!\")\r\n para pagamentos em dinheiro\r\n\r\n* Ok(resultPagemento)\r\n para pagamentos com PIX ou Boleto\r\n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MetodoPagamento"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MetodoPagamento"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/MetodoPagamento"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Servicos/Todos/{id}": {
+      "get": {
+        "tags": [
+          "Servicos"
+        ],
+        "summary": "Busca as informações de todos os serviços existentes para um comércio específico.",
+        "description": "Exemplo de chamada: GET /Servicos/Todos/idComercio\r\nNa chamada GET deve ser informado o id do comércio para o qual se deseja obter os serviços. O método GET retorna uma lista de serviços ativos para o comércio especificado.\r\n\r\n**Retornos:**\r\n\r\n* Ok(ListaServicos) caso a lista de serviços seja encontrada.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Servicos/{id}": {
+      "get": {
+        "tags": [
+          "Servicos"
+        ],
+        "summary": "Busca as informações de um serviço existente para um comércio específico.",
+        "description": "Exemplo de chamada: GET /Servicos/idServiço\r\nNa chamada GET deve ser informado o id do serviço para o qual se deseja obter. O método GET retorna as informações do serviço especificado.\r\n\r\n**Retornos:** \r\n\r\n* NotFound(\"Serviço não encontrado.\")\r\n \r\n* Ok(servico)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Servicos"
+        ],
+        "summary": "Atualiza as informações de um serviço existente para um comércio específico.",
+        "description": "Exemplo de chamada: PUT /Servicos/id\r\nNa chamada PUT deve ser enviado um objeto JSON com as informações do serviço a ser atualizado. O método PUT atualiza o serviço no banco de dados e retorna o serviço atualizado.\r\n\r\n**Retornos:**\r\n\r\n* BadRequest(\"Dados do serviço não preenchido.\")\r\n* NotFound(\"Serviço não encontrado.\")\r\n* BadRequest(\"Erro ao tentar atualizar serviço!\") \r\n* Ok(servicoAtualizado)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServicoDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServicoDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServicoDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Servicos"
+        ],
+        "summary": "Desativa as informações de um serviço existente para um comércio específico.",
+        "description": "Exemplo de chamada: DELETE /Servicos/idServico\r\nNa chamada DELETE deve ser informado o id do serviço para o qual se deseja desativar. O método DELETE desativa o serviço no banco de dados e retorna o serviço desativado.\r\n\r\n**Retornos:**\r\n \r\n* NotFound(\"Serviço não encontrado.\")\r\n* Ok(\"Serviço desativado com sucesso.\")\r\n* BadRequest(\"Erro ao tentar excluir serviço!\")",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Servicos": {
+      "post": {
+        "tags": [
+          "Servicos"
+        ],
+        "summary": "Cadastra as informações de um novo serviço para um comércio específico.",
+        "description": "Exemplo de chamada: POST /Servicos\r\nNa chamada POST deve ser enviado um objeto JSON com as informações do serviço a ser criado. O método POST cria um novo serviço no banco de dados e retorna o serviço criado.\r\n\r\n**Retornos:** \r\n \r\n* BadRequest(\"Serviço inválido.\") \r\n\r\n* Unauthorized(\"Usuário não autenticado.\")\r\n* BadRequest(\"Erro ao tentar cadastrar serviço!\")\r\n* BadRequest(\"Dados do serviço inválidos.\")\r\n* Ok(servico)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServicoDTO"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServicoDTO"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ServicoDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Usuario/{id}": {
+      "get": {
+        "tags": [
+          "Usuario"
+        ],
+        "summary": "Obtém as informações de um usuário específico.",
+        "description": "Exemplo de chamada: GET /Usuario/Perfil/idUsuario\r\n\r\n**Retorno:**\r\n\r\n* NotFound(\"Usuário não encontrado.\") caso o usuário especificado não seja encontrado.\r\n\r\n* BadRequest(\"Dados inválidos.\") caso o ID do usuário seja nulo ou vazio.\r\n\r\n* Ok(usuario) caso o usuário seja encontrado.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Usuario"
+        ],
+        "summary": "Atualiza as informações de um usuário específico.",
+        "description": "Exemplo de chamada: PUT /Usuario/Perfil/idUsuario\r\n\r\n**Retorno:**\r\n\r\n* NotFound(\"Usuário não encontrado.\") caso o usuário especificado não seja encontrado.\r\n\r\n* BadRequest(\"Erro ao atualizar o perfil.\")\r\n\r\n* Ok(usuario) caso o usuário seja atualizado com sucesso.\r\n\r\n* Forbid(\"Acesso negado. Você só pode acessar seu próprio perfil.\") caso o ID do usuário na URL seja diferente do ID do usuário autenticado.\r\n\r\n* BadRequest(\"Dados inválidos.\") caso o ID do usuário seja nulo ou vazio.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditarUsuario"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditarUsuario"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditarUsuario"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Usuario"
+        ],
+        "summary": "Deleta um usuário específico.",
+        "description": "Exemplo de chamada: DELETE /Usuario/idUsuario\r\n\r\n**Retorno:**\r\n\r\n* NotFound(\"Usuário não encontrado.\") caso o usuário especificado não seja encontrado.\r\n\r\n* BadRequest(\"Erro ao desativar o usuário.\") caso ocorra um erro ao desativar o usuário.\r\n\r\n* Ok(\"Usuário desativado com sucesso.\") caso o usuário seja desativado com sucesso.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Usuario/Config-Usuario/{id}": {
+      "get": {
+        "tags": [
+          "Usuario"
+        ],
+        "summary": "Busca as informações de uma configuração de usuário específico.",
+        "description": "Exemplo de chamada: GET /Usuario/Config-Usuario/idUsuario\r\n\r\n**Retorno:**\r\n\r\n* NotFound(\"Erro não encontrado.\") caso a configuração do usuário especificado não seja encontrada.\r\n\r\n* Ok(config) caso a configuração seja encontrada com sucesso.\r\n\r\n* Forbid(\"Acesso negado. Você só pode acessar sua própria configuração.\") caso o ID da configuração do usuário na URL seja diferente do ID do usuário autenticado.\r\n\r\n* BadRequest(\"Dados inválidos.\") caso o ID da configuração do usuário seja menor ou igual a zero.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Usuario"
+        ],
+        "summary": "Atualiza as informações de uma configuração de usuário específico.",
+        "description": "Exemplo de chamada: PUT /Usuario/Config-Usuario/idUsuario\r\n\r\n**Retorno:**\r\n\r\n* NotFound(\"Erro não encontrado.\") caso a configuração do usuário especificado não seja encontrada.\r\n\r\n* Ok(config) caso a configuração seja atualizada com sucesso.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigUsuario"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigUsuario"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigUsuario"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/WhatsApp/Status/{id}": {
+      "get": {
+        "tags": [
+          "WhatsApp"
+        ],
+        "summary": "Retorna o status de um WhatsApp específico.",
+        "description": "Exemplo de chamada: GET /WhatsApp/Status/idComercio\r\n\r\n**Retorno:**\r\n\r\n* NotFound(\"Sessão não encontrada.\") caso a sessão do WhatsApp não seja encontrada para o comércio especificado.\r\n\r\n* Ok(whatsApp) caso a sessão do WhatsApp seja encontrada para o comércio especificado.\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/WhatsApp/Obter-QrCode/{id}": {
+      "get": {
+        "tags": [
+          "WhatsApp"
+        ],
+        "summary": "Obtém o QR Code para login do WhatsApp de um comércio específico.",
+        "description": "Exemplo de chamada: GET /WhatsApp/Obter-QrCode/idComercio\r\n\r\n**Retorno:**\r\n\r\n* BadRequest(new { success = false, message = \"Sessão não encontrada.\" }) caso a sessão do WhatsApp não seja encontrada para o comércio especificado.\r\n\r\n* BadRequest(new { message = \"Falha ao obter QR Code\" }) caso haja um erro ao tentar obter o QR Code da API.\r\n\r\n* BadRequest(new { success = false, message = \"Erro ao obter QR Code.\" })\r\n\r\n* Ok(new { qrCode = resultado.qrcode })\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/WhatsApp/Desconectar/{id}": {
+      "delete": {
+        "tags": [
+          "WhatsApp"
+        ],
+        "summary": "Desativa o WhatsApp de um comércio específico.",
+        "description": "Exemplo de chamada: DELETE /WhatsApp/Desconectar/idComercio\r\n\r\n**Retorno:**\r\n\r\n* BadRequest(\"Erro ao Desconectar\" )\r\n\r\n* NotFound(\"Sessão não Encontrada!\")\r\n\r\n* BadRequest(\"Erro ao Desconectar\")\r\n\r\n* Ok(\"Desconectado!\")\r\n",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Agendamento": {
+        "required": [
+          "profissionalId",
+          "status",
+          "usuarioId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "servicoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "servico": {
+            "$ref": "#/components/schemas/Servico"
+          },
+          "usuarioId": {
+            "type": "string",
+            "nullable": true
+          },
+          "usuario": {
+            "$ref": "#/components/schemas/Usuario"
+          },
+          "profissionalId": {
+            "type": "string",
+            "nullable": true
+          },
+          "profissional": {
+            "$ref": "#/components/schemas/Usuario"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AppointmentStatus"
+          },
+          "dataAgendamento": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "horaAgendamento": {
+            "type": "string",
+            "format": "date-span"
+          },
+          "dataCriacao": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "observacao": {
+            "type": "string",
+            "nullable": true
+          },
+          "avaliacao": {
+            "$ref": "#/components/schemas/Avaliacao"
+          },
+          "pagamento": {
+            "$ref": "#/components/schemas/Pagamento"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AgendamentoView": {
+        "required": [
+          "idProssional"
+        ],
+        "type": "object",
+        "properties": {
+          "idProssional": {
+            "type": "string",
+            "nullable": true
+          },
+          "idUsuario": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "horario": {
+            "type": "string",
+            "format": "date-span"
+          },
+          "idServico": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "observacao": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AppointmentStatus": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "Avaliacao": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agendamentoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agendamento": {
+            "$ref": "#/components/schemas/Agendamento"
+          },
+          "nota": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dataAvaliacao": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "comentario": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AvaliacaoNota": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nota": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comentario": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Cartao": {
+        "required": [
+          "ccv",
+          "cpf",
+          "nome",
+          "numero",
+          "usuarioId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "numero": {
+            "type": "string",
+            "nullable": true
+          },
+          "ccv": {
+            "type": "string",
+            "nullable": true
+          },
+          "cpf": {
+            "type": "string",
+            "nullable": true
+          },
+          "dataValidade": {
+            "type": "string",
+            "format": "date"
+          },
+          "enderecoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ativo": {
+            "type": "boolean"
+          },
+          "usuarioId": {
+            "type": "string",
+            "nullable": true
+          },
+          "usuario": {
+            "$ref": "#/components/schemas/Usuario"
+          },
+          "pagamentos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Pagamento"
+            },
+            "nullable": true
+          },
+          "endereco": {
+            "$ref": "#/components/schemas/Endereco"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CartaoPost": {
+        "required": [
+          "ccv",
+          "cpf",
+          "nome",
+          "numero",
+          "usuarioId"
+        ],
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "numero": {
+            "type": "string",
+            "nullable": true
+          },
+          "validade": {
+            "type": "string",
+            "format": "date"
+          },
+          "ccv": {
+            "type": "string",
+            "nullable": true
+          },
+          "cpf": {
+            "type": "string",
+            "nullable": true
+          },
+          "usuarioId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Categoria": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comercioId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comercio": {
+            "$ref": "#/components/schemas/Comercio"
+          },
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "icone": {
+            "type": "string",
+            "nullable": true
+          },
+          "ativo": {
+            "type": "boolean"
+          },
+          "servicos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Servico"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CategoriaDTO": {
+        "type": "object",
+        "properties": {
+          "idCategoria": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comercioId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "icone": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ChavePix": {
+        "type": "object",
+        "properties": {
+          "idChavePix": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "chave": {
+            "type": "string",
+            "nullable": true
+          },
+          "tipoChave": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "criado": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "usuario": {
+            "$ref": "#/components/schemas/Usuario"
+          },
+          "usuarioId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ChavePixPost": {
+        "required": [
+          "chave",
+          "tipoChave"
+        ],
+        "type": "object",
+        "properties": {
+          "chave": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "tipoChave": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ChavePixPut": {
+        "required": [
+          "chave",
+          "tipoChave"
+        ],
+        "type": "object",
+        "properties": {
+          "idChave": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "chave": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "tipoChave": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "ativa": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Comercio": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "endereco": {
+            "type": "string",
+            "nullable": true
+          },
+          "telefone": {
+            "type": "string",
+            "nullable": true
+          },
+          "cnpj": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          },
+          "instagram": {
+            "type": "string",
+            "nullable": true
+          },
+          "facebook": {
+            "type": "string",
+            "nullable": true
+          },
+          "site": {
+            "type": "string",
+            "nullable": true
+          },
+          "logoUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "notificarAgendamento": {
+            "type": "boolean"
+          },
+          "lembrarAgendamento": {
+            "type": "boolean"
+          },
+          "resumoDiario": {
+            "type": "boolean"
+          },
+          "ativo": {
+            "type": "boolean"
+          },
+          "enderecosComercio": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnderecoComercio"
+            },
+            "nullable": true
+          },
+          "controleAcesso": {
+            "$ref": "#/components/schemas/ControleAcesso"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ComercioAddUser": {
+        "type": "object",
+        "properties": {
+          "idComercio": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "permissao": {
+            "$ref": "#/components/schemas/TipoPermissao"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ComercioConfigFuncionario": {
+        "type": "object",
+        "properties": {
+          "idFuncionario": {
+            "type": "string",
+            "nullable": true
+          },
+          "dias": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DayOfWeek"
+            },
+            "nullable": true
+          },
+          "horaInicio": {
+            "type": "string",
+            "format": "date-span"
+          },
+          "horaFim": {
+            "type": "string",
+            "format": "date-span"
+          },
+          "inicioIntervalo": {
+            "type": "string",
+            "format": "date-span",
+            "nullable": true
+          },
+          "fimIntervalo": {
+            "type": "string",
+            "format": "date-span",
+            "nullable": true
+          },
+          "intervalo": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ComercioConfigUpdate": {
+        "type": "object",
+        "properties": {
+          "idHorarioAtendimento": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "idConfigComercio": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "horarioAtendimento": {
+            "$ref": "#/components/schemas/HorarioAtendimentoDto"
+          },
+          "configuracao": {
+            "$ref": "#/components/schemas/ConfigComercioDTOUptade"
+          },
+          "funcionarios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ComercioConfigFuncionario"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ComercioConfigu": {
+        "type": "object",
+        "properties": {
+          "horarioAtendimento": {
+            "$ref": "#/components/schemas/HorarioAtendimentoDto"
+          },
+          "configuracao": {
+            "$ref": "#/components/schemas/ConfigComercioDTO"
+          },
+          "funcionarios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ComercioConfigFuncionario"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ConfigComercioDTO": {
+        "type": "object",
+        "properties": {
+          "comercioId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "antecedenciaMin": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "limiteAgendar": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "confirmaAuto": {
+            "type": "boolean"
+          },
+          "tempoDuracaoPadrao": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tempoCancelamento": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reagendar": {
+            "type": "boolean"
+          },
+          "tempoIntervalo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agendaSimultanea": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "horarioPorProfissional": {
+            "type": "boolean"
+          },
+          "fechaFeriadosNacionais": {
+            "type": "boolean"
+          },
+          "fechaFeriadosMunicipais": {
+            "type": "boolean"
+          },
+          "diasFechados": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DiaFechadoDTO"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ConfigComercioDTOUptade": {
+        "type": "object",
+        "properties": {
+          "comercioId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "antecedenciaMin": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "limiteAgendar": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "confirmaAuto": {
+            "type": "boolean"
+          },
+          "tempoDuracaoPadrao": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tempoCancelamento": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reagendar": {
+            "type": "boolean"
+          },
+          "tempoIntervalo": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agendaSimultanea": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "horarioPorProfissional": {
+            "type": "boolean"
+          },
+          "fechaFeriadosNacionais": {
+            "type": "boolean"
+          },
+          "fechaFeriadosMunicipais": {
+            "type": "boolean"
+          },
+          "diasFechados": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DiaFechado"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ConfigUsuario": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "usuarioId": {
+            "type": "string",
+            "nullable": true
+          },
+          "usuario": {
+            "$ref": "#/components/schemas/Usuario"
+          },
+          "notificaAgendamento": {
+            "type": "boolean"
+          },
+          "notificaPromo": {
+            "type": "boolean"
+          },
+          "notificaDiaAgendado": {
+            "type": "boolean"
+          },
+          "notificaWhats": {
+            "type": "boolean"
+          },
+          "notificaEmail": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ControleAcesso": {
+        "type": "object",
+        "properties": {
+          "idControle": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/Estado"
+          },
+          "whatsapp": {
+            "$ref": "#/components/schemas/Estado"
+          },
+          "solicitado": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/Estado"
+          },
+          "idBixs": {
+            "type": "string",
+            "nullable": true
+          },
+          "idComercio": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comercio": {
+            "$ref": "#/components/schemas/Comercio"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ControleViewPost": {
+        "required": [
+          "password",
+          "verificationCode"
+        ],
+        "type": "object",
+        "properties": {
+          "payment": {
+            "$ref": "#/components/schemas/Estado"
+          },
+          "whatsapp": {
+            "$ref": "#/components/schemas/Estado"
+          },
+          "idEmpresa": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          },
+          "verificationCode": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ControleViewPut": {
+        "type": "object",
+        "properties": {
+          "idControle": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/Estado"
+          },
+          "whatsapp": {
+            "$ref": "#/components/schemas/Estado"
+          },
+          "estado": {
+            "$ref": "#/components/schemas/Estado"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DayOfWeek": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "DiaFechado": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "configComercioId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "data": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DiaFechadoDTO": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EditarUsuario": {
+        "required": [
+          "cpf",
+          "email",
+          "id",
+          "nome",
+          "telefone"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "nome": {
+            "maxLength": 18,
+            "minLength": 3,
+            "type": "string",
+            "nullable": true
+          },
+          "sobrenome": {
+            "type": "string",
+            "nullable": true
+          },
+          "cpf": {
+            "maxLength": 14,
+            "minLength": 11,
+            "type": "string",
+            "nullable": true
+          },
+          "telefone": {
+            "maxLength": 15,
+            "minLength": 10,
+            "type": "string",
+            "nullable": true
+          },
+          "dataNascimento": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Endereco": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rua": {
+            "type": "string",
+            "nullable": true
+          },
+          "numero": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "bairro": {
+            "type": "string",
+            "nullable": true
+          },
+          "cidade": {
+            "type": "string",
+            "nullable": true
+          },
+          "estado": {
+            "type": "string",
+            "nullable": true
+          },
+          "cep": {
+            "type": "string",
+            "nullable": true
+          },
+          "referencia": {
+            "type": "string",
+            "nullable": true
+          },
+          "enderecosComercio": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnderecoComercio"
+            },
+            "nullable": true
+          },
+          "usuarios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Usuario"
+            },
+            "nullable": true
+          },
+          "cartoes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Cartao"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnderecoComercio": {
+        "type": "object",
+        "properties": {
+          "comercioId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comercio": {
+            "$ref": "#/components/schemas/Comercio"
+          },
+          "enderecoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "endereco": {
+            "$ref": "#/components/schemas/Endereco"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnderecoViewPost": {
+        "type": "object",
+        "properties": {
+          "rua": {
+            "type": "string",
+            "nullable": true
+          },
+          "numero": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "bairro": {
+            "type": "string",
+            "nullable": true
+          },
+          "cidade": {
+            "type": "string",
+            "nullable": true
+          },
+          "estado": {
+            "type": "string",
+            "nullable": true
+          },
+          "cep": {
+            "type": "string",
+            "nullable": true
+          },
+          "referencia": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Estado": {
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "FacebookLogin": {
+        "required": [
+          "accessToken"
+        ],
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "HorarioAtendimento": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comercioId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dias": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DayOfWeek"
+            },
+            "nullable": true
+          },
+          "horaInicio": {
+            "type": "string",
+            "format": "date-span"
+          },
+          "horaFim": {
+            "type": "string",
+            "format": "date-span"
+          },
+          "intervalo": {
+            "type": "boolean"
+          },
+          "inicioIntervalo": {
+            "type": "string",
+            "format": "date-span",
+            "nullable": true
+          },
+          "fimIntervalo": {
+            "type": "string",
+            "format": "date-span",
+            "nullable": true
+          },
+          "usuariosComercios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UsuarioComercio"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "HorarioAtendimentoDto": {
+        "type": "object",
+        "properties": {
+          "dias": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DayOfWeek"
+            },
+            "nullable": true
+          },
+          "horaInicio": {
+            "type": "string",
+            "format": "date-span"
+          },
+          "horaFim": {
+            "type": "string",
+            "format": "date-span"
+          },
+          "intervalo": {
+            "type": "boolean"
+          },
+          "inicioIntervalo": {
+            "type": "string",
+            "format": "date-span",
+            "nullable": true
+          },
+          "fimIntervalo": {
+            "type": "string",
+            "format": "date-span",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Login": {
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "LoginGoogle": {
+        "required": [
+          "idToken"
+        ],
+        "type": "object",
+        "properties": {
+          "idToken": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MetodoPagamento": {
+        "type": "object",
+        "properties": {
+          "agendamentoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tipoPagamento": {
+            "$ref": "#/components/schemas/TipoPagamento"
+          },
+          "valor": {
+            "type": "number",
+            "format": "double"
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          },
+          "endereco": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "enderecoPagamento": {
+            "$ref": "#/components/schemas/EnderecoViewPost"
+          },
+          "idCartao": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "cartao": {
+            "$ref": "#/components/schemas/CartaoPost"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Pagamento": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agendamentoId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "valor": {
+            "type": "number",
+            "format": "double"
+          },
+          "codigoTransacao": {
+            "type": "string",
+            "nullable": true
+          },
+          "dataPagamento": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "dataCriacao": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          },
+          "idCartao": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "statusPagamento": {
+            "$ref": "#/components/schemas/StatusPagamento"
+          },
+          "metodoPagamento": {
+            "$ref": "#/components/schemas/TipoPagamento"
+          },
+          "agendamento": {
+            "$ref": "#/components/schemas/Agendamento"
+          },
+          "cartao": {
+            "$ref": "#/components/schemas/Cartao"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PagamentoRepasse": {
+        "type": "object",
+        "properties": {
+          "event": {
+            "type": "string",
+            "nullable": true
+          },
+          "delivered_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "data": {
+            "$ref": "#/components/schemas/PagamentoRepasseData"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PagamentoRepasseData": {
+        "type": "object",
+        "properties": {
+          "invoice_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "cora_invoice_id": {
+            "type": "string",
+            "nullable": true
+          },
+          "external_code": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "payment_method": {
+            "type": "string",
+            "nullable": true
+          },
+          "total_paid": {
+            "type": "number",
+            "format": "double"
+          },
+          "paid_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "payment_type": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "Registrar": {
+        "required": [
+          "confirmPassword",
+          "cpf",
+          "email",
+          "nome",
+          "password",
+          "telefone"
+        ],
+        "type": "object",
+        "properties": {
+          "nome": {
+            "maxLength": 18,
+            "minLength": 3,
+            "type": "string",
+            "nullable": true
+          },
+          "sobrenome": {
+            "type": "string",
+            "nullable": true
+          },
+          "cpf": {
+            "maxLength": 14,
+            "minLength": 11,
+            "type": "string",
+            "nullable": true
+          },
+          "telefone": {
+            "maxLength": 15,
+            "minLength": 10,
+            "type": "string",
+            "nullable": true
+          },
+          "dataNascimento": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "nullable": true
+          },
+          "confirmPassword": {
+            "type": "string",
+            "format": "password",
+            "nullable": true
+          },
+          "tipoPermissao": {
+            "$ref": "#/components/schemas/TipoPermissao"
+          },
+          "comercioId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Servico": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comercioId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comercio": {
+            "$ref": "#/components/schemas/Comercio"
+          },
+          "categorias": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Categoria"
+            },
+            "nullable": true
+          },
+          "icone": {
+            "type": "string",
+            "nullable": true
+          },
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          },
+          "preco": {
+            "type": "number",
+            "format": "double"
+          },
+          "duracao": {
+            "type": "string",
+            "format": "date-span"
+          },
+          "ativo": {
+            "type": "boolean"
+          },
+          "agendamentos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Agendamento"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ServicoCategotiaDTO": {
+        "type": "object",
+        "properties": {
+          "idCategoria": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ServicoDTO": {
+        "required": [
+          "preco"
+        ],
+        "type": "object",
+        "properties": {
+          "comercioId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "categoria": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServicoCategotiaDTO"
+            },
+            "nullable": true
+          },
+          "icone": {
+            "type": "string",
+            "nullable": true
+          },
+          "nome": {
+            "type": "string",
+            "nullable": true
+          },
+          "descricao": {
+            "type": "string",
+            "nullable": true
+          },
+          "preco": {
+            "minimum": 0,
+            "type": "number",
+            "format": "double"
+          },
+          "duracao": {
+            "type": "string",
+            "format": "date-span"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StatusPagamento": {
+        "enum": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "TipoPagamento": {
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "TipoPermissao": {
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "TipoStatusUsuario": {
+        "enum": [
+          0,
+          1,
+          2
+        ],
+        "type": "integer",
+        "format": "int32"
+      },
+      "TokenExterno": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "externalToken": {
+            "type": "string",
+            "nullable": true
+          },
+          "externalTokenRefresh": {
+            "type": "string",
+            "nullable": true
+          },
+          "externalTokenExpiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "webhookSecret": {
+            "type": "string",
+            "nullable": true
+          },
+          "whatsAtivo": {
+            "type": "boolean"
+          },
+          "paymentAtivo": {
+            "type": "boolean"
+          },
+          "usuarioId": {
+            "type": "string",
+            "nullable": true
+          },
+          "usuario": {
+            "$ref": "#/components/schemas/Usuario"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Usuario": {
+        "required": [
+          "cpf"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "nullable": true
+          },
+          "userName": {
+            "type": "string",
+            "nullable": true
+          },
+          "normalizedUserName": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "normalizedEmail": {
+            "type": "string",
+            "nullable": true
+          },
+          "emailConfirmed": {
+            "type": "boolean"
+          },
+          "passwordHash": {
+            "type": "string",
+            "nullable": true
+          },
+          "securityStamp": {
+            "type": "string",
+            "nullable": true
+          },
+          "concurrencyStamp": {
+            "type": "string",
+            "nullable": true
+          },
+          "phoneNumber": {
+            "type": "string",
+            "nullable": true
+          },
+          "phoneNumberConfirmed": {
+            "type": "boolean"
+          },
+          "twoFactorEnabled": {
+            "type": "boolean"
+          },
+          "lockoutEnd": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lockoutEnabled": {
+            "type": "boolean"
+          },
+          "accessFailedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastName": {
+            "type": "string",
+            "nullable": true
+          },
+          "cpf": {
+            "type": "string",
+            "nullable": true
+          },
+          "dateBirth": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TipoStatusUsuario"
+          },
+          "dateCreate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "tokenExterno": {
+            "$ref": "#/components/schemas/TokenExterno"
+          },
+          "usuariosComercios": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UsuarioComercio"
+            },
+            "nullable": true
+          },
+          "agendamentosCliente": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Agendamento"
+            },
+            "nullable": true
+          },
+          "agendamentosProfissional": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Agendamento"
+            },
+            "nullable": true
+          },
+          "configUsuario": {
+            "$ref": "#/components/schemas/ConfigUsuario"
+          },
+          "cartoes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Cartao"
+            },
+            "nullable": true
+          },
+          "enderecos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Endereco"
+            },
+            "nullable": true
+          },
+          "chavesPix": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChavePix"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UsuarioComercio": {
+        "required": [
+          "usuarioId"
+        ],
+        "type": "object",
+        "properties": {
+          "usuarioId": {
+            "type": "string",
+            "nullable": true
+          },
+          "usuario": {
+            "$ref": "#/components/schemas/Usuario"
+          },
+          "comercioId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comercio": {
+            "$ref": "#/components/schemas/Comercio"
+          },
+          "horarioId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "horarioAtendimento": {
+            "$ref": "#/components/schemas/HorarioAtendimento"
+          },
+          "status": {
+            "type": "boolean"
+          },
+          "favorito": {
+            "type": "boolean"
+          },
+          "tipoPermissao": {
+            "$ref": "#/components/schemas/TipoPermissao"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "apiKey",
+        "description": "JWT Authorization header usando o esquema Bearer. Exemplo: \"Bearer {token}\"",
+        "name": "Authorization",
+        "in": "header"
+      }
+    }
+  },
+  "security": [
+    {
+      "Bearer": [ ]
+    }
+  ]
+}

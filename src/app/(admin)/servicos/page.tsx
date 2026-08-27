@@ -20,13 +20,29 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
+interface CategoriaItem {
+  id: number;
+  nome: string;
+}
+
+interface ServicoItem {
+  id: number;
+  nome: string;
+  descricao?: string;
+  duracao?: string;
+  preco?: number | string;
+  ativo?: boolean;
+  categorias?: Array<{ id?: number; nome: string }>;
+  categoria?: string;
+}
+
 export default function AdminServicosPage() {
   const queryClient = useQueryClient();
   const { token } = useAuth();
   const { comercioId, isLoading: isComercioLoading } = useComercioId();
   const { showToast } = useToast();
-  const { data: servicos = [], isPending: isLoading } = useServicosComercio(comercioId);
-  const { data: categorias = [], isPending: isLoadingCategorias } = useCategoriasComercio(comercioId);
+  const { data: servicos = [], isPending: isLoading } = useServicosComercio<ServicoItem>(comercioId);
+  const { data: categorias = [], isPending: isLoadingCategorias } = useCategoriasComercio<CategoriaItem>(comercioId);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCategoriaModalOpen, setIsCategoriaModalOpen] = useState(false);
@@ -60,7 +76,7 @@ export default function AdminServicosPage() {
     }
   };
 
-  const openModal = (servico?: any) => {
+  const openModal = (servico?: ServicoItem) => {
     if (servico) {
       setEditingId(servico.id);
       setNome(servico.nome || '');
@@ -107,8 +123,8 @@ export default function AdminServicosPage() {
 
     // Find category ID from category name if necessary, 
     // but we'll try to store ID directly in state if it fits better.
-    const selectedCat = categorias.find(c => c.nome === categoria || c.id.toString() === categoria);
-    const catId = selectedCat ? parseInt(selectedCat.id) : 0;
+    const selectedCat = categorias.find(c => c.nome === categoria || String(c.id) === categoria);
+    const catId = selectedCat ? Number(selectedCat.id) : 0;
 
     const payload = {
       comercioId: activeCommerceId,
@@ -133,21 +149,22 @@ export default function AdminServicosPage() {
           headers: { 'Authorization': `Bearer ${token}` },
           body: JSON.stringify(payload),
           skipToast: true
-        } as any);
+        });
       } else {
         await fetchApi('/api/Servicos', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}` },
           body: JSON.stringify(payload),
           skipToast: true
-        } as any);
+        });
       }
       setIsModalOpen(false);
       showToast(editingId ? 'Serviço atualizado com sucesso!' : 'Serviço criado com sucesso!', 'success');
       refreshServicos();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Full Submit Error:", err);
-      showToast(err.message || 'Erro ao salvar serviço.', 'error');
+      const message = err instanceof Error ? err.message : 'Erro ao salvar serviço.';
+      showToast(message, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -161,7 +178,7 @@ export default function AdminServicosPage() {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` },
         skipToast: true,
-      } as RequestInit);
+      });
       showToast('Serviço excluído com sucesso!', 'success');
       setConfirmDeleteId(null);
       refreshServicos();
@@ -197,7 +214,7 @@ export default function AdminServicosPage() {
             icone: "string"
           }),
           skipToast: true
-        } as any);
+        });
       } else {
         await fetchApi('/api/Categorias', {
           method: 'POST',
@@ -208,16 +225,17 @@ export default function AdminServicosPage() {
             icone: "string"
           }),
           skipToast: true
-        } as any);
+        });
       }
       setCategoriaNome('');
       setEditingCategoriaId(null);
       setIsCategoriaModalOpen(false);
       showToast('Categoria salva com sucesso!', 'success');
       refreshCategorias();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Save Category Error:", err);
-      showToast(err.message || 'Erro ao salvar categoria.', 'error');
+      const message = err instanceof Error ? err.message : 'Erro ao salvar categoria.';
+      showToast(message, 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -232,13 +250,13 @@ export default function AdminServicosPage() {
       });
       showToast('Categoria excluída com sucesso!', 'success');
       refreshCategorias();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       showToast('Erro ao excluir categoria.', 'error');
     }
   };
 
-  const openCategoriaModal = (cat?: any) => {
+  const openCategoriaModal = (cat?: CategoriaItem) => {
     if (cat) {
       setEditingCategoriaId(cat.id);
       setCategoriaNome(cat.nome);
@@ -249,7 +267,7 @@ export default function AdminServicosPage() {
     setIsCategoriaModalOpen(true);
   };
 
-  const getCategoriaNome = (servico: { categorias?: { nome: string }[]; categoria?: string }) =>
+  const getCategoriaNome = (servico: ServicoItem) =>
     servico.categorias?.[0]?.nome ?? servico.categoria ?? 'Sem categoria';
 
   const formatPreco = (preco: number | string | undefined) =>

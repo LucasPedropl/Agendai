@@ -269,9 +269,11 @@ export function mapConfigFromApi(data: Record<string, unknown>, comercioId: numb
   };
 }
 
+import type { FetchApiOptions } from '@/lib/api';
+
 export type ConfigFetchFn = (
   endpoint: string,
-  options?: RequestInit & { skipToast?: boolean; notFoundAsEmpty?: boolean }
+  options?: FetchApiOptions
 ) => Promise<unknown>;
 
 /**

@@ -5,7 +5,15 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { User } from '@/types';
 import { fetchApi } from '@/lib/api';
-import { getUserIdFromToken, resolveUserTypeFromAuth, getDashboardPath, type AppUserType } from '@/lib/apiHelpers';
+import {
+  getUserIdFromToken,
+  resolveUserTypeFromAuth,
+  getDashboardPath,
+  extractPermissaoFromAuthResponse,
+  isMasterCredential,
+  MASTER_LOGIN_BLOCKED_MESSAGE,
+  type AppUserType,
+} from '@/lib/apiHelpers';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import FacebookLogin from '@greatsumini/react-facebook-login';
@@ -68,10 +76,12 @@ export default function LoginPage() {
     const realId = response.id || response.usuarioId || (response.user as Record<string, unknown>)?.id || getUserIdFromToken(token);
     if (!realId) throw new Error('Não foi possível identificar o usuário após o login.');
 
-    const actualUserType = resolveUserTypeFromAuth(
-      token,
-      typeof response.permissao === 'string' ? response.permissao : null
-    );
+    const permissao = extractPermissaoFromAuthResponse(response);
+    if (isMasterCredential(permissao, token)) {
+      throw new Error(MASTER_LOGIN_BLOCKED_MESSAGE);
+    }
+
+    const actualUserType = resolveUserTypeFromAuth(token, permissao);
 
     if (type !== actualUserType) {
       toast.warning(
@@ -127,8 +137,9 @@ export default function LoginPage() {
       const token = response.token || response.Token || response.accessToken || (typeof response === 'string' ? response : '');
       if (!token) throw new Error('Token não retornado pela API');
       handleAuthSuccess(token, response);
-    } catch {
-      const errorMessage = 'E-mail ou senha incorretos. Verifique seus dados e tente novamente.';
+    } catch (err: unknown) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'E-mail ou senha incorretos. Verifique seus dados e tente novamente.';
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {

@@ -12,8 +12,14 @@ const NAME_ID_CLAIM =
 const ROLE_CLAIM =
   'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';
 
-export type ApiPermissao = 'Cliente' | 'Profissional' | 'Admin';
+export type ApiPermissao = 'Cliente' | 'Profissional' | 'Admin' | 'Master';
 export type AppUserType = 'cliente' | 'estabelecimento' | 'profissional';
+
+export const MASTER_LOGIN_BLOCKED_MESSAGE =
+  'Esta credencial pertence ao painel administrativo Master (agendai-admin). Use o aplicativo correto para acessar.';
+
+export const ADMIN_ACCESS_DENIED_MESSAGE =
+  'Acesso negado à área administrativa. Verifique se sua conta possui permissão de administrador do estabelecimento.';
 
 function decodeJwtPayload(token: string): Record<string, string> | null {
   try {
@@ -34,23 +40,45 @@ export function getUserIdFromToken(token: string): string | null {
   return payload[NAME_ID_CLAIM] || payload.sub || payload.nameid || null;
 }
 
-/** Extrai a role/permissão do JWT (Cliente, Profissional, Admin). */
+/** Extrai a role/permissão do JWT (Cliente, Profissional, Admin, Master). */
 export function getRoleFromToken(token: string): ApiPermissao | null {
   const payload = decodeJwtPayload(token);
   if (!payload) return null;
   const role = payload[ROLE_CLAIM] || payload.role;
-  if (role === 'Admin' || role === 'Profissional' || role === 'Cliente') {
+  if (role === 'Admin' || role === 'Profissional' || role === 'Cliente' || role === 'Master') {
     return role;
   }
   return null;
 }
 
-/** Converte permissão da API para o tipo de área do app. */
+/** Lê `permissao` ou `Permissao` do body de login/registro. */
+export function extractPermissaoFromAuthResponse(
+  response: Record<string, unknown>
+): string | null {
+  const raw = response.permissao ?? response.Permissao;
+  return typeof raw === 'string' ? raw.trim() : null;
+}
+
+/** Credencial de serviço Master — não pertence a este app. */
+export function isMasterCredential(
+  permissao: string | null | undefined,
+  token?: string
+): boolean {
+  if (permissao?.toLowerCase() === 'master') return true;
+  if (token) {
+    const role = getRoleFromToken(token);
+    if (role === 'Master') return true;
+  }
+  return false;
+}
+
+/** Converte permissão da API para o tipo de área do app. Master não é mapeado — use `isMasterCredential`. */
 export function apiPermissaoToUserType(
   permissao: string | null | undefined
 ): AppUserType {
   if (permissao === 'Admin') return 'estabelecimento';
   if (permissao === 'Profissional') return 'profissional';
+  if (permissao === 'Master') return 'cliente';
   return 'cliente';
 }
 
@@ -98,9 +126,48 @@ export function normalizeApiList<T>(data: unknown, emptyMarkers: string[] = []):
   return [];
 }
 
-/** Mês atual (1–12) para query `periodo` de Comercio-Historico — API exige inteiro, não string. */
+/** Mês atual (1–12) para path param `periodo` de Comercio-Historico. Use `0` para todos os meses. */
 export function getHistoricoPeriodoAtual(): string {
   return String(new Date().getMonth() + 1);
+}
+
+export interface ComercioHistoricoPathParams {
+  comercioId: number;
+  periodo?: number | string;
+  status?: string | null;
+  profissionalId?: string | null;
+}
+
+/**
+ * Monta GET /api/Agenda/Comercio-Historico/{id}/{periodo}/{status?}/{profissional?}.
+ * - `periodo`: int; 0 ou fora de 1–12 = sem filtro de mês.
+ * - Segmentos finais vazios são omitidos; `status`/`profissional` são encodados.
+ * - ASP.NET não permite `profissional` sem `status` — sentinela `_` quando só profissional.
+ */
+export function buildComercioHistoricoPath({
+  comercioId,
+  periodo,
+  status,
+  profissionalId,
+}: ComercioHistoricoPathParams): string {
+  const periodoSegment =
+    periodo !== undefined && periodo !== null ? String(periodo) : '0';
+  let path = `/api/Agenda/Comercio-Historico/${comercioId}/${periodoSegment}`;
+
+  const trimmedStatus = status?.trim() ?? '';
+  const trimmedProfissional = profissionalId?.trim() ?? '';
+
+  if (trimmedStatus) {
+    path += `/${encodeURIComponent(trimmedStatus)}`;
+    if (trimmedProfissional) {
+      path += `/${encodeURIComponent(trimmedProfissional)}`;
+    }
+  } else if (trimmedProfissional) {
+    // Sentinela: não casa com Concluido/Cancelado/Não compareceu — sem filtro extra de status.
+    path += `/_/${encodeURIComponent(trimmedProfissional)}`;
+  }
+
+  return path;
 }
 
 /** Lê horários disponíveis independente do casing (camelCase / PascalCase). */
@@ -153,8 +220,13 @@ export async function fetchAdminComercios(
     }
     return [];
   } catch (err) {
-    if (err instanceof Error && (err.message.includes('404') || err.message.includes('403'))) {
-      return [];
+    if (err instanceof Error) {
+      if (err.message.includes('403')) {
+        throw new Error(ADMIN_ACCESS_DENIED_MESSAGE);
+      }
+      if (err.message.includes('404')) {
+        return [];
+      }
     }
     throw err;
   }

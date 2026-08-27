@@ -18,14 +18,15 @@ import { queryKeys } from '@/lib/queryKeys';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useComercioId } from '@/hooks/useComercioId';
-import { useComercioUsuarios } from '@/hooks/useAdminQueries';
+import { useComercioUsuarios, useDesativarComercioUsuario } from '@/hooks/useAdminQueries';
 
 export default function AdminProfissionaisPage() {
   const queryClient = useQueryClient();
   const { token } = useAuth();
   const { showToast } = useToast();
   const { comercioId, isLoading: isLoadingComercio } = useComercioId();
-  const { data: profissionais = [], isPending: isLoading } = useComercioUsuarios(comercioId, 'Profissionais');
+  const { data: profissionais = [], isPending: isLoading } = useComercioUsuarios<Profissional>(comercioId, 'Profissionais');
+  const desativarMutation = useDesativarComercioUsuario('Profissionais', comercioId);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
@@ -40,16 +41,12 @@ export default function AdminProfissionaisPage() {
   };
 
   const handleDesativar = async () => {
-    if (!comercioId || !confirmId) return;
+    if (!confirmId) return;
     setIsDeactivating(true);
     try {
-      await fetchApi(`/Desativar-Usuario/${comercioId}/${confirmId}`, {
-        method: 'DELETE',
-        skipToast: true,
-      } as RequestInit);
+      await desativarMutation.mutateAsync(confirmId);
       showToast('Profissional desativado.', 'success');
       setConfirmId(null);
-      refreshProfissionais();
     } catch (err: unknown) {
       showToast(err instanceof Error ? err.message : 'Erro ao desativar.', 'error');
     } finally {
@@ -67,7 +64,7 @@ export default function AdminProfissionaisPage() {
         headers: { Authorization: `Bearer ${token}` },
         body: JSON.stringify({ idComercio: comercioId, nome, email, permissao: 1 }),
         skipToast: true,
-      } as RequestInit);
+      });
       setIsModalOpen(false);
       setNome('');
       setEmail('');
@@ -80,7 +77,7 @@ export default function AdminProfissionaisPage() {
     }
   };
 
-  const profissionaisList = profissionais as Profissional[];
+  const profissionaisList = profissionais;
 
   if (isLoadingComercio || isLoading) return <PageLoader label="Carregando profissionais..." />;
 

@@ -3,7 +3,8 @@
 // resolvendo completamente qualquer erro de CORS ("Failed to fetch").
 export const API_URL = '';
 
-export type FetchApiOptions = RequestInit & {
+export type FetchApiOptions = Omit<RequestInit, 'body'> & {
+  body?: BodyInit | Record<string, unknown> | unknown[] | null;
   skipToast?: boolean;
   /** Retorna [] em GET 404 sem logar erro (listas vazias na API .NET). */
   notFoundAsEmpty?: boolean;
@@ -22,32 +23,40 @@ function onRefreshed(token: string | null) {
   refreshSubscribers = [];
 }
 
-export async function fetchApi(endpoint: string, options: FetchApiOptions = {}): Promise<any> {
-  let token = localStorage.getItem('token');
-  
-  if (!token) {
-    const storedAuth = localStorage.getItem('agendaAi_auth');
-    if (storedAuth) {
-      try {
-        const parsed = JSON.parse(storedAuth);
-        if (parsed.token) {
-          token = parsed.token;
-        }
-      } catch (e) {
-        // ignore
-      }
-    }
+/**
+ * Lê o JWT da sessão. Exportada porque services que não podem passar por `fetchApi`
+ * (ex.: os que precisam do corpo de erro em texto puro) precisam do mesmo token,
+ * e duplicar as chaves de storage já causou divergência antes.
+ */
+export function resolveAuthToken(): string | null {
+  const direct = localStorage.getItem('token');
+  if (direct) return direct;
+
+  const storedAuth = localStorage.getItem('agendaAi_auth');
+  if (!storedAuth) return null;
+
+  try {
+    const parsed = JSON.parse(storedAuth) as { token?: string };
+    return parsed.token ?? null;
+  } catch {
+    return null;
   }
-  
+}
+
+export async function fetchApi(endpoint: string, options: FetchApiOptions = {}): Promise<any> {
+  const token = resolveAuthToken();
+
   const headers = new Headers(options.headers || {});
 
-  let body = options.body;
-  if (body && typeof body === 'object' && !(body instanceof FormData)) {
-    body = JSON.stringify(body);
+  let body: BodyInit | null | undefined;
+  if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
+    body = JSON.stringify(options.body);
+  } else {
+    body = options.body as BodyInit | null | undefined;
   }
 
   // Only set default content-type if not FormData
-  if (!(body instanceof FormData) && !headers.has('Content-Type')) {
+  if (!(options.body instanceof FormData) && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
 

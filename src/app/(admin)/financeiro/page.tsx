@@ -45,6 +45,7 @@ import {
 import { Transacao } from '@/types';
 import { usePagamentosEmpresa } from '@/hooks/useAdminQueries';
 import { useComercioId } from '@/hooks/useComercioId';
+import { mapPaymentStatusToUi } from '@/lib/paymentEnums';
 
 const COLORS = ['#4f46e5', '#ef4444', '#10b981', '#f59e0b'];
 
@@ -60,12 +61,7 @@ export default function AdminFinanceiroPage() {
       descricao: String(p.descricao ?? 'Pagamento de agendamento'),
       valor: Number(p.valor ?? 0),
       data: String(p.dataCriacao ?? p.dataPagamento ?? new Date().toISOString()),
-      status:
-        Number(p.statusPagamento) === 1
-          ? 'pago'
-          : Number(p.statusPagamento) === 2
-            ? 'cancelado'
-            : 'pendente',
+      status: mapPaymentStatusToUi(Number(p.statusPagamento ?? 0)),
     }));
   }, [pagamentos]);
 
@@ -237,6 +233,7 @@ export default function AdminFinanceiroPage() {
                             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                               transacao.status === 'pago' ? 'bg-emerald-100 text-emerald-800' : 
                               transacao.status === 'pendente' ? 'bg-amber-100 text-amber-800' : 
+                              transacao.status === 'reembolsado' ? 'bg-slate-100 text-slate-800' :
                               'bg-red-100 text-red-800'
                             }`}>
                               {transacao.status.charAt(0).toUpperCase() + transacao.status.slice(1)}

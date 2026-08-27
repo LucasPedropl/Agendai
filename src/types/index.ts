@@ -74,6 +74,6 @@ export interface Transacao {
   descricao: string;
   valor: number;
   data: string;
-  status: 'pago' | 'pendente' | 'cancelado';
+  status: 'pago' | 'pendente' | 'cancelado' | 'reembolsado';
   servico?: string;
 }

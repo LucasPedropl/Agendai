@@ -32,10 +32,10 @@ interface HistoryItem {
 export default function ClientHistoryPage() {
   const { user } = useAuth();
   const userId = user?.id ? String(user.id) : undefined;
-  const { data: history = [], isPending: isLoading } = useClienteHistorico(userId);
+  const { data: history = [], isPending: isLoading } = useClienteHistorico<HistoryItem>(userId);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const historyList = history as HistoryItem[];
+  const historyList = history;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -203,7 +203,7 @@ export default function ClientHistoryPage() {
               <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Total Gasto</p>
               <p className="text-3xl font-black text-primary">
                 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                  history.reduce((acc, curr) => acc + (curr.valor || 0), 0)
+                  historyList.reduce((acc, curr) => acc + (curr.valor || 0), 0)
                 )}
               </p>
             </div>

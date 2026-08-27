@@ -41,7 +41,7 @@ interface Agendamento {
 export default function ClientDashboardPage() {
   const { user } = useAuth();
   const userId = user?.id ? String(user.id) : undefined;
-  const { data: agendamentos = [], isPending: isLoading } = useClienteAgendamentos(userId);
+  const { data: agendamentos = [], isPending: isLoading } = useClienteAgendamentos<Agendamento>(userId);
   const [activeTab, setActiveTab] = useState('Todos');
   const tabs = ['Todos', 'Pendentes', 'Confirmados', 'Concluídos', 'Cancelados'];
   const queryClient = useQueryClient();
@@ -55,7 +55,7 @@ export default function ClientDashboardPage() {
 
   const [selectedAgendamentoId, setSelectedAgendamentoId] = useState<number | null>(null);
 
-  const agendamentosList = agendamentos as Agendamento[];
+  const agendamentosList = agendamentos;
 
   const handleCancelAgendamento = async () => {
     if (!selectedAgendamentoId) return;

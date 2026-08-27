@@ -261,9 +261,10 @@ export default function CadastroPage() {
       });
       
       setIsSuccess(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || 'Erro ao realizar cadastro. Verifique os dados e tente novamente.');
+      const message = err instanceof Error ? err.message : 'Erro ao realizar cadastro. Verifique os dados e tente novamente.';
+      setError(message);
     } finally {
       setIsLoading(false);
     }

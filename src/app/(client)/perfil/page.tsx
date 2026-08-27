@@ -68,7 +68,7 @@ export default function ClientProfilePage() {
       <div className="flex flex-col md:flex-row items-center gap-8 bg-card border border-border p-10 rounded-[2.5rem] shadow-sm relative overflow-hidden">
         <div className="relative group">
           <div className="w-32 h-32 bg-primary/10 rounded-[2rem] flex items-center justify-center text-primary text-4xl font-black border-4 border-background shadow-xl">
-            {formData.nome.charAt(0) || user?.name?.charAt(0) || 'U'}
+            {formData.nome.charAt(0) || user?.nome?.charAt(0) || 'U'}
           </div>
           <button className="absolute bottom-0 right-0 p-2 bg-white rounded-xl shadow-lg border border-border text-slate-600 hover:text-primary transition-colors">
             <Camera className="h-5 w-5" />

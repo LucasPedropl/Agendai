@@ -20,6 +20,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import {
+  PAYMENT_METHOD,
+  PAYMENT_STATUS,
+  getPaymentStatusLabel,
+} from '@/lib/paymentEnums';
 
 export default function ClientFinancasPage() {
   const { data: pagamentos = [], isPending: isLoading } = useClientePagamentos();
@@ -35,21 +40,34 @@ export default function ClientFinancasPage() {
   }, [pagamentosList]);
 
   const getStatusBadge = (status: number) => {
-    // Enum mock logic: 0=Pendente, 1=Pago, 2=Cancelado, 3=Estornado
+    const label = getPaymentStatusLabel(status);
     switch (status) {
-      case 1:
-        return <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">Pago</span>;
-      case 2:
-        return <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-600 border border-red-500/20">Cancelado</span>;
+      case PAYMENT_STATUS.Pago:
+        return <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">{label}</span>;
+      case PAYMENT_STATUS.Cancelado:
+        return <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-600 border border-red-500/20">{label}</span>;
+      case PAYMENT_STATUS.Reembolsado:
+        return <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-500/10 text-slate-600 border border-slate-500/20">{label}</span>;
       default:
-        return <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-600 border border-amber-500/20">Pendente</span>;
+        return <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-600 border border-amber-500/20">{label}</span>;
     }
   };
 
   const getMetodoIcon = (metodo: number) => {
-    // Enum mock: 0=Dinheiro, 1=Cartão, 2=Pix, etc.
-    if (metodo === 1) return <CreditCard className="h-4 w-4" />;
-    if (metodo === 2) return <Receipt className="h-4 w-4" />;
+    if (
+      metodo === PAYMENT_METHOD.CartaoCredito ||
+      metodo === PAYMENT_METHOD.CartaoDebito
+    ) {
+      return <CreditCard className="h-4 w-4" />;
+    }
+    if (
+      metodo === PAYMENT_METHOD.Boleto ||
+      metodo === PAYMENT_METHOD.Pix ||
+      metodo === PAYMENT_METHOD.PixCaixa ||
+      metodo === PAYMENT_METHOD.TransferenciaBancaria
+    ) {
+      return <Receipt className="h-4 w-4" />;
+    }
     return <Wallet className="h-4 w-4" />;
   };
 
@@ -101,7 +119,7 @@ export default function ClientFinancasPage() {
             <p className="text-3xl font-black">R$ 0,00</p>
             <p className="text-xs opacity-70">Nenhum pagamento pendente para este mês.</p>
           </div>
-          <Button variant="secondary" className="relative z-10 w-full rounded-2xl font-bold h-12 shadow-lg group-hover:scale-[1.02] transition-transform">
+          <Button variant="outline" className="relative z-10 w-full rounded-2xl font-bold h-12 shadow-lg group-hover:scale-[1.02] transition-transform">
             Ver Faturas <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
           <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />

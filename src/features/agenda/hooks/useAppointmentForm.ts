@@ -113,12 +113,12 @@ export function useAppointmentForm(onSuccess?: () => void) {
         method: 'POST',
         body: payload,
         skipToast: true,
-      } as RequestInit);
+      });
 
       success("Agendamento cadastrado com sucesso!");
       resetForm();
       if (onSuccess) onSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Erro ao cadastrar agendamento:", err);
       error("Erro ao cadastrar agendamento");
     } finally {

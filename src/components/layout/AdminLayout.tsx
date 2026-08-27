@@ -11,6 +11,7 @@ import {
   ChartBarIcon, 
   Cog6ToothIcon,
   ChatBubbleBottomCenterTextIcon,
+  PuzzlePieceIcon,
   ArrowLeftOnRectangleIcon
 } from '@heroicons/react/24/outline';
 import { PageLoader } from '@/components/ui/page-loader';
@@ -39,6 +40,7 @@ import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { fetchApi } from '@/lib/api';
 import {
+  buildComercioHistoricoPath,
   fetchComercioUsuariosList,
   getHistoricoPeriodoAtual,
   normalizeApiList,
@@ -47,7 +49,7 @@ import { queryKeys } from '@/lib/queryKeys';
 
 function AdminLayoutShell() {
   const { logout, user, token, userType } = useAuth();
-  const { comercioId, isLoading: isLoadingCommerce, hasCommerce, reload } = useComercioContext();
+  const { comercioId, isLoading: isLoadingCommerce, hasCommerce, reload, error: comercioError } = useComercioContext();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
@@ -89,12 +91,13 @@ function AdminLayoutShell() {
       },
     });
     void queryClient.prefetchQuery({
-      queryKey: queryKeys.historicoComercio(comercioId, periodo, ''),
+      queryKey: queryKeys.historicoComercio(comercioId, periodo, '', ''),
       queryFn: async () => {
-        const data = await fetchApi(
-          `/api/Agenda/Comercio-Historico/${comercioId}?periodo=${periodo}`,
-          { skipToast: true } as RequestInit
-        );
+        const path = buildComercioHistoricoPath({
+          comercioId,
+          periodo,
+        });
+        const data = await fetchApi(path, { skipToast: true } as RequestInit);
         return normalizeApiList(data, ['Histórico Vazio']);
       },
     });
@@ -157,6 +160,7 @@ function AdminLayoutShell() {
       {
         title: 'OUTROS',
         items: [
+          { to: `${basePath}/integracoes`, icon: PuzzlePieceIcon, label: 'Integrações Bixs' },
           { to: `${basePath}/whatsapp`, icon: ChatBubbleBottomCenterTextIcon, label: 'WhatsApp' },
           { to: `${basePath}/config`, icon: Cog6ToothIcon, label: 'Configurações' },
         ]
@@ -181,6 +185,23 @@ function AdminLayoutShell() {
     { to: `${basePath}/historico`, icon: MobileClockIcon, label: 'Histórico' },
     { to: `${basePath}/config`, icon: MobileConfigIcon, label: 'Config' },
   ];
+
+  if (comercioError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-6">
+        <div className="max-w-md text-center space-y-4">
+          <p className="text-destructive font-medium">{comercioError}</p>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+          >
+            Sair e tentar outro login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (isLoadingCommerce) {
     return (

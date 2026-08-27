@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { AuthState, User } from '@/types';
-import { apiPermissaoToUserType, getRoleFromToken } from '@/lib/apiHelpers';
+import { apiPermissaoToUserType, getRoleFromToken, isMasterCredential } from '@/lib/apiHelpers';
 
 interface AuthContextType extends AuthState {
   login: (user: User, token: string, userType: 'cliente' | 'estabelecimento' | 'profissional') => void;
@@ -14,6 +14,15 @@ function normalizeStoredAuth(raw: string): AuthState {
     const parsed = JSON.parse(raw) as AuthState;
     if (parsed.token) {
       const roleFromToken = getRoleFromToken(parsed.token);
+      if (isMasterCredential(roleFromToken, parsed.token)) {
+        localStorage.removeItem('agendaAi_auth');
+        return {
+          isAuthenticated: false,
+          user: null,
+          token: null,
+          userType: null,
+        };
+      }
       if (roleFromToken) {
         parsed.userType = apiPermissaoToUserType(roleFromToken);
       }

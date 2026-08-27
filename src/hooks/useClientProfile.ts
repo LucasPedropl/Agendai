@@ -9,14 +9,15 @@ export function useClientProfile() {
   /**
    * Obtém os dados de perfil do usuário.
    */
-  const getPerfil = async (userId: string) => {
+  const getPerfil = async (userId: string | number) => {
     try {
       setIsLoading(true);
       // Rota correta identificada no Swagger: /api/Usuario/{id}
       const data = await fetchApi(`/api/Usuario/${userId}`);
       return data;
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao obter perfil';
+      setError(message);
       return null;
     } finally {
       setIsLoading(false);
@@ -26,7 +27,7 @@ export function useClientProfile() {
   /**
    * Atualiza os dados de perfil do usuário.
    */
-  const updatePerfil = async (userId: string, dados: any) => {
+  const updatePerfil = async (userId: string | number, dados: Record<string, unknown>) => {
     try {
       setIsLoading(true);
       // Rota correta identificada no Swagger: /api/Usuario/{id}
@@ -44,8 +45,9 @@ export function useClientProfile() {
         })
       });
       return true;
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao atualizar perfil';
+      setError(message);
       return false;
     } finally {
       setIsLoading(false);
@@ -55,12 +57,12 @@ export function useClientProfile() {
   /**
    * Obtém as configurações de notificação do usuário.
    */
-  const getConfig = async (userId: string) => {
+  const getConfig = async (userId: string | number) => {
     try {
       setIsLoading(true);
       const data = await fetchApi(`/api/Usuario/Config-Usuario/${userId}`, {
         skipToast: true,
-      } as RequestInit);
+      });
       return data;
     } catch {
       // API ainda espera int no path — retorna defaults até correção no backend
@@ -78,7 +80,7 @@ export function useClientProfile() {
   /**
    * Atualiza as configurações de notificação do usuário.
    */
-  const updateConfig = async (userId: string, config: Record<string, unknown>) => {
+  const updateConfig = async (userId: string | number, config: Record<string, unknown>) => {
     if (IS_CONFIG_USUARIO_PUT_BLOCKED) {
       setError('Salvar preferências de notificação temporariamente indisponível (correção pendente na API).');
       return false;
@@ -89,10 +91,11 @@ export function useClientProfile() {
         method: 'PUT',
         body: config,
         skipToast: true,
-      } as RequestInit);
+      });
       return true;
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao atualizar preferências';
+      setError(message);
       return false;
     } finally {
       setIsLoading(false);

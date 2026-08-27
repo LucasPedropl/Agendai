@@ -18,8 +18,8 @@ interface Review {
 export default function ClientAvaliacoesPage() {
   const { user } = useAuth();
   const userId = user?.id ? String(user.id) : undefined;
-  const { data: reviews = [], isPending: isLoading } = useClienteAvaliacoes(userId);
-  const reviewsList = reviews as Review[];
+  const { data: reviews = [], isPending: isLoading } = useClienteAvaliacoes<Review>(userId);
+  const reviewsList = reviews;
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">

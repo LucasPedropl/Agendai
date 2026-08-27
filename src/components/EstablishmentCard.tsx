@@ -6,7 +6,7 @@ interface EstablishmentCardProps {
   address: string;
   rating: number;
   reviews: number;
-  hours: string;
+  hours?: string;
   onClick: () => void;
 }
 
@@ -15,7 +15,7 @@ export const EstablishmentCard: React.FC<EstablishmentCardProps> = ({
   address,
   rating,
   reviews,
-  hours,
+  hours = 'Consulte os horários',
   onClick,
 }) => {
   return (
