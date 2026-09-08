@@ -285,7 +285,7 @@ function AdminLayoutShell() {
 
       {!hasCommerce && userType === 'estabelecimento' && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/40 backdrop-blur-md">
-          <div className="bg-background border border-border p-8 rounded-2xl shadow-2xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-background border border-border p-6 sm:p-8 rounded-2xl shadow-2xl max-w-xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <CadastroComercioPage onSuccess={() => void reload()} />
           </div>
         </div>
