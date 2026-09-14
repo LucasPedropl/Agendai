@@ -7,6 +7,24 @@ import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { User } from '@/types';
 
+type EmailActivationResponse = { token?: string; permissao?: string };
+
+/** Strict Mode remonta o componente; o Map reusa o mesmo POST. */
+const emailActivationRequests = new Map<string, Promise<EmailActivationResponse>>();
+
+function postEmailActivation(userId: string, confirmationToken: string): Promise<EmailActivationResponse> {
+  const activationKey = `${userId}:${confirmationToken}`;
+  const pendingRequest = emailActivationRequests.get(activationKey);
+  if (pendingRequest) return pendingRequest;
+
+  const request = fetchApi(
+    `/api/Login/Ativar-Login?userId=${encodeURIComponent(userId)}&token=${encodeURIComponent(confirmationToken)}`,
+    { method: 'POST', skipToast: true },
+  ) as Promise<EmailActivationResponse>;
+  emailActivationRequests.set(activationKey, request);
+  return request;
+}
+
 export default function AtivarContaPage() {
   const [searchParams] = useSearchParams();
   const userId = searchParams.get('userId');
@@ -30,28 +48,27 @@ export default function AtivarContaPage() {
       }
 
       try {
-        // A rota espera userId e token como query params
-        const response: any = await fetchApi(`/api/Login/Ativar-Login?userId=${encodeURIComponent(userId)}&token=${encodeURIComponent(token)}`, {
-          method: 'POST',
-        });
-        
-        if (response && response.token) {
-          const isCliente = response.permissao === 'Cliente';
+        const activation = await postEmailActivation(userId, token);
+        if (activation.token) {
+          const isCliente = activation.permissao === 'Cliente';
           const userType = isCliente ? 'cliente' : 'estabelecimento';
           
           const mockUser: User = isCliente 
             ? { id: userId, nome: 'Usuário', email: '', tipo: 'cliente' }
             : { id: 1, nome: 'Estabelecimento', email: '', endereco: '', imagem: '', avaliacao: 5, totalAvaliacoes: 0, horarioFuncionamento: '', tipo: 'estabelecimento' };
           
-          login(mockUser, response.token, userType);
+          login(mockUser, activation.token, userType);
           setRedirectPath(isCliente ? '/app' : '/estabelecimento/dashboard');
         }
 
         setStatus('success');
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Erro ao ativar conta:', err);
         setStatus('error');
-        setErrorMessage(err.message || 'Ocorreu um erro ao tentar ativar sua conta. O link pode ter expirado.');
+        const message = err instanceof Error ? err.message : '';
+        setErrorMessage(
+          message || 'Ocorreu um erro ao tentar ativar sua conta. O link pode ter expirado.',
+        );
       }
     };
 

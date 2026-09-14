@@ -34,7 +34,7 @@ export function useClientDashboard() {
 
     try {
       setIsLoading(true);
-      const data = await fetchApi(`/api/Agenda/Cliente/${userId}`);
+      const data = await fetchApi('/api/Agenda/Cliente');
       return normalizeApiList(data);
     } catch (err: any) {
       setError(err.message);
@@ -68,7 +68,7 @@ export function useClientDashboard() {
 
     try {
       setIsLoading(true);
-      const data = await fetchApi(`/api/Agenda/Cliente-Historico/${userId}`);
+      const data = await fetchApi('/api/Agenda/Cliente-Historico');
       return normalizeApiList(data, ['Histórico Vazio']);
     } catch (err: any) {
       setError(err.message);

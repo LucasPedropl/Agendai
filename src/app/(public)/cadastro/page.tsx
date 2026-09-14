@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { fetchApi } from '@/lib/api';
+import { isValidPassword, PASSWORD_INVALID_MESSAGE } from '@/lib/passwordRules';
+import { PasswordRequirements } from '@/components/ui/password-requirements';
 import { CheckCircle2, Eye, EyeOff, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { User } from '@/types';
@@ -152,8 +154,8 @@ export default function CadastroPage() {
       telefone: formatTelefone(randomPhone),
       dataNascimento: formattedRandomDate,
       email: formData.email || `test_${randomString}@example.com`,
-      password: '123123',
-      confirmPassword: '123123'
+      password: 'Senha@123',
+      confirmPassword: 'Senha@123'
     });
   };
 
@@ -224,8 +226,8 @@ export default function CadastroPage() {
       return;
     }
 
-    if (getTipoPermissao() === 2) {
-      setError('O cadastro de estabelecimentos está temporariamente restrito por motivos de segurança.');
+    if (!isValidPassword(formData.password)) {
+      setError(PASSWORD_INVALID_MESSAGE);
       return;
     }
 
@@ -338,48 +340,61 @@ export default function CadastroPage() {
               <label className="text-sm font-medium" htmlFor="email">Email</label>
               <Input id="email" type="email" required placeholder="exemplo@email.com" value={formData.email} onChange={handleChange} disabled={!!initialEmail} />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+            <div className="space-y-2">
                 <label className="text-sm font-medium" htmlFor="password">Senha</label>
                 <div className="relative">
-                  <Input 
-                    id="password" 
-                    type={showPassword ? "text" : "password"} 
-                    required 
-                    placeholder="••••••••"
-                    value={formData.password} 
-                    onChange={handleChange} 
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    placeholder="Mínimo 8 caracteres"
+                    value={formData.password}
+                    onChange={handleChange}
                   />
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                <PasswordRequirements password={formData.password} />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium" htmlFor="confirmPassword">Confirmar Senha</label>
                 <div className="relative">
-                  <Input 
-                    id="confirmPassword" 
-                    type={showConfirmPassword ? "text" : "password"} 
-                    required 
-                    placeholder="••••••••"
-                    value={formData.confirmPassword} 
-                    onChange={handleChange} 
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    placeholder="Repita a senha"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    aria-invalid={
+                      formData.confirmPassword.length > 0 && formData.password !== formData.confirmPassword
+                    }
                   />
-                  <button 
-                    type="button" 
+                  <button
+                    type="button"
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    aria-label={showConfirmPassword ? 'Ocultar confirmação' : 'Mostrar confirmação'}
                   >
                     {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
+                {formData.confirmPassword.length > 0 && formData.password !== formData.confirmPassword ? (
+                  <p className="text-xs text-destructive" role="alert">
+                    As senhas não coincidem.
+                  </p>
+                ) : null}
               </div>
-            </div>
           </>
         );
       default:

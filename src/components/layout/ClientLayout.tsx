@@ -47,17 +47,18 @@ export function ClientLayout() {
   useEffect(() => {
     const userId = user?.id ? String(user.id) : undefined;
     if (userId) {
+      // Rotas sem {id}: a API resolve o cliente pelo JWT desde 09/09/2026.
       void queryClient.prefetchQuery({
         queryKey: queryKeys.clienteAgendamentos(userId),
         queryFn: async () => {
-          const data = await fetchApi(`/api/Agenda/Cliente/${userId}`);
+          const data = await fetchApi('/api/Agenda/Cliente');
           return normalizeApiList(data);
         },
       });
       void queryClient.prefetchQuery({
         queryKey: queryKeys.clienteHistorico(userId),
         queryFn: async () => {
-          const data = await fetchApi(`/api/Agenda/Cliente-Historico/${userId}`);
+          const data = await fetchApi('/api/Agenda/Cliente-Historico');
           return normalizeApiList(data, ['Histórico Vazio']);
         },
       });

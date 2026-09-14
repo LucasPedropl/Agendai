@@ -1,3 +1,21 @@
+import { formatApiErrorPayload } from './formatApiErrorMessage';
+import { isExpiredSessionUnauthorized } from './isExpiredSessionUnauthorized';
+import {
+  ApiError,
+  NETWORK_ERROR_MESSAGE,
+  SESSION_EXPIRED_MESSAGE,
+  describeApiErrorBody,
+} from './errors';
+
+/** Status sintético para falha de transporte (offline, DNS, CORS, servidor fora). */
+const NETWORK_ERROR_STATUS = 0;
+
+function dispatchErrorToast(message: string): void {
+  window.dispatchEvent(
+    new CustomEvent('global-toast', { detail: { type: 'error', message } }),
+  );
+}
+
 // Deixamos a API_URL vazia para que o frontend faça requisições relativas (ex: /api/Login).
 // Isso faz com que as requisições passem pelo proxy do Vite (localmente) e pelo proxy do Vercel (em produção),
 // resolvendo completamente qualquer erro de CORS ("Failed to fetch").
@@ -67,11 +85,27 @@ export async function fetchApi(endpoint: string, options: FetchApiOptions = {}):
   // Ensure endpoint starts with /
   const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
 
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    body,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      ...options,
+      body,
+      headers,
+    });
+  } catch (networkError) {
+    // `fetch` só rejeita em falha de transporte — vira TypeError("Failed to fetch"),
+    // que antes chegava cru na tela. Aqui já sai traduzido.
+    console.error(`API Network Error (${path}):`, networkError);
+    if (!options.skipToast) {
+      dispatchErrorToast(NETWORK_ERROR_MESSAGE);
+    }
+    throw new ApiError({
+      friendlyMessage: NETWORK_ERROR_MESSAGE,
+      status: NETWORK_ERROR_STATUS,
+      rawMessage: networkError instanceof Error ? networkError.message : String(networkError),
+      payload: networkError,
+    });
+  }
 
   const method = options.method?.toUpperCase() || 'GET';
   
@@ -83,8 +117,16 @@ export async function fetchApi(endpoint: string, options: FetchApiOptions = {}):
     }
 
     const isLoginRoute = /\/api\/login\//i.test(path);
+    const unauthorizedMessage =
+      response.status === 401 ? await parseApiMessage(response.clone()) : '';
+    const shouldRefreshSession =
+      response.status === 401 &&
+      Boolean(token) &&
+      !isLoginRoute &&
+      !options._retry &&
+      isExpiredSessionUnauthorized(unauthorizedMessage);
     
-    if (response.status === 401 && token && !isLoginRoute && !options._retry) {
+    if (shouldRefreshSession) {
       if (!isRefreshing) {
         isRefreshing = true;
         try {
@@ -156,26 +198,10 @@ export async function fetchApi(endpoint: string, options: FetchApiOptions = {}):
     const errorData: unknown = await response.json().catch(() => ({}));
     console.error(`API Error (${response.status}):`, errorData);
 
-    let message = `Erro na operação: ${response.status} ${response.statusText}`;
-
-    if (typeof errorData === 'string' && errorData.trim()) {
-      message = errorData.trim();
-    } else if (errorData && typeof errorData === 'object') {
-      const err = errorData as Record<string, unknown>;
-      const validationErrors = err.errors && typeof err.errors === 'object'
-        ? Object.entries(err.errors as Record<string, string[]>)
-            .map(([key, val]) => `${key}: ${val.join(', ')}`)
-            .join(' | ')
-        : '';
-
-      message =
-        (typeof err.message === 'string' && err.message) ||
-        (typeof err.error === 'string' && err.error) ||
-        (typeof err.detail === 'string' && err.detail) ||
-        (typeof err.title === 'string' && err.title) ||
-        validationErrors ||
-        message;
-    }
+    const message = formatApiErrorPayload(
+      errorData,
+      `Erro na operação: ${response.status} ${response.statusText}`,
+    );
     
     if (!skipToast) {
       window.dispatchEvent(new CustomEvent('global-toast', { 
@@ -212,4 +238,45 @@ export async function fetchApi(endpoint: string, options: FetchApiOptions = {}):
   } catch (e) {
     return text;
   }
+}
+
+/**
+ * Helpers para chamadas cruas, sem passar por `fetchApi`.
+ *
+ * `fetchApi` engole o status HTTP (só propaga a mensagem) e dispara toasts
+ * automáticos em POST/PUT/DELETE. Services que precisam distinguir 401 de 403,
+ * ou tratar como caso de negócio o que a API devolveu como erro, usam estes.
+ * O preço é não herdar o refresh-token automático — quem usa isto trata o 401.
+ */
+export function buildAuthHeaders(): HeadersInit {
+  const token = resolveAuthToken();
+  const headers: Record<string, string> = {
+    accept: '*/*',
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+/**
+ * Extrai a mensagem de uma resposta da API .NET, que ora devolve string pura
+ * (`Ok("...")` / `BadRequest("...")`), ora um envelope message/error/detail/title.
+ */
+export async function parseApiMessage(response: Response): Promise<string> {
+  const text = await response.text();
+  if (!text.trim()) return '';
+
+  try {
+    const parsed: unknown = JSON.parse(text);
+    if (typeof parsed === 'string') return parsed.trim();
+    if (parsed && typeof parsed === 'object') {
+      return formatApiErrorPayload(parsed, '');
+    }
+  } catch {
+    // corpo em texto puro
+  }
+
+  return text.trim();
 }

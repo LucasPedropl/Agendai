@@ -20,7 +20,7 @@ import {
   useRequestAcessoBixsMutation,
   useSendVerificationCodeMutation,
 } from '../hooks/useAcessoBixs';
-import type { AcessoBixsStatus } from '../schemas';
+import { VERIFICATION_CODE_TTL_SECONDS, type AcessoBixsStatus } from '../schemas';
 import { SolicitarAcessoForm, type SolicitarAcessoFormValues } from './SolicitarAcessoForm';
 import {
   ESTADO_ACESSO_LABEL,
@@ -66,13 +66,16 @@ export function AcessoBixsPanel() {
   const sendCodeMutation = useSendVerificationCodeMutation();
   const requestMutation = useRequestAcessoBixsMutation();
 
+  const emailAdmin =
+    statusQuery.data?.kind === 'loaded' ? statusQuery.data.data.emailAdmin : '';
+
   const handleSendVerificationCode = async () => {
     try {
-      const result = await sendCodeMutation.mutateAsync();
-      const minutes = Math.round(result.expiresInSeconds / 60);
+      await sendCodeMutation.mutateAsync();
+      const minutes = Math.round(VERIFICATION_CODE_TTL_SECONDS / 60);
       toast.success(
-        result.sentTo
-          ? `Enviamos um código de 6 dígitos para ${result.sentTo}. Válido por ${minutes} minutos.`
+        emailAdmin
+          ? `Enviamos um código de 6 dígitos para ${emailAdmin}. Válido por ${minutes} minutos.`
           : `Enviamos um código de 6 dígitos para o e-mail do administrador. Válido por ${minutes} minutos.`,
       );
     } catch (err) {
@@ -88,9 +91,8 @@ export function AcessoBixsPanel() {
   const handleRequestAccess = async (values: SolicitarAcessoFormValues) => {
     try {
       await requestMutation.mutateAsync(values);
-      const isReopening = statusQuery.data?.kind === 'loaded' && statusQuery.data.data.estado === 'Inativo';
       toast.success(
-        isReopening
+        values.isReactivation
           ? 'Solicitação reaberta. Aguarde aprovação do time Agendai.'
           : 'Solicitação enviada. Aguarde aprovação do time Agendai.',
       );
@@ -241,6 +243,9 @@ export function AcessoBixsPanel() {
           </div>
           <SolicitarAcessoForm
             submitLabel="Solicitar novamente"
+            isReactivation
+            initialPayment={status.payment !== 'Inativo'}
+            initialWhatsapp={status.whatsapp !== 'Inativo'}
             isSubmitting={requestMutation.isPending}
             isSendingCode={sendCodeMutation.isPending}
             onSubmit={handleRequestAccess}

@@ -1,14 +1,21 @@
 import { z } from 'zod';
 
-/** Ordem do enum C# `Estado`: Ativo = 0, Inativo = 1, Solicitado = 2. */
-export const ESTADO_ACESSO_VALUES = ['Ativo', 'Inativo', 'Solicitado'] as const;
+/**
+ * Ordem do enum C# `Estado` (api/Models/ControleAcesso.cs). O índice **é** o valor
+ * trafegado na API — mexer na ordem desta tupla inverte status na tela.
+ *
+ * Atenção: a API trocou Ativo/Inativo de lugar no commit f495c0e (09/09/2026);
+ * antes era `Ativo = 0, Inativo = 1`. O XMLDoc do ComerciosController já reflete
+ * a ordem nova (`Inativo = 0, Ativo = 1, Solicitado = 2`).
+ */
+export const ESTADO_ACESSO_VALUES = ['Inativo', 'Ativo', 'Solicitado'] as const;
 export type EstadoAcesso = (typeof ESTADO_ACESSO_VALUES)[number];
 
 export const EstadoAcessoEnum = z.enum(ESTADO_ACESSO_VALUES);
 
 export const ESTADO_ACESSO_TO_API: Record<EstadoAcesso, number> = {
-  Ativo: 0,
-  Inativo: 1,
+  Inativo: 0,
+  Ativo: 1,
   Solicitado: 2,
 };
 
@@ -78,31 +85,42 @@ export const AcessoBixsRequestInputSchema = z
     requestPayment: z.boolean(),
     requestWhatsapp: z.boolean(),
     password: z.string().min(1, 'Informe sua senha para confirmar'),
-    verificationCode: z
-      .string()
-      .trim()
-      .regex(/^\d{6}$/, 'Informe o código de 6 dígitos'),
+    /**
+     * Vazio só vale na reativação: `POST /Comercios/solicitar-acesso` reabre um
+     * controle já existente em `Inativo` e retorna antes de checar o código —
+     * a conta na Bixs já foi criada na primeira solicitação.
+     */
+    verificationCode: z.string().trim(),
+    /** Marca a reativação; vem do `estado` retornado por `/Comercios/status-acesso`. */
+    isReactivation: z.boolean(),
   })
   .refine((data) => data.requestPayment || data.requestWhatsapp, {
     message: 'Marque ao menos Pagamentos ou WhatsApp.',
     path: ['requestPayment'],
+  })
+  .refine((data) => data.isReactivation || /^\d{6}$/.test(data.verificationCode), {
+    message: 'Informe o código de 6 dígitos',
+    path: ['verificationCode'],
+  })
+  .refine((data) => !data.verificationCode || /^\d{6}$/.test(data.verificationCode), {
+    message: 'O código deve ter 6 dígitos',
+    path: ['verificationCode'],
   });
 
 export type AcessoBixsRequestInput = z.infer<typeof AcessoBixsRequestInputSchema>;
 
-export const SendVerificationCodeResultSchema = z
-  .object({
-    sent_to: z.string().optional().nullable(),
-    sentTo: z.string().optional().nullable(),
-    expires_in_seconds: z.number().optional(),
-    expiresInSeconds: z.number().optional(),
-  })
-  .transform((raw) => ({
-    sentTo: raw.sent_to ?? raw.sentTo ?? '',
-    expiresInSeconds: raw.expires_in_seconds ?? raw.expiresInSeconds ?? 900,
-  }));
+/**
+ * `GET /api/Comercios/verificationCode` responde `Ok(string)` — texto puro, sem
+ * envelope. E responde 200 mesmo quando a Bixs recusa o envio (`ExternalToken.
+ * SolicitarToken` engole a falha e devolve "Erro ao enviar email!"), então o corpo
+ * é a única forma de saber se o e-mail saiu.
+ */
+export interface SendVerificationCodeResult {
+  message: string;
+}
 
-export type SendVerificationCodeResult = z.infer<typeof SendVerificationCodeResultSchema>;
+/** Validade do código na Bixs, em segundos. A API não devolve esse dado. */
+export const VERIFICATION_CODE_TTL_SECONDS = 900;
 
 export type AcessoBixsStatusQueryResult =
   | { kind: 'never_requested' }

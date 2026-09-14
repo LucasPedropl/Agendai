@@ -1,4 +1,4 @@
-import { resolveAuthToken } from '@/lib/api';
+import { buildAuthHeaders, parseApiMessage } from '@/lib/api';
 import { ADMIN_ACCESS_DENIED_MESSAGE } from '@/lib/apiHelpers';
 import {
   AcessoBixsRequestInput,
@@ -7,14 +7,17 @@ import {
   AcessoBixsStatusSchema,
   ESTADO_ACESSO_TO_API,
   SendVerificationCodeResult,
-  SendVerificationCodeResultSchema,
 } from '../schemas';
 
 const STATUS_URL = '/api/Comercios/status-acesso';
 const SOLICITAR_URL = '/api/Comercios/solicitar-acesso';
-/** Endpoint previsto — ainda não implementado na API do AgendaAi (pendente do time backend). */
-const ENVIAR_CODIGO_URL = '/api/Comercios/enviar-codigo-acesso';
+/** GET, Admin-only. Dispara o e-mail de verificação da Bixs para o admin logado. */
+const ENVIAR_CODIGO_URL = '/api/Comercios/verificationCode';
 
+/**
+ * A API em produção pode estar atrás do commit que introduziu o endpoint.
+ * Nesse caso degradamos para o fluxo manual em vez de quebrar a tela.
+ */
 export class VerificationCodeEndpointMissingError extends Error {
   constructor() {
     super(
@@ -22,51 +25,6 @@ export class VerificationCodeEndpointMissingError extends Error {
         'Peça o código de verificação ao suporte Agendai e digite-o abaixo.',
     );
     this.name = 'VerificationCodeEndpointMissingError';
-  }
-}
-
-function buildAuthHeaders(): HeadersInit {
-  const token = resolveAuthToken();
-  const headers: Record<string, string> = {
-    accept: '*/*',
-    'Content-Type': 'application/json',
-  };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-  return headers;
-}
-
-async function parseApiMessage(response: Response): Promise<string> {
-  const text = await response.text();
-  if (!text.trim()) return '';
-
-  try {
-    const parsed: unknown = JSON.parse(text);
-    if (typeof parsed === 'string') return parsed.trim();
-    if (parsed && typeof parsed === 'object') {
-      const record = parsed as Record<string, unknown>;
-      const candidates = [record.message, record.error, record.detail, record.title];
-      for (const candidate of candidates) {
-        if (typeof candidate === 'string' && candidate.trim()) {
-          return candidate.trim();
-        }
-      }
-    }
-  } catch {
-    // corpo em texto puro
-  }
-
-  return text.trim();
-}
-
-async function parseOptionalJson(response: Response): Promise<unknown> {
-  const text = await response.text();
-  if (!text.trim()) return null;
-  try {
-    return JSON.parse(text) as unknown;
-  } catch {
-    return null;
   }
 }
 
@@ -107,47 +65,73 @@ export const acessoBixsService = {
   },
 
   async sendVerificationCode(): Promise<SendVerificationCodeResult> {
-    const response = await fetch(ENVIAR_CODIGO_URL, {
-      method: 'POST',
-      headers: buildAuthHeaders(),
-      body: JSON.stringify({}),
-    });
+    const response = await fetch(ENVIAR_CODIGO_URL, { headers: buildAuthHeaders() });
 
-    if (response.status === 404 || response.status === 405) {
+    if (response.status === 405) {
       throw new VerificationCodeEndpointMissingError();
     }
 
+    const message = await parseApiMessage(response);
+
+    if (response.status === 404) {
+      // 404 do endpoint (API antiga) x 404 de regra ("Nenhuma empresa vinculada...").
+      if (/nenhuma empresa vinculada/i.test(message)) {
+        throw new Error(
+          'Sua conta não está vinculada como administrador de nenhum estabelecimento.',
+        );
+      }
+      throw new VerificationCodeEndpointMissingError();
+    }
+
+    if (response.status === 401) {
+      throw new Error('Sua sessão expirou. Faça login novamente.');
+    }
+
+    if (response.status === 403) {
+      throw new Error(ADMIN_ACCESS_DENIED_MESSAGE);
+    }
+
     if (!response.ok) {
+      throw new Error(message || 'Não foi possível enviar o código de verificação.');
+    }
+
+    // A API devolve 200 mesmo quando a Bixs recusa o envio — o corpo é a única pista.
+    if (/erro ao enviar email/i.test(message)) {
       throw new Error(
-        (await parseApiMessage(response)) || 'Não foi possível enviar o código de verificação.',
+        'A Bixs recusou o envio do código. Tente novamente em alguns minutos; ' +
+          'se persistir, é falha de integração no backend.',
       );
     }
 
-    const raw = await parseOptionalJson(response);
-    const parsed = SendVerificationCodeResultSchema.safeParse(raw);
-    return parsed.success ? parsed.data : { sentTo: '', expiresInSeconds: 900 };
+    return { message };
   },
 
   async requestAccess(input: AcessoBixsRequestInput): Promise<void> {
     const validated = AcessoBixsRequestInputSchema.parse(input);
 
+    // `Solicitado` (e não `Ativo`) porque este valor é o que o painel Master exibe
+    // enquanto a solicitação está pendente — `Ativo` faria um módulo ainda não
+    // provisionado aparecer como já liberado. Mesma escolha do PagWeb em produção.
+    const payload: Record<string, unknown> = {
+      payment: validated.requestPayment
+        ? ESTADO_ACESSO_TO_API.Solicitado
+        : ESTADO_ACESSO_TO_API.Inativo,
+      whatsapp: validated.requestWhatsapp
+        ? ESTADO_ACESSO_TO_API.Solicitado
+        : ESTADO_ACESSO_TO_API.Inativo,
+      password: validated.password,
+    };
+
+    // `verificationCode` virou opcional (nullable) no ControleViewPost; só é exigido
+    // quando a API cria um controle novo. Na reativação o campo vai ausente.
+    if (validated.verificationCode) {
+      payload.verificationCode = validated.verificationCode;
+    }
+
     const response = await fetch(SOLICITAR_URL, {
       method: 'POST',
       headers: buildAuthHeaders(),
-      // `Solicitado` (e não `Ativo`) porque este valor é o que o painel Master exibe
-      // enquanto a solicitação está pendente — `Ativo` faria um módulo ainda não
-      // provisionado aparecer como já liberado. Mesma escolha do PagWeb em produção.
-      body: JSON.stringify({
-        payment: validated.requestPayment
-          ? ESTADO_ACESSO_TO_API.Solicitado
-          : ESTADO_ACESSO_TO_API.Inativo,
-        whatsapp: validated.requestWhatsapp
-          ? ESTADO_ACESSO_TO_API.Solicitado
-          : ESTADO_ACESSO_TO_API.Inativo,
-        idEmpresa: 0,
-        password: validated.password,
-        verificationCode: validated.verificationCode.trim(),
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {

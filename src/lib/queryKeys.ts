@@ -8,7 +8,8 @@ export const queryKeys = {
   servicos: (comercioId: number) => ['servicos', comercioId] as const,
   categorias: (comercioId: number) => ['categorias', comercioId] as const,
   clienteAgendamentos: (userId: string) => ['cliente', 'agendamentos', userId] as const,
-  clienteHistorico: (userId: string) => ['cliente', 'historico', userId] as const,
+  /** `date` = filtro opcional (ISO) de `GET /api/Agenda/Cliente-Historico`; '' = sem filtro. */
+  clienteHistorico: (userId: string, date = '') => ['cliente', 'historico', userId, date] as const,
   clienteAvaliacoes: (userId: string) => ['cliente', 'avaliacoes', userId] as const,
   clientePagamentos: (userId: string) => ['cliente', 'pagamentos', userId] as const,
   clientePerfil: (userId: string) => ['cliente', 'perfil', userId] as const,
@@ -17,4 +18,6 @@ export const queryKeys = {
   pagamentosEmpresa: (comercioId: number) => ['pagamentos', 'empresa', comercioId] as const,
   whatsappStatus: (comercioId: number) => ['whatsapp', 'status', comercioId] as const,
   acessoBixsStatus: ['acesso-bixs', 'status'] as const,
+  /** `GET /api/ChavesPix` é escopado pelo usuário do JWT — sem id na chave. */
+  chavesPix: ['chaves-pix'] as const,
 };

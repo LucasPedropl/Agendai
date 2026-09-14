@@ -3,7 +3,8 @@
 ## Dev server
 - Porta padrão: **5174** (`npm run dev`) — 3000/5173 costumam estar ocupadas
 - Usar `fetchApi` em `src/lib/api.ts` — nunca fetch solto
-- 401 em rota autenticada → logout automático (evento `agendaai:session-expired`)
+- 401 de JWT/sessão → logout automático (evento `agendaai:session-expired`)
+- 401/403 de autorização de negócio (ex. "não tem permissão") **não** é sessão expirada — `fetchApi` mostra o erro e mantém o login. A API AgendaAi mistura os dois no 401.
 - `notFoundAsEmpty: true` em GETs de listas que retornam 404 vazio
 - `normalizeApiList` para strings "Agenda Vazia", "Histórico Vazio"
 

@@ -15,14 +15,12 @@ import { Search, Mail, Phone, Calendar, Plus, Users, UserX } from 'lucide-react'
 import { Cliente } from '@/types';
 import { fetchApi } from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useComercioId } from '@/hooks/useComercioId';
 import { useComercioUsuarios, useDesativarComercioUsuario } from '@/hooks/useAdminQueries';
 
 export default function AdminClientesPage() {
   const queryClient = useQueryClient();
-  const { token } = useAuth();
   const { showToast } = useToast();
   const { comercioId, isLoading: isLoadingComercio } = useComercioId();
   const { data: clientes = [], isPending: isLoading } = useComercioUsuarios<Cliente>(comercioId, 'Clientes');
@@ -62,8 +60,7 @@ export default function AdminClientesPage() {
       if (!comercioId) return;
       await fetchApi('/api/ComercioUsuarios/Cadastrar-Funcionario-Cliente', {
         method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ idComercio: comercioId, nome, email, permissao: 0 }),
+        body: { idComercio: comercioId, nome, email, permissao: 0 },
         skipToast: true,
       });
       setIsModalOpen(false);

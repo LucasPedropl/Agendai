@@ -8,6 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useEstablishmentConfig, ComercioConfg, ComercioConfiguracao } from '@/hooks/useEstablishmentConfig';
 import { useToast } from '@/contexts/ToastContext';
+import { ChavesPixPanel } from '@/features/chaves-pix/components/ChavesPixPanel';
 
 export default function AdminEstablishmentConfigPage() {
   const [activeTab, setActiveTab] = useState('horarios');
@@ -131,6 +132,16 @@ export default function AdminEstablishmentConfigPage() {
           }`}
         >
           Informações Básicas
+        </button>
+        <button
+          onClick={() => setActiveTab('chaves-pix')}
+          className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
+            activeTab === 'chaves-pix'
+              ? 'bg-white text-slate-900 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          Chaves PIX
         </button>
       </div>
 
@@ -1189,6 +1200,12 @@ export default function AdminEstablishmentConfigPage() {
               </Button>
             </div>
           </div>
+        </div>
+      )}
+
+      {activeTab === 'chaves-pix' && (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <ChavesPixPanel />
         </div>
       )}
     </div>

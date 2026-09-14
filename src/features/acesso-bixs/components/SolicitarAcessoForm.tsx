@@ -12,12 +12,18 @@ export interface SolicitarAcessoFormValues {
   requestWhatsapp: boolean;
   password: string;
   verificationCode: string;
+  isReactivation: boolean;
 }
 
 interface SolicitarAcessoFormProps {
   submitLabel: string;
   initialPayment?: boolean;
   initialWhatsapp?: boolean;
+  /**
+   * Reabertura de um controle já existente (`estado === 'Inativo'`). A API pula a
+   * validação do código nesse caminho, então o bloco de verificação some do form.
+   */
+  isReactivation?: boolean;
   isSubmitting: boolean;
   isSendingCode: boolean;
   onSubmit: (values: SolicitarAcessoFormValues) => Promise<void>;
@@ -28,6 +34,7 @@ export function SolicitarAcessoForm({
   submitLabel,
   initialPayment = true,
   initialWhatsapp = false,
+  isReactivation = false,
   isSubmitting,
   isSendingCode,
   onSubmit,
@@ -82,7 +89,8 @@ export function SolicitarAcessoForm({
       requestPayment,
       requestWhatsapp,
       password,
-      verificationCode,
+      verificationCode: isReactivation ? '' : verificationCode,
+      isReactivation,
     });
 
     if (!parsed.success) {
@@ -101,7 +109,8 @@ export function SolicitarAcessoForm({
       requestPayment,
       requestWhatsapp,
       password,
-      verificationCode,
+      verificationCode: isReactivation ? '' : verificationCode,
+      isReactivation,
     });
     setPassword('');
     setVerificationCode('');
@@ -168,6 +177,12 @@ export function SolicitarAcessoForm({
         ) : null}
       </div>
 
+      {isReactivation ? (
+        <p className="rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+          Sua conta na Bixs já existe — a reabertura não precisa de um novo código de
+          verificação.
+        </p>
+      ) : (
       <div className="space-y-2">
         <label htmlFor={verificationCodeId} className="text-sm font-medium text-foreground">
           Código de verificação (6 dígitos)
@@ -220,6 +235,7 @@ export function SolicitarAcessoForm({
           </div>
         ) : null}
       </div>
+      )}
 
       <Button type="submit" className="min-h-11" disabled={isSubmitting}>
         {isSubmitting ? (
