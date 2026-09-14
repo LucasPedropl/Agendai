@@ -18,6 +18,7 @@ import { queryKeys } from '@/lib/queryKeys';
 import { useToast } from '@/contexts/ToastContext';
 import { useComercioId } from '@/hooks/useComercioId';
 import { useComercioUsuarios, useDesativarComercioUsuario } from '@/hooks/useAdminQueries';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 
 export default function AdminClientesPage() {
   const queryClient = useQueryClient();
@@ -47,7 +48,7 @@ export default function AdminClientesPage() {
       showToast('Cliente desativado.', 'success');
       setConfirmId(null);
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Erro ao desativar.', 'error');
+      showToast(getFriendlyErrorMessage(err, 'Não foi possível desativar o cliente.'), 'error');
     } finally {
       setIsDeactivating(false);
     }
@@ -69,7 +70,7 @@ export default function AdminClientesPage() {
       showToast('Convite enviado com sucesso!', 'success');
       refreshClientes();
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Erro ao convidar cliente.', 'error');
+      showToast(getFriendlyErrorMessage(err, 'Não foi possível enviar o convite ao cliente.'), 'error');
     } finally {
       setIsSubmitting(false);
     }

@@ -8,6 +8,8 @@
  * parar na tela. Tudo passa por `getFriendlyErrorMessage` antes de ser exibido.
  */
 
+import { formatApiErrorPayload } from './formatApiErrorMessage';
+
 export const GENERIC_ERROR_MESSAGE =
   'Não foi possível concluir a operação. Tente novamente em alguns instantes.';
 
@@ -21,18 +23,22 @@ export class ApiError extends Error {
   readonly status: number;
   readonly rawMessage: string;
   readonly payload: unknown;
+  /** `true` quando a API não devolveu nada aproveitável e a mensagem veio do status. */
+  readonly isGenericMessage: boolean;
 
   constructor(params: {
     friendlyMessage: string;
     status: number;
     rawMessage?: string;
     payload?: unknown;
+    isGenericMessage?: boolean;
   }) {
     super(params.friendlyMessage);
     this.name = 'ApiError';
     this.status = params.status;
     this.rawMessage = params.rawMessage ?? params.friendlyMessage;
     this.payload = params.payload;
+    this.isGenericMessage = params.isGenericMessage ?? false;
   }
 }
 
@@ -137,9 +143,17 @@ function extractRawMessage(error: unknown): string {
 }
 
 /**
+ * Status cuja mensagem padrão já explica a causa melhor do que a tela explicaria.
+ * 401 fica de fora de propósito: na tela de login, "sua sessão expirou" é errado —
+ * o fallback da tela ("e-mail ou senha incorretos") é o certo.
+ */
+const SELF_EXPLANATORY_STATUSES = new Set([403, 404, 409, 413, 429]);
+
+/**
  * Ponto único de leitura de erro pela UI.
  *
- * @param fallback mensagem da tela, usada quando o erro é técnico ou vazio.
+ * @param fallback mensagem da tela, usada quando o erro é técnico, vazio, ou quando
+ *   a API não devolveu nada aproveitável (a tela sabe descrever a operação).
  */
 export function getFriendlyErrorMessage(
   error: unknown,
@@ -149,7 +163,9 @@ export function getFriendlyErrorMessage(
 
   // ApiError já nasceu traduzido em `fetchApi`.
   if (isApiError(error)) {
-    return error.message.trim() || fallback;
+    if (!error.isGenericMessage) return error.message.trim() || fallback;
+    if (SELF_EXPLANATORY_STATUSES.has(error.status)) return error.message;
+    return fallback;
   }
 
   const raw = extractRawMessage(error);
@@ -178,6 +194,11 @@ function toMessageList(value: unknown): string[] {
 
 const MAX_VALIDATION_PARTS = 3;
 
+/** "E-mail já cadastrado." se basta; "é obrigatório" precisa do nome do campo. */
+function isStandaloneSentence(text: string): boolean {
+  return /^[A-ZÀ-Þ]/.test(text) && text.trim().split(/\s+/).length >= 3;
+}
+
 function extractValidationMessage(body: unknown): string {
   if (!body || typeof body !== 'object') return '';
   const errors = (body as { errors?: unknown }).errors;
@@ -187,23 +208,22 @@ function extractValidationMessage(body: unknown): string {
   for (const [field, value] of Object.entries(errors as Record<string, unknown>)) {
     for (const text of toMessageList(value)) {
       if (!text || isTechnicalErrorMessage(text)) continue;
-      const label = humanizeFieldName(field);
-      parts.push(label ? `${label}: ${text}` : text);
-      if (parts.length >= MAX_VALIDATION_PARTS) return parts.join(' ');
+      const label = isStandaloneSentence(text) ? '' : humanizeFieldName(field);
+      const part = label ? `${label}: ${text}` : text;
+      // Sem pontuação, duas mensagens seguidas viram uma frase só.
+      parts.push(/[.!?]$/.test(part) ? part : `${part}.`);
+      if (parts.length >= MAX_VALIDATION_PARTS) break;
     }
+    if (parts.length >= MAX_VALIDATION_PARTS) break;
   }
   return parts.join(' ');
 }
 
-function extractBodyMessage(body: unknown): string {
-  if (typeof body === 'string') return body.trim();
-  if (!body || typeof body !== 'object') return '';
-  const record = body as Record<string, unknown>;
-  for (const key of ['message', 'error', 'detail', 'title'] as const) {
-    const candidate = record[key];
-    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
-  }
-  return '';
+/** ModelState (`errors` como objeto campo→mensagens). O Identity manda array. */
+function hasModelStateErrors(body: unknown): boolean {
+  if (!body || typeof body !== 'object') return false;
+  const errors = (body as { errors?: unknown }).errors;
+  return Boolean(errors) && typeof errors === 'object' && !Array.isArray(errors);
 }
 
 export interface ApiErrorDescription {
@@ -211,19 +231,38 @@ export interface ApiErrorDescription {
   friendlyMessage: string;
   /** O que a API respondeu de fato — só para `console.error` e matching interno. */
   rawMessage: string;
+  /** `true` quando nada do corpo era aproveitável e a mensagem veio do status. */
+  isGenericMessage: boolean;
 }
 
-/** Traduz o corpo de uma resposta de erro da API em mensagem exibível. */
+/**
+ * Traduz o corpo de uma resposta de erro da API em mensagem exibível.
+ *
+ * Duas fontes, com a ordem invertida conforme o formato do corpo:
+ * - `extractValidationMessage` filtra campo a campo e omite o nome do campo quando
+ *   a mensagem já é uma frase — melhor para ModelState.
+ * - `formatApiErrorPayload` achata envelope + `errors` e traz mapeamentos PT-BR
+ *   próprios (ex.: `InvalidToken` do Identity) — melhor para o resto.
+ *
+ * Se as duas saírem técnicas, cai na mensagem genérica derivada do status.
+ */
 export function describeApiErrorBody(body: unknown, status: number): ApiErrorDescription {
-  const bodyMessage = extractBodyMessage(body);
-  const validationMessage = extractValidationMessage(body);
-  const rawMessage = bodyMessage || validationMessage || `HTTP ${status}`;
+  const flattened = formatApiErrorPayload(body, '');
+  const rawMessage = flattened || `HTTP ${status}`;
 
-  for (const candidate of [bodyMessage, validationMessage]) {
+  const candidates = hasModelStateErrors(body)
+    ? [extractValidationMessage(body), flattened]
+    : [flattened, extractValidationMessage(body)];
+
+  for (const candidate of candidates) {
     if (candidate && !isTechnicalErrorMessage(candidate)) {
-      return { friendlyMessage: candidate, rawMessage };
+      return { friendlyMessage: candidate, rawMessage, isGenericMessage: false };
     }
   }
 
-  return { friendlyMessage: getHttpStatusMessage(status), rawMessage };
+  return {
+    friendlyMessage: getHttpStatusMessage(status),
+    rawMessage,
+    isGenericMessage: true,
+  };
 }

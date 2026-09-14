@@ -28,6 +28,7 @@ import {
   formatSolicitadoDate,
 } from '../utils/moduleLabels';
 import { VerificationCodeEndpointMissingError } from '../services/acessoBixsService';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 
 function ModuleStatusRow({
   icon: Icon,
@@ -83,7 +84,7 @@ export function AcessoBixsPanel() {
         toast.warning(err.message);
         throw err;
       }
-      toast.error(err instanceof Error ? err.message : 'Erro ao enviar código de verificação.');
+      toast.error(getFriendlyErrorMessage(err, 'Não foi possível enviar o código de verificação.'));
       throw err;
     }
   };
@@ -98,7 +99,7 @@ export function AcessoBixsPanel() {
       );
       setIsFormModalOpen(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao solicitar acesso.');
+      toast.error(getFriendlyErrorMessage(err, 'Não foi possível enviar a solicitação de acesso.'));
       throw err;
     }
   };

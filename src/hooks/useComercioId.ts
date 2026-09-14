@@ -4,6 +4,7 @@ import { fetchApi } from '@/lib/api';
 import { fetchAdminComercios } from '@/lib/apiHelpers';
 import { queryKeys } from '@/lib/queryKeys';
 import { useAuth } from '@/contexts/AuthContext';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 
 /**
  * Resolve o ID do comércio vinculado ao usuário admin/profissional.
@@ -35,7 +36,9 @@ export function useComercioId() {
     comercioId: list[0]?.id ?? null,
     isLoading: fallback.isPending,
     isFetching: fallback.isFetching,
-    error: fallback.error instanceof Error ? fallback.error.message : null,
+    error: fallback.error
+      ? getFriendlyErrorMessage(fallback.error, 'Não foi possível carregar seu estabelecimento.')
+      : null,
     reload: () => void fallback.refetch(),
   };
 }

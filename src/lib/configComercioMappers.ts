@@ -1,4 +1,5 @@
 import { toApiTimeSpan } from '@/lib/apiHelpers';
+import { hasApiStatus } from '@/lib/errors';
 
 export interface HorarioAtendimento {
   dias: number[];
@@ -321,8 +322,8 @@ export async function saveConfigWithIdDiscovery(
       return attemptConfig;
     } catch (err) {
       lastError = err;
-      const message = err instanceof Error ? err.message : '';
-      if (message.includes('404')) continue;
+      // 404 = este par de IDs não existe no servidor; tenta o próximo candidato.
+      if (hasApiStatus(err, 404)) continue;
       throw err;
     }
   }

@@ -19,6 +19,7 @@ import { PageLoader } from '@/components/ui/page-loader';
 import { EmptyState } from '@/components/ui/empty-state';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 
 interface CategoriaItem {
   id: number;
@@ -163,7 +164,7 @@ export default function AdminServicosPage() {
       refreshServicos();
     } catch (err: unknown) {
       console.error("Full Submit Error:", err);
-      const message = err instanceof Error ? err.message : 'Erro ao salvar serviço.';
+      const message = getFriendlyErrorMessage(err, 'Não foi possível salvar o serviço.');
       showToast(message, 'error');
     } finally {
       setIsSubmitting(false);
@@ -234,7 +235,7 @@ export default function AdminServicosPage() {
       refreshCategorias();
     } catch (err: unknown) {
       console.error("Save Category Error:", err);
-      const message = err instanceof Error ? err.message : 'Erro ao salvar categoria.';
+      const message = getFriendlyErrorMessage(err, 'Não foi possível salvar a categoria.');
       showToast(message, 'error');
     } finally {
       setIsSubmitting(false);

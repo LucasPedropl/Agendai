@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { fetchApi } from '@/lib/api';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { User } from '@/types';
@@ -65,9 +66,11 @@ export default function AtivarContaPage() {
       } catch (err: unknown) {
         console.error('Erro ao ativar conta:', err);
         setStatus('error');
-        const message = err instanceof Error ? err.message : '';
         setErrorMessage(
-          message || 'Ocorreu um erro ao tentar ativar sua conta. O link pode ter expirado.',
+          getFriendlyErrorMessage(
+            err,
+            'Não foi possível ativar sua conta. O link pode ter expirado ou já ter sido usado.',
+          ),
         );
       }
     };

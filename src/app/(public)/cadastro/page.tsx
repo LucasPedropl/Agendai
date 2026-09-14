@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { User } from '@/types';
 import { GoogleLogin } from '@react-oauth/google';
 import FacebookLogin from '@greatsumini/react-facebook-login';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 
 export default function CadastroPage() {
   const { type, '*': splat } = useParams<{ type: string, '*': string }>();
@@ -210,9 +211,14 @@ export default function CadastroPage() {
       login(mockUser, token, type as any);
 
       navigate(type === 'cliente' ? '/app' : '/estabelecimento/dashboard');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || `Erro ao entrar com ${provider === 'google' ? 'Google' : 'Facebook'}.`);
+      setError(
+        getFriendlyErrorMessage(
+          err,
+          `Não foi possível entrar com ${provider === 'google' ? 'Google' : 'Facebook'}. Tente novamente.`,
+        ),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -265,7 +271,7 @@ export default function CadastroPage() {
       setIsSuccess(true);
     } catch (err: unknown) {
       console.error(err);
-      const message = err instanceof Error ? err.message : 'Erro ao realizar cadastro. Verifique os dados e tente novamente.';
+      const message = getFriendlyErrorMessage(err, 'Não foi possível concluir o cadastro. Verifique os dados e tente novamente.');
       setError(message);
     } finally {
       setIsLoading(false);

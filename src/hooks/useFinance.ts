@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { fetchApi } from '@/lib/api';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 
 export interface Pagamento {
   id: number;
@@ -21,8 +22,8 @@ export function useFinance() {
     try {
       const data = await fetchApi('/api/Pagamentos/Pagamentos-Cliente');
       return Array.isArray(data) ? data : [];
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(getFriendlyErrorMessage(err, 'Não foi possível carregar seus pagamentos.'));
       return [];
     } finally {
       setIsLoading(false);
@@ -37,7 +38,7 @@ export function useFinance() {
       } as RequestInit);
       return Array.isArray(data) ? data : [];
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar pagamentos');
+      setError(getFriendlyErrorMessage(err, 'Não foi possível carregar os pagamentos do estabelecimento.'));
       return [];
     } finally {
       setIsLoading(false);

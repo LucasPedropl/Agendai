@@ -3,6 +3,7 @@ import { ADMIN_ACCESS_DENIED_MESSAGE } from '@/lib/apiHelpers';
 import { queryKeys } from '@/lib/queryKeys';
 import type { AcessoBixsRequestInput, AcessoBixsStatusQueryResult } from '../schemas';
 import { acessoBixsService } from '../services/acessoBixsService';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 
 /**
  * Limite conhecida: enquanto LoginController.cs não corrigir a role Admin no JWT,
@@ -34,8 +35,7 @@ export function useRequestAcessoBixsMutation() {
 }
 
 export function getAcessoBixsErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  return 'Erro ao carregar integrações Bixs.';
+  return getFriendlyErrorMessage(error, 'Não foi possível carregar o status da integração Bixs.');
 }
 
 export function getForbiddenMessage(): string {

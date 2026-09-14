@@ -167,12 +167,25 @@ export async function fetchApi(endpoint: string, options: FetchApiOptions = {}):
               return fetchApi(endpoint, retryOptions);
             }
           }
-          throw new Error('Refresh token failed');
+          throw new ApiError({
+            friendlyMessage: SESSION_EXPIRED_MESSAGE,
+            status: 401,
+            rawMessage: 'Refresh token failed',
+          });
         } catch (error) {
           isRefreshing = false;
           onRefreshed(null);
           window.dispatchEvent(new CustomEvent('agendaai:session-expired'));
-          throw error;
+          // A causa técnica da falha de refresh (rede, parse, 500) não interessa
+          // ao usuário e não pode vazar: o que ele precisa saber é que expirou.
+          if (error instanceof ApiError) throw error;
+          console.error('Falha ao renovar a sessão:', error);
+          throw new ApiError({
+            friendlyMessage: SESSION_EXPIRED_MESSAGE,
+            status: 401,
+            rawMessage: error instanceof Error ? error.message : String(error),
+            payload: error,
+          });
         }
       } else {
         // Wait for the ongoing refresh
@@ -190,26 +203,34 @@ export async function fetchApi(endpoint: string, options: FetchApiOptions = {}):
           return fetchApi(endpoint, retryOptions);
         } else {
           window.dispatchEvent(new CustomEvent('agendaai:session-expired'));
-          throw new Error('Sessão expirada');
+          throw new ApiError({
+            friendlyMessage: SESSION_EXPIRED_MESSAGE,
+            status: 401,
+            rawMessage: 'Refresh token failed (aguardando refresh em andamento)',
+          });
         }
       }
     }
 
-    const errorData: unknown = await response.json().catch(() => ({}));
-    console.error(`API Error (${response.status}):`, errorData);
+    const errorData: unknown = await response.json().catch(() => null);
+    console.error(`API Error (${response.status}) em ${path}:`, errorData);
 
-    const message = formatApiErrorPayload(
+    const { friendlyMessage, rawMessage, isGenericMessage } = describeApiErrorBody(
       errorData,
-      `Erro na operação: ${response.status} ${response.statusText}`,
+      response.status,
     );
-    
+
     if (!skipToast) {
-      window.dispatchEvent(new CustomEvent('global-toast', { 
-        detail: { type: 'error', message } 
-      }));
+      dispatchErrorToast(friendlyMessage);
     }
-    
-    throw new Error(message);
+
+    throw new ApiError({
+      friendlyMessage,
+      status: response.status,
+      rawMessage,
+      payload: errorData,
+      isGenericMessage,
+    });
   }
 
   // Handle successful CRUD (POST, PUT, DELETE)

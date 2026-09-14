@@ -16,6 +16,7 @@ import { fetchApi } from '@/lib/api';
 import { normalizeApiList } from '@/lib/apiHelpers';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 
 interface SavedCard {
   id: number;
@@ -63,7 +64,7 @@ export default function ClientPagamentosPage() {
       await fetchApi(`/api/Cartoes/${id}`, { method: 'DELETE' });
       setCards((prev) => prev.filter((c) => c.id !== id));
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao remover cartão');
+      toast.error(getFriendlyErrorMessage(err, 'Não foi possível remover o cartão.'));
     }
   };
 
@@ -102,7 +103,7 @@ export default function ClientPagamentosPage() {
       setCpf('');
       await loadCards();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao cadastrar cartão');
+      toast.error(getFriendlyErrorMessage(err, 'Não foi possível cadastrar o cartão.'));
     } finally {
       setIsSubmitting(false);
     }

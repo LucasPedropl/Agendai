@@ -25,6 +25,7 @@ import { useComercioId } from '@/hooks/useComercioId';
 import { useToast } from '@/contexts/ToastContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 
 export default function AdminWhatsAppPage() {
   const { token } = useAuth();
@@ -80,11 +81,11 @@ export default function AdminWhatsAppPage() {
     } catch (err: unknown) {
       console.error('Erro ao obter QR Code:', err);
       setStatus('ERROR');
-      const message = err instanceof Error ? err.message : 'Falha na comunicação com o servidor.';
       toast.error(
-        message.includes('QR') || message.includes('Falha')
-          ? 'Integração WhatsApp indisponível. A geração de QR Code depende de correção no backend.'
-          : message
+        getFriendlyErrorMessage(
+          err,
+          'Integração WhatsApp indisponível no momento. Tente novamente mais tarde.',
+        ),
       );
     } finally {
       setIsActionLoading(false);

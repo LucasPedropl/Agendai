@@ -18,6 +18,7 @@ import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import FacebookLogin from '@greatsumini/react-facebook-login';
 import { useToast } from '@/contexts/ToastContext';
+import { getFriendlyErrorMessage, hasApiStatus } from '@/lib/errors';
 
 const typeLabels: Record<string, string> = {
   cliente: 'Cliente',
@@ -113,10 +114,16 @@ export default function LoginPage() {
         body: JSON.stringify(tokenPayload),
       });
       const token = response.token || response.Token || response.accessToken || (typeof response === 'string' ? response : '');
-      if (!token) throw new Error('Token não retornado pela API');
+      if (!token) {
+        console.error('Login social sem token no corpo da resposta:', response);
+        throw new Error('Não foi possível concluir o login. Tente novamente em alguns instantes.');
+      }
       handleAuthSuccess(token, response);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : `Erro ao entrar com ${provider === 'google' ? 'Google' : 'Facebook'}.`;
+      const errorMessage = getFriendlyErrorMessage(
+        err,
+        `Não foi possível entrar com ${provider === 'google' ? 'Google' : 'Facebook'}. Tente novamente.`,
+      );
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -135,11 +142,20 @@ export default function LoginPage() {
         skipToast: true,
       } as RequestInit);
       const token = response.token || response.Token || response.accessToken || (typeof response === 'string' ? response : '');
-      if (!token) throw new Error('Token não retornado pela API');
+      if (!token) {
+        console.error('Login sem token no corpo da resposta:', response);
+        throw new Error('Não foi possível concluir o login. Tente novamente em alguns instantes.');
+      }
       handleAuthSuccess(token, response);
     } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'E-mail ou senha incorretos. Verifique seus dados e tente novamente.';
+      // 400/401 aqui é recusa de credencial, não sessão expirada — a API nem sempre
+      // manda corpo, então a tela precisa dar o texto certo.
+      const errorMessage = getFriendlyErrorMessage(
+        err,
+        hasApiStatus(err, 400, 401)
+          ? 'E-mail ou senha incorretos. Verifique seus dados e tente novamente.'
+          : 'Não foi possível entrar. Tente novamente em alguns instantes.',
+      );
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {

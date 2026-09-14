@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { fetchApi } from '@/lib/api';
 import { normalizeApiList } from '@/lib/apiHelpers';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 
 const IS_DEMO_MODE = false; // TODO: Remover depois
 
@@ -36,8 +37,8 @@ export function useClientDashboard() {
       setIsLoading(true);
       const data = await fetchApi('/api/Agenda/Cliente');
       return normalizeApiList(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(getFriendlyErrorMessage(err, 'Não foi possível carregar seus agendamentos.'));
       return [];
     } finally {
       setIsLoading(false);
@@ -70,8 +71,8 @@ export function useClientDashboard() {
       setIsLoading(true);
       const data = await fetchApi('/api/Agenda/Cliente-Historico');
       return normalizeApiList(data, ['Histórico Vazio']);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(getFriendlyErrorMessage(err, 'Não foi possível carregar seu histórico.'));
       return [];
     } finally {
       setIsLoading(false);
@@ -108,8 +109,8 @@ export function useClientDashboard() {
       setIsLoading(true);
       const data = await fetchApi(`/api/Avaliacoes/Usuario/${userId}`);
       return normalizeApiList(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(getFriendlyErrorMessage(err, 'Não foi possível carregar suas avaliações.'));
       return [];
     } finally {
       setIsLoading(false);

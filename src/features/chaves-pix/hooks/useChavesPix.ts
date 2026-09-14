@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
 import type { ChavePixFormInput, ChavePixUpdateInput, ChavesPixQueryResult } from '../schemas';
 import { chavesPixService } from '../services/chavesPixService';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 
 export function useChavesPix() {
   return useQuery<ChavesPixQueryResult, Error>({
@@ -49,6 +50,5 @@ export function useDeactivateChavePixMutation() {
 }
 
 export function getChavesPixErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  return 'Erro ao carregar chaves PIX.';
+  return getFriendlyErrorMessage(error, 'Não foi possível carregar as chaves PIX.');
 }

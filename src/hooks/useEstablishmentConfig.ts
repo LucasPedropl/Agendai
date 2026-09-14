@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { fetchApi } from '@/lib/api';
 import { fetchAdminComercios } from '@/lib/apiHelpers';
+import { getFriendlyErrorMessage, hasApiStatus } from '@/lib/errors';
 import {
   buildConfigComercioPayload,
   createDefaultConfig,
@@ -97,8 +98,8 @@ export function useEstablishmentConfig() {
         return;
       }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : '';
-      if (!message.includes('404')) {
+      // 404 aqui é "ainda não existe config" — caso normal, não é erro.
+      if (!hasApiStatus(err, 404)) {
         console.error('Erro ao buscar configurações específicas:', err);
       }
     }
@@ -129,7 +130,7 @@ export function useEstablishmentConfig() {
       setBasicInfo(mapBasicInfo(basicDataRaw as Record<string, unknown>));
       await loadConfigForComercio(actualComercioId);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar configurações');
+      setError(getFriendlyErrorMessage(err, 'Não foi possível carregar as configurações do estabelecimento.'));
     } finally {
       setIsLoading(false);
     }
@@ -157,8 +158,8 @@ export function useEstablishmentConfig() {
           skipToast: true,
         });
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : '';
-        if (!message.includes('400')) throw err;
+        // 400 no POST significa que a config já existia — segue para o fluxo de edição.
+        if (!hasApiStatus(err, 400)) throw err;
       }
       setHasServerConfig(true);
     } else {

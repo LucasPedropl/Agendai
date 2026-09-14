@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { fetchApi } from '@/lib/api';
 import { IS_CONFIG_USUARIO_PUT_BLOCKED } from '@/lib/apiHelpers';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 
 export function useClientProfile() {
   const [isLoading, setIsLoading] = useState(false);
@@ -16,7 +17,7 @@ export function useClientProfile() {
       const data = await fetchApi(`/api/Usuario/${userId}`);
       return data;
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Erro ao obter perfil';
+      const message = getFriendlyErrorMessage(err, 'Não foi possível carregar seu perfil.');
       setError(message);
       return null;
     } finally {
@@ -46,7 +47,7 @@ export function useClientProfile() {
       });
       return true;
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Erro ao atualizar perfil';
+      const message = getFriendlyErrorMessage(err, 'Não foi possível salvar seu perfil.');
       setError(message);
       return false;
     } finally {
@@ -94,7 +95,7 @@ export function useClientProfile() {
       });
       return true;
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Erro ao atualizar preferências';
+      const message = getFriendlyErrorMessage(err, 'Não foi possível salvar suas preferências.');
       setError(message);
       return false;
     } finally {

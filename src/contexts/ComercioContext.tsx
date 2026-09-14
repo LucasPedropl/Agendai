@@ -4,6 +4,7 @@ import { fetchApi } from '@/lib/api';
 import { fetchAdminComercios, type ComercioSummary } from '@/lib/apiHelpers';
 import { queryKeys } from '@/lib/queryKeys';
 import { useAuth } from '@/contexts/AuthContext';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 
 interface ComercioContextValue {
   comercios: ComercioSummary[];
@@ -37,7 +38,7 @@ export function ComercioProvider({ children }: { children: React.ReactNode }) {
       comercioId,
       isLoading: query.isPending,
       isFetching: query.isFetching,
-      error: query.error instanceof Error ? query.error.message : null,
+      error: query.error ? getFriendlyErrorMessage(query.error, 'Não foi possível carregar seu estabelecimento.') : null,
       hasCommerce,
       reload: () => void query.refetch(),
     }),

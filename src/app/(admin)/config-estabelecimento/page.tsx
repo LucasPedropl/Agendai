@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useEstablishmentConfig, ComercioConfg, ComercioConfiguracao } from '@/hooks/useEstablishmentConfig';
 import { useToast } from '@/contexts/ToastContext';
 import { ChavesPixPanel } from '@/features/chaves-pix/components/ChavesPixPanel';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 
 export default function AdminEstablishmentConfigPage() {
   const [activeTab, setActiveTab] = useState('horarios');
@@ -33,8 +34,9 @@ export default function AdminEstablishmentConfigPage() {
       if (success) {
         toast.success('Horários salvos com sucesso!');
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao salvar as configurações.');
+    } catch (err: unknown) {
+      console.error('Erro ao salvar horários:', err);
+      toast.error(getFriendlyErrorMessage(err, 'Não foi possível salvar os horários.'));
     } finally {
       setIsSaving(false);
     }
@@ -49,8 +51,11 @@ export default function AdminEstablishmentConfigPage() {
       if (success) {
         toast.success('Informações salvas com sucesso!');
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao salvar as informações.');
+    } catch (err: unknown) {
+      console.error('Erro ao salvar informações do estabelecimento:', err);
+      toast.error(
+        getFriendlyErrorMessage(err, 'Não foi possível salvar as informações do estabelecimento.'),
+      );
     } finally {
       setIsSaving(false);
     }

@@ -22,6 +22,7 @@ import {
 } from '../schemas';
 import { ChavePixReactivatedError } from '../services/chavesPixService';
 import { ChavePixForm } from './ChavePixForm';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 
 function describeTipo(chave: ChavePix): string {
   if (chave.tipoChave) return TIPO_CHAVE_PIX_LABEL[chave.tipoChave];
@@ -58,7 +59,7 @@ export function ChavesPixPanel() {
         closeCreateModal();
         return;
       }
-      toast.error(err instanceof Error ? err.message : 'Erro ao cadastrar chave PIX.');
+      toast.error(getFriendlyErrorMessage(err, 'Não foi possível cadastrar a chave PIX.'));
     }
   };
 
@@ -73,7 +74,7 @@ export function ChavesPixPanel() {
       toast.success('Chave PIX atualizada.');
       setChaveEmEdicao(null);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar chave PIX.');
+      toast.error(getFriendlyErrorMessage(err, 'Não foi possível atualizar a chave PIX.'));
     }
   };
 
@@ -93,7 +94,7 @@ export function ChavesPixPanel() {
       });
       toast.success('Chave PIX reativada.');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao alterar a chave PIX.');
+      toast.error(getFriendlyErrorMessage(err, 'Não foi possível alterar a chave PIX.'));
     } finally {
       setChaveParaDesativar(null);
     }

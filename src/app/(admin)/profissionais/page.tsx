@@ -19,6 +19,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useComercioId } from '@/hooks/useComercioId';
 import { useComercioUsuarios, useDesativarComercioUsuario } from '@/hooks/useAdminQueries';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 
 export default function AdminProfissionaisPage() {
   const queryClient = useQueryClient();
@@ -48,7 +49,7 @@ export default function AdminProfissionaisPage() {
       showToast('Profissional desativado.', 'success');
       setConfirmId(null);
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Erro ao desativar.', 'error');
+      showToast(getFriendlyErrorMessage(err, 'Não foi possível desativar o profissional.'), 'error');
     } finally {
       setIsDeactivating(false);
     }
@@ -71,7 +72,7 @@ export default function AdminProfissionaisPage() {
       showToast('Convite enviado com sucesso!', 'success');
       refreshProfissionais();
     } catch (err: unknown) {
-      showToast(err instanceof Error ? err.message : 'Erro ao convidar profissional.', 'error');
+      showToast(getFriendlyErrorMessage(err, 'Não foi possível enviar o convite ao profissional.'), 'error');
     } finally {
       setIsSubmitting(false);
     }

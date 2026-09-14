@@ -1,5 +1,7 @@
 /** Utilitários para normalizar respostas da API .NET no frontend. */
 
+import { hasApiStatus } from './errors';
+
 /** PUT /api/Usuario/Config-Usuario/{guid} retorna 400 até correção no backend. */
 export const IS_CONFIG_USUARIO_PUT_BLOCKED = true;
 
@@ -220,13 +222,11 @@ export async function fetchAdminComercios(
     }
     return [];
   } catch (err) {
-    if (err instanceof Error) {
-      if (err.message.includes('403')) {
-        throw new Error(ADMIN_ACCESS_DENIED_MESSAGE);
-      }
-      if (err.message.includes('404')) {
-        return [];
-      }
+    if (hasApiStatus(err, 403)) {
+      throw new Error(ADMIN_ACCESS_DENIED_MESSAGE);
+    }
+    if (hasApiStatus(err, 404)) {
+      return [];
     }
     throw err;
   }

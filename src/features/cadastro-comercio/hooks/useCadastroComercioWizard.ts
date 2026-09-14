@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getFriendlyErrorMessage, hasApiStatus } from '@/lib/errors';
 import { formatCep, formatCnpj, formatTelefone } from '../formatters';
 import {
   CadastroComercioFormSchema,
@@ -89,14 +90,18 @@ export function useCadastroComercioWizard(onSuccess?: () => void) {
       onSuccess?.();
     } catch (err: unknown) {
       console.error(err);
-      const message = err instanceof Error ? err.message : '';
-      if (message.includes('403')) {
+      if (hasApiStatus(err, 403)) {
         setSubmitError(
           'Sem permissão para criar comércio. Sua conta precisa ser de Administrador (cadastro como Estabelecimento). ' +
             'Após reset do banco de testes, pode ser necessário recadastrar em /cadastro/estabelecimento.',
         );
       } else {
-        setSubmitError(message || 'Erro ao cadastrar comércio. Verifique os dados e tente novamente.');
+        setSubmitError(
+          getFriendlyErrorMessage(
+            err,
+            'Erro ao cadastrar comércio. Verifique os dados e tente novamente.',
+          ),
+        );
       }
     } finally {
       setIsLoading(false);
