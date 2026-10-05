@@ -133,6 +133,13 @@ export async function fetchApi(endpoint: string, options: FetchApiOptions = {}):
           const refreshRes = await fetch(`${API_URL}/api/Login/refresh-token`, {
             method: 'POST',
             credentials: 'include', // API needs the refresh_token cookie
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({
+              accessToken: token,
+            }),
           });
           
           if (refreshRes.ok) {
