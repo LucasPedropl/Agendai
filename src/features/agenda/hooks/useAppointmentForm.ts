@@ -100,6 +100,7 @@ export function useAppointmentForm(onSuccess?: () => void) {
       const horarioComSegundos = horario.length === 5 ? `${horario}:00` : horario;
 
       const payload = {
+        idProfissional: idProssional,
         idProssional,
         idUsuario,
         data: dataIso,

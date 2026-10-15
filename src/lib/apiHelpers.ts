@@ -119,7 +119,14 @@ export function normalizeApiList<T>(data: unknown, emptyMarkers: string[] = []):
   if (Array.isArray(data)) return data as T[];
   if (data && typeof data === 'object') {
     const record = data as Record<string, unknown>;
-    const nested = record.agendamentos ?? record.Agendamentos;
+    const nested =
+      record.dados ??
+      record.Dados ??
+      record.items ??
+      record.Items ??
+      record.data ??
+      record.agendamentos ??
+      record.Agendamentos;
     if (Array.isArray(nested)) return nested as T[];
   }
   if (typeof data === 'string' && emptyMarkers.some((m) => data.includes(m))) {

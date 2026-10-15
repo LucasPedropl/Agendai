@@ -79,10 +79,9 @@ export default function ClientDashboardPage() {
     
     setIsRescheduling(true);
     try {
-      // payload mocked as the backend ignores it for now, but we send it correctly anyway
       const payload = {
-        data: rescheduleDate,
-        horario: rescheduleTime
+        data: new Date(rescheduleDate).toISOString(),
+        horario: rescheduleTime.length === 5 ? `${rescheduleTime}:00` : rescheduleTime
       };
       
       await fetchApi(`/api/Agenda/Reagendar/${selectedAgendamentoId}`, { 

@@ -63,7 +63,7 @@ export function useComerciosPublicos() {
     queryKey: queryKeys.comerciosPublicos,
     queryFn: async () => {
       const data = await fetchApi('/api/Comercios', { method: 'GET', skipToast: true });
-      return Array.isArray(data) ? data : [];
+      return normalizeApiList<any>(data);
     },
   });
 }
