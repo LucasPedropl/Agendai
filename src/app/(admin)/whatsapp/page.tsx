@@ -2,14 +2,12 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  MessageSquare, 
   RefreshCw, 
   QrCode, 
   CheckCircle2, 
   XCircle, 
   AlertCircle,
   Loader2,
-  ExternalLink,
   ShieldCheck,
   Smartphone,
   Unlink,
@@ -26,6 +24,16 @@ import { useToast } from '@/contexts/ToastContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { getFriendlyErrorMessage } from '@/lib/errors';
+
+interface StatusConfigItem {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  badge: string;
+}
 
 export default function AdminWhatsAppPage() {
   const { token } = useAuth();
@@ -46,12 +54,13 @@ export default function AdminWhatsAppPage() {
     try {
       const data = await fetchApi(`/api/WhatsApp/Status/${commerceId}`, {
         skipToast: true,
-      } as RequestInit);
+      });
 
-      setStatus(mapWhatsAppStatus(data?.status));
+      const mapped = mapWhatsAppStatus(data?.status);
+      setStatus(mapped);
       setPhoneNumber(data?.phone_number || data?.ntelefone || null);
       
-      if (data.status === 'CONNECTED') {
+      if (mapped === 'CONNECTED') {
         setQrCode(null);
       }
     } catch (err) {
@@ -68,7 +77,7 @@ export default function AdminWhatsAppPage() {
     try {
       const data = await fetchApi(`/api/WhatsApp/Obter-QrCode/${commerceId}`, {
         skipToast: true,
-      } as RequestInit);
+      });
       
       if (data?.qrCode) {
         setQrCode(data.qrCode);
@@ -76,7 +85,9 @@ export default function AdminWhatsAppPage() {
         toast.success('QR Code gerado com sucesso!');
       } else {
         setStatus('ERROR');
-        toast.error('Integração WhatsApp indisponível no momento. Tente novamente mais tarde.');
+        toast.error(
+          getFriendlyErrorMessage(data, 'Integração WhatsApp indisponível no momento. Tente novamente mais tarde.')
+        );
       }
     } catch (err: unknown) {
       console.error('Erro ao obter QR Code:', err);
@@ -93,19 +104,21 @@ export default function AdminWhatsAppPage() {
   };
 
   const disconnect = async () => {
+    if (!commerceId) return;
     setIsActionLoading(true);
     try {
       await fetchApi(`/api/WhatsApp/Desconectar/${commerceId}`, {
         method: 'DELETE',
+        skipToast: true,
       });
       
       setStatus('DISCONNECTED');
       setQrCode(null);
       setPhoneNumber(null);
       toast.success('WhatsApp desconectado com sucesso.');
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Erro ao desconectar:', err);
-      toast.error('Erro ao processar desconexão.');
+      toast.error(getFriendlyErrorMessage(err, 'Erro ao processar desconexão.'));
     } finally {
       setIsActionLoading(false);
       setShowDisconnectDialog(false);
@@ -126,7 +139,7 @@ export default function AdminWhatsAppPage() {
     checkStatus();
   }, [checkStatus]);
 
-  const statusConfig = {
+  const statusConfig: Record<string, StatusConfigItem> = {
     CONNECTED: {
       icon: CheckCircle2,
       title: 'Conexão Ativa',
@@ -166,9 +179,7 @@ export default function AdminWhatsAppPage() {
     ERROR: {
       icon: AlertCircle,
       title: 'Integração indisponível',
-      description:
-        'O serviço de WhatsApp não está respondendo no momento (falha de comunicação com o provedor externo). ' +
-        'Os lembretes automáticos ficam desativados até a equipe de backend restabelecer a integração.',
+      description: 'Integração do WhatsApp com erro no servidor, tente gerar o QR Code novamente.',
       color: 'text-rose-500',
       bgColor: 'bg-rose-50',
       borderColor: 'border-rose-100',
@@ -176,7 +187,7 @@ export default function AdminWhatsAppPage() {
     }
   };
 
-  const currentStatus = (statusConfig[status as keyof typeof statusConfig] || statusConfig.ERROR) as any;
+  const currentStatus: StatusConfigItem = statusConfig[status] || statusConfig.ERROR;
 
   if (isLoading && status === 'checking') {
     return (
@@ -232,8 +243,7 @@ export default function AdminWhatsAppPage() {
           <div className="space-y-1">
             <p className="font-semibold">WhatsApp temporariamente indisponível</p>
             <p className="text-rose-800/90 leading-relaxed">
-              A API não consegue se comunicar com o provedor externo (erro TLS/handshake). Conectar ou gerar QR Code
-              não funcionará até a equipe de backend corrigir a integração. Seus agendamentos continuam normais.
+              Integração do WhatsApp com erro no servidor, tente gerar o QR Code novamente.
             </p>
           </div>
         </div>
@@ -243,7 +253,7 @@ export default function AdminWhatsAppPage() {
         {/* Main Status Panel */}
         <div className="lg:col-span-8 space-y-8">
           <Card className={`overflow-hidden border-none shadow-2xl shadow-slate-200/50 transition-all duration-500`}>
-            <div className={`h-2 ${currentStatus.bgColor.replace('bg-', 'bg-')}`} style={{ backgroundColor: `var(--${currentStatus.color.split('-')[1]}-500)` }} />
+            <div className={`h-2 ${currentStatus.bgColor}`} style={{ backgroundColor: `var(--${currentStatus.color.split('-')[1]}-500)` }} />
             <CardContent className="p-0">
               <div className="p-8 md:p-12">
                 <div className="flex flex-col md:flex-row items-center gap-10">
@@ -332,7 +342,7 @@ export default function AdminWhatsAppPage() {
                     <Button 
                       className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-12 h-14 font-bold shadow-xl shadow-indigo-100 hover:shadow-indigo-200 transition-all hover:-translate-y-0.5 active:translate-y-0"
                       onClick={generateQrCode}
-                      disabled={isActionLoading || status === 'QRCODE_READY' || status === 'ERROR'}
+                      disabled={isActionLoading || Boolean(qrCode) || status === 'QRCODE_READY'}
                     >
                       {isActionLoading ? (
                         <Loader2 className="h-5 w-5 animate-spin" />
@@ -390,16 +400,7 @@ export default function AdminWhatsAppPage() {
             </div>
           </div>
 
-          <Card className="border-none bg-indigo-50/50 rounded-[2.5rem] p-8 space-y-4">
-            <h4 className="font-bold text-indigo-900">Precisa de ajuda?</h4>
-            <p className="text-sm text-indigo-700/80 leading-relaxed">
-              Caso encontre dificuldades para conectar, nossa equipe de suporte está disponível 24h.
-            </p>
-            <Button variant="link" className="p-0 h-auto text-indigo-600 font-bold flex items-center gap-1 hover:no-underline hover:text-indigo-700 group">
-              Acesse o Centro de Ajuda
-              <ExternalLink className="h-4 w-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-            </Button>
-          </Card>
+
         </div>
       </div>
 

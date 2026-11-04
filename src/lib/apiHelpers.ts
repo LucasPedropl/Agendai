@@ -246,10 +246,12 @@ export function mapWhatsAppStatus(raw: string | null | undefined): string {
   if (lower === 'connected' || lower === 'conectado') return 'CONNECTED';
   if (lower.includes('qr') || lower === 'qrcode_ready') return 'QRCODE_READY';
   if (
-    lower.includes('erro') ||
     lower.includes('sessão não encontrada') ||
     lower.includes('sessao nao encontrada')
   ) {
+    return 'DISCONNECTED';
+  }
+  if (lower.includes('erro')) {
     return 'ERROR';
   }
   if (lower.includes('desconect') || lower === 'disconnected') return 'DISCONNECTED';

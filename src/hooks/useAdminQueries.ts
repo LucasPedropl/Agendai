@@ -102,14 +102,15 @@ export function useCategoriasComercio<T = Record<string, unknown>>(comercioId: n
   });
 }
 
-export function usePagamentosEmpresa(comercioId: number | null) {
+export function usePagamentosEmpresa<T = Record<string, unknown>>(comercioId: number | null) {
   return useQuery({
     queryKey: comercioId ? queryKeys.pagamentosEmpresa(comercioId) : ['pagamentos', 'empresa', 'none'],
     queryFn: async () => {
       const data = await fetchApi(`/api/Pagamentos/Pagamentos-Empresa/${comercioId}`, {
         skipToast: true,
+        notFoundAsEmpty: true,
       });
-      return Array.isArray(data) ? data : [];
+      return Array.isArray(data) ? (data as T[]) : [];
     },
     enabled: Boolean(comercioId),
   });

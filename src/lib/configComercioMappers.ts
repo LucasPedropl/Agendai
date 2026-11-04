@@ -1,5 +1,4 @@
 import { toApiTimeSpan } from '@/lib/apiHelpers';
-import { hasApiStatus } from '@/lib/errors';
 
 export interface HorarioAtendimento {
   dias: number[];
@@ -160,98 +159,17 @@ export function createDefaultConfig(comercioId: number): ComercioConfiguracao {
   };
 }
 
-const CONFIG_IDS_CACHE_PREFIX = 'agendai_config_ids_';
-
-export function hasValidConfigIds(config: ComercioConfiguracao): boolean {
-  return (config.idConfigComercio ?? 0) > 0 && (config.idHorarioAtendimento ?? 0) > 0;
-}
-
-export function getCachedConfigIds(
-  comercioId: number
-): Pick<ComercioConfiguracao, 'idConfigComercio' | 'idHorarioAtendimento'> | null {
-  try {
-    const raw = localStorage.getItem(`${CONFIG_IDS_CACHE_PREFIX}${comercioId}`);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as {
-      idConfigComercio?: number;
-      idHorarioAtendimento?: number;
-    };
-    if ((parsed.idConfigComercio ?? 0) > 0 && (parsed.idHorarioAtendimento ?? 0) > 0) {
-      return {
-        idConfigComercio: parsed.idConfigComercio,
-        idHorarioAtendimento: parsed.idHorarioAtendimento,
-      };
-    }
-  } catch {
-    // ignore cache parse errors
-  }
-  return null;
-}
-
-export function setCachedConfigIds(
-  comercioId: number,
-  ids: Pick<ComercioConfiguracao, 'idConfigComercio' | 'idHorarioAtendimento'>
-): void {
-  localStorage.setItem(`${CONFIG_IDS_CACHE_PREFIX}${comercioId}`, JSON.stringify(ids));
-}
-
-/** Mescla IDs válidos do GET ou do cache local (sem heurística). */
-export function mergeConfigIdsFromCache(
-  config: ComercioConfiguracao,
-  comercioId: number
-): ComercioConfiguracao {
-  if (hasValidConfigIds(config)) {
-    setCachedConfigIds(comercioId, {
-      idConfigComercio: config.idConfigComercio,
-      idHorarioAtendimento: config.idHorarioAtendimento,
-    });
-    return config;
-  }
-
-  const cached = getCachedConfigIds(comercioId);
-  if (cached) {
-    return { ...config, ...cached };
-  }
-
-  return config;
-}
-
-export function buildConfigIdCandidates(comercioId: number): Array<{
-  idConfigComercio: number;
-  idHorarioAtendimento: number;
-}> {
-  const candidates: Array<{ idConfigComercio: number; idHorarioAtendimento: number }> = [
-    { idConfigComercio: comercioId, idHorarioAtendimento: comercioId },
-  ];
-
-  for (let i = 1; i <= 10; i += 1) {
-    for (let j = 1; j <= 10; j += 1) {
-      candidates.push({ idConfigComercio: i, idHorarioAtendimento: j });
-    }
-  }
-
-  const seen = new Set<string>();
-  return candidates.filter((item) => {
-    const key = `${item.idConfigComercio}:${item.idHorarioAtendimento}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
-
 export function isValidConfigResponse(data: unknown): data is Record<string, unknown> {
   return !!data && typeof data === 'object' && !Array.isArray(data);
 }
 
-/** A API retorna ids 0 quando a config já existe — detectar pelo objeto, não pelo id. */
-export function serverConfigExists(data: unknown): boolean {
-  if (!isValidConfigResponse(data)) return false;
-  return (
-    'configuracao' in data ||
-    'Configuracao' in data ||
-    'horarioAtendimento' in data ||
-    'HorarioAtendimento' in data
-  );
+/**
+ * A API sempre devolve o objeto `configuracao` (com valores padrão quando não há nada
+ * gravado), então a presença do objeto não diz nada. O que diz é o id: o GET devolve
+ * `idConfigComercio = 0` quando o comércio ainda não tem configuração no banco.
+ */
+export function configExistsOnServer(config: ComercioConfiguracao): boolean {
+  return (config.idConfigComercio ?? 0) > 0;
 }
 
 export function mapConfigFromApi(data: Record<string, unknown>, comercioId: number): ComercioConfiguracao {
@@ -268,69 +186,6 @@ export function mapConfigFromApi(data: Record<string, unknown>, comercioId: numb
       ? funcsRaw.map(mapFuncionario).filter((f): f is ComercioConfigFuncionario => f !== null)
       : [],
   };
-}
-
-import type { FetchApiOptions } from '@/lib/api';
-
-export type ConfigFetchFn = (
-  endpoint: string,
-  options?: FetchApiOptions
-) => Promise<unknown>;
-
-/**
- * PUT exige IdConfigComercio/IdHorarioAtendimento reais. A API às vezes retorna 0 no GET;
- * tenta combinações prováveis até obter 200 (salva de fato no servidor).
- */
-export async function saveConfigWithIdDiscovery(
-  fetchApiFn: ConfigFetchFn,
-  comercioId: number,
-  config: ComercioConfiguracao
-): Promise<ComercioConfiguracao> {
-  const base = mergeConfigIdsFromCache(config, comercioId);
-  const rawCandidates: Array<{ idConfigComercio: number; idHorarioAtendimento: number }> = [];
-
-  if (hasValidConfigIds(base)) {
-    rawCandidates.push({
-      idConfigComercio: base.idConfigComercio!,
-      idHorarioAtendimento: base.idHorarioAtendimento!,
-    });
-  }
-
-  rawCandidates.push(...buildConfigIdCandidates(comercioId));
-
-  const seen = new Set<string>();
-  const candidates = rawCandidates.filter((item) => {
-    const key = `${item.idConfigComercio}:${item.idHorarioAtendimento}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-
-  let lastError: unknown;
-
-  for (const ids of candidates) {
-    const attemptConfig = { ...base, ...ids };
-    const payload = buildConfigComercioPayload(attemptConfig, comercioId, false);
-
-    try {
-      await fetchApiFn(`/api/ConfigComercio/Editar-Atendimento/${comercioId}`, {
-        method: 'PUT',
-        body: payload,
-        skipToast: true,
-      });
-      setCachedConfigIds(comercioId, ids);
-      return attemptConfig;
-    } catch (err) {
-      lastError = err;
-      // 404 = este par de IDs não existe no servidor; tenta o próximo candidato.
-      if (hasApiStatus(err, 404)) continue;
-      throw err;
-    }
-  }
-
-  throw lastError instanceof Error
-    ? lastError
-    : new Error('Não foi possível atualizar a configuração. Os IDs internos não foram encontrados no servidor.');
 }
 
 function toApiDateTime(value: string): string {
@@ -354,7 +209,13 @@ function buildHorarioPayload(horario: HorarioAtendimento) {
   return payload;
 }
 
-/** Monta body camelCase aceito pelo POST/PUT /api/ConfigComercio. */
+/**
+ * Monta body camelCase aceito pelo POST/PUT /api/ConfigComercio.
+ *
+ * No PUT, os ids vão exatamente como o GET devolveu — nunca adivinhados. O PUT da API
+ * busca a configuração e o horário pelo id do corpo sem conferir o comércio, então um id
+ * chutado grava na linha de outro estabelecimento (relatório do devhub, 04/11/2026).
+ */
 export function buildConfigComercioPayload(
   newConfig: ComercioConfiguracao,
   comercioId: number,

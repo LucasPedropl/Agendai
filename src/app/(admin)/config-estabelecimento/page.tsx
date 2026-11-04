@@ -6,7 +6,12 @@ import {
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useEstablishmentConfig, ComercioConfg, ComercioConfiguracao } from '@/hooks/useEstablishmentConfig';
+import {
+  useEstablishmentConfig,
+  ComercioConfg,
+  ComercioConfiguracao,
+  CONFIG_LOAD_FAILED_MESSAGE,
+} from '@/hooks/useEstablishmentConfig';
 import { useToast } from '@/contexts/ToastContext';
 import { ChavesPixPanel } from '@/features/chaves-pix/components/ChavesPixPanel';
 import { getFriendlyErrorMessage } from '@/lib/errors';
@@ -14,7 +19,8 @@ import { getFriendlyErrorMessage } from '@/lib/errors';
 export default function AdminEstablishmentConfigPage() {
   const [activeTab, setActiveTab] = useState('horarios');
   const [activePattern, setActivePattern] = useState('seg-sex');
-  const { config, basicInfo, isLoading, error, updateConfig, updateBasicInfo } = useEstablishmentConfig();
+  const { config, basicInfo, isLoading, error, configLoadFailed, updateConfig, updateBasicInfo } =
+    useEstablishmentConfig();
   const [localBasicInfo, setLocalBasicInfo] = useState<ComercioConfg | null>(null);
   const [localConfig, setLocalConfig] = useState<ComercioConfiguracao | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -115,6 +121,18 @@ export default function AdminEstablishmentConfigPage() {
           <p className="text-slate-500">Gerencie horários de funcionamento, feriados e bloqueios de agenda.</p>
         </div>
       </div>
+
+      {error && (
+        <div role="alert" className="p-4 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
+
+      {configLoadFailed && activeTab === 'horarios' && (
+        <div role="alert" className="p-4 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-sm">
+          {CONFIG_LOAD_FAILED_MESSAGE}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex p-1 bg-gray-100 rounded-lg w-fit">
@@ -986,7 +1004,7 @@ export default function AdminEstablishmentConfigPage() {
             <Button variant="outline" className="bg-slate-50">Cancelar</Button>
             <Button 
               onClick={handleSaveConfig}
-              disabled={isSaving}
+              disabled={isSaving || configLoadFailed}
               className="bg-slate-900 hover:bg-slate-800 text-white"
             >
               {isSaving ? (

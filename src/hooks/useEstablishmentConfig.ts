@@ -4,12 +4,10 @@ import { fetchAdminComercios } from '@/lib/apiHelpers';
 import { getFriendlyErrorMessage, hasApiStatus } from '@/lib/errors';
 import {
   buildConfigComercioPayload,
+  configExistsOnServer,
   createDefaultConfig,
   isValidConfigResponse,
   mapConfigFromApi,
-  mergeConfigIdsFromCache,
-  saveConfigWithIdDiscovery,
-  serverConfigExists,
   type ComercioConfiguracao,
   type ConfigComercio,
   type HorarioAtendimento,
@@ -77,6 +75,18 @@ function mergeConfigState(
   };
 }
 
+/**
+ * - `existing`: o GET trouxe uma configuração gravada (ids reais) → salvar é PUT.
+ * - `missing`: o comércio ainda não tem configuração → salvar é POST.
+ * - `failed`: o GET falhou. Não sabemos se existe configuração, então salvar fica
+ *   bloqueado — um POST/PUT às cegas já gravou por cima de dados antes.
+ */
+type ConfigLoadState = 'existing' | 'missing' | 'failed';
+
+export const CONFIG_LOAD_FAILED_MESSAGE =
+  'Não foi possível carregar os horários salvos: o servidor do AgendaAi está com erro nesta tela. ' +
+  'Para não apagar o que já está gravado, salvar os horários fica bloqueado até o problema ser corrigido.';
+
 export function useEstablishmentConfig() {
   const { token, userType } = useAuth();
   const [config, setConfig] = useState<ComercioConfiguracao | null>(null);
@@ -84,7 +94,7 @@ export function useEstablishmentConfig() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeComercioId, setActiveComercioId] = useState<number | null>(null);
-  const [hasServerConfig, setHasServerConfig] = useState(false);
+  const [configLoadState, setConfigLoadState] = useState<ConfigLoadState>('missing');
 
   const loadConfigForComercio = useCallback(async (comercioId: number) => {
     try {
@@ -92,20 +102,39 @@ export function useEstablishmentConfig() {
         skipToast: true,
       });
 
-      if (isValidConfigResponse(configDataRaw) && serverConfigExists(configDataRaw)) {
-        setHasServerConfig(true);
-        setConfig(mergeConfigIdsFromCache(mapConfigFromApi(configDataRaw, comercioId), comercioId));
+      if (isValidConfigResponse(configDataRaw)) {
+        const mapped = mapConfigFromApi(configDataRaw, comercioId);
+        setConfigLoadState(configExistsOnServer(mapped) ? 'existing' : 'missing');
+        setConfig(mapped);
         return;
       }
+      setConfigLoadState('missing');
     } catch (err: unknown) {
-      // 404 aqui é "ainda não existe config" — caso normal, não é erro.
-      if (!hasApiStatus(err, 404)) {
+      // 404 = comércio sem configuração (caso normal). Qualquer outro erro: estado desconhecido.
+      if (hasApiStatus(err, 404)) {
+        setConfigLoadState('missing');
+      } else {
         console.error('Erro ao buscar configurações específicas:', err);
+        setConfigLoadState('failed');
       }
     }
 
-    setHasServerConfig(false);
     setConfig(createDefaultConfig(comercioId));
+  }, []);
+
+  /** `/api/Comercios/Admin` só traz id e nome; os demais campos vêm de `/api/Comercios/{id}`. */
+  const loadBasicInfo = useCallback(async (summary: Record<string, unknown>, comercioId: number) => {
+    try {
+      const detail = await fetchApi(`/api/Comercios/${comercioId}`, { skipToast: true });
+      if (detail && typeof detail === 'object' && !Array.isArray(detail)) {
+        setBasicInfo(mapBasicInfo({ ...summary, ...(detail as Record<string, unknown>) }));
+        return;
+      }
+    } catch (err: unknown) {
+      console.error('Erro ao buscar dados do estabelecimento:', err);
+    }
+    // Sem os dados completos, salvar "Informações" apagaria endereço, telefone etc. no servidor.
+    throw new Error('Não foi possível carregar os dados do estabelecimento.');
   }, []);
 
   const loadData = useCallback(async () => {
@@ -127,14 +156,16 @@ export function useEstablishmentConfig() {
 
       const actualComercioId = basicDataRaw.id;
       setActiveComercioId(actualComercioId);
-      setBasicInfo(mapBasicInfo(basicDataRaw as Record<string, unknown>));
-      await loadConfigForComercio(actualComercioId);
+      await Promise.all([
+        loadBasicInfo(basicDataRaw as Record<string, unknown>, actualComercioId),
+        loadConfigForComercio(actualComercioId),
+      ]);
     } catch (err: unknown) {
       setError(getFriendlyErrorMessage(err, 'Não foi possível carregar as configurações do estabelecimento.'));
     } finally {
       setIsLoading(false);
     }
-  }, [token, userType, loadConfigForComercio]);
+  }, [token, userType, loadBasicInfo, loadConfigForComercio]);
 
   useEffect(() => {
     loadData();
@@ -146,27 +177,27 @@ export function useEstablishmentConfig() {
       return false;
     }
 
-    const mergedConfig = mergeConfigState(config, newConfig);
-    const isNew = !hasServerConfig;
-
-    if (isNew) {
-      const payload = buildConfigComercioPayload(mergedConfig, activeComercioId, true);
-      try {
-        await fetchApi('/api/ConfigComercio', {
-          method: 'POST',
-          body: payload,
-          skipToast: true,
-        });
-      } catch (err: unknown) {
-        // 400 no POST significa que a config já existia — segue para o fluxo de edição.
-        if (!hasApiStatus(err, 400)) throw err;
-      }
-      setHasServerConfig(true);
-    } else {
-      await saveConfigWithIdDiscovery(fetchApi, activeComercioId, mergedConfig);
+    if (configLoadState === 'failed') {
+      throw new Error(CONFIG_LOAD_FAILED_MESSAGE);
     }
 
-    setHasServerConfig(true);
+    const mergedConfig = mergeConfigState(config, newConfig);
+
+    if (configLoadState === 'missing') {
+      await fetchApi('/api/ConfigComercio', {
+        method: 'POST',
+        body: buildConfigComercioPayload(mergedConfig, activeComercioId, true),
+        skipToast: true,
+      });
+    } else {
+      // Ids exatamente como o GET devolveu. Se a API recusar, o erro sobe para a tela.
+      await fetchApi(`/api/ConfigComercio/Editar-Atendimento/${activeComercioId}`, {
+        method: 'PUT',
+        body: buildConfigComercioPayload(mergedConfig, activeComercioId, false),
+        skipToast: true,
+      });
+    }
+
     await loadConfigForComercio(activeComercioId);
     return true;
   };
@@ -208,6 +239,7 @@ export function useEstablishmentConfig() {
     activeComercioId,
     isLoading,
     error,
+    configLoadFailed: configLoadState === 'failed',
     updateConfig,
     updateBasicInfo,
     reload: loadData,
