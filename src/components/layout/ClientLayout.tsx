@@ -65,7 +65,7 @@ export function ClientLayout() {
       void queryClient.prefetchQuery({
         queryKey: queryKeys.clientePagamentos('self'),
         queryFn: async () => {
-          const data = await fetchApi('/api/Pagamentos/Pagamentos-Cliente', { skipToast: true } as RequestInit);
+          const data = await fetchApi('/api/Pagamentos/Pagamentos-Cliente', { skipToast: true, notFoundAsEmpty: true });
           return Array.isArray(data) ? data : [];
         },
       });

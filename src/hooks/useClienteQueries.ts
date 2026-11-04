@@ -72,7 +72,7 @@ export function useClientePagamentos() {
   return useQuery({
     queryKey: queryKeys.clientePagamentos('self'),
     queryFn: async () => {
-      const data = await fetchApi('/api/Pagamentos/Pagamentos-Cliente', { skipToast: true });
+      const data = await fetchApi('/api/Pagamentos/Pagamentos-Cliente', { skipToast: true, notFoundAsEmpty: true });
       return Array.isArray(data) ? data : [];
     },
   });

@@ -20,7 +20,8 @@ export function useFinance() {
   const getPagamentosCliente = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await fetchApi('/api/Pagamentos/Pagamentos-Cliente');
+      // 404 = cliente ainda sem pagamentos (a API responde assim para lista vazia).
+      const data = await fetchApi('/api/Pagamentos/Pagamentos-Cliente', { notFoundAsEmpty: true });
       return Array.isArray(data) ? data : [];
     } catch (err: unknown) {
       setError(getFriendlyErrorMessage(err, 'Não foi possível carregar seus pagamentos.'));

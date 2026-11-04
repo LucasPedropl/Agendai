@@ -221,11 +221,16 @@ export default function AgendarPage() {
   };
 
   const estabelecimentosList = estabelecimentos as Estabelecimento[];
-  const filteredEstabelecimentos = estabelecimentosList.filter(
-    (est) =>
-      est.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      est.endereco.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // A API lista também comércios com cadastro incompleto (nome nulo). Não dá para agendar
+  // neles e o nome nulo derrubava a tela inteira no toLowerCase — ficam fora da lista.
+  const term = searchTerm.toLowerCase();
+  const filteredEstabelecimentos = estabelecimentosList.filter((est) => {
+    if (!est.nome) return false;
+    return (
+      est.nome.toLowerCase().includes(term) ||
+      (est.endereco ?? '').toLowerCase().includes(term)
+    );
+  });
 
   // --- Render Helpers ---
 
