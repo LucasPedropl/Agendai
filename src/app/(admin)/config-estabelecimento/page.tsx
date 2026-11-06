@@ -15,6 +15,7 @@ import {
 import { useToast } from '@/contexts/ToastContext';
 import { ChavesPixPanel } from '@/features/chaves-pix/components/ChavesPixPanel';
 import { getFriendlyErrorMessage } from '@/lib/errors';
+import { validateBusinessHours } from '@/lib/configComercioMappers';
 
 export default function AdminEstablishmentConfigPage() {
   const [activeTab, setActiveTab] = useState('horarios');
@@ -33,6 +34,12 @@ export default function AdminEstablishmentConfigPage() {
 
   const handleSaveConfig = async () => {
     if (!localConfig) return;
+
+    const errorMsg = validateBusinessHours(localConfig);
+    if (errorMsg) {
+      toast.error(errorMsg);
+      return;
+    }
     
     setIsSaving(true);
     try {

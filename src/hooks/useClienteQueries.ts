@@ -58,13 +58,77 @@ export function useClienteAvaliacoes<T = Record<string, unknown>>(userId: string
   });
 }
 
-export function useComerciosPublicos() {
+interface RawComercioItem {
+  id?: number | string;
+  idComercio?: number | string;
+  nome?: string | null;
+  [key: string]: unknown;
+}
+
+export async function fetchComerciosAgendaveis(): Promise<unknown[]> {
+  const firstPage = await fetchApi('/api/Comercios?pagina=1&qtdPagina=100', {
+    method: 'GET',
+    skipToast: true,
+  });
+
+  let totalPaginas = 1;
+  if (firstPage && typeof firstPage === 'object' && 'totalPaginas' in firstPage) {
+    const tp = Number((firstPage as Record<string, unknown>).totalPaginas);
+    if (Number.isFinite(tp) && tp >= 1) {
+      totalPaginas = Math.floor(tp);
+    }
+  }
+
+  const allItems: unknown[] = [...normalizeApiList<unknown>(firstPage)];
+
+  if (totalPaginas > 1) {
+    const pagePromises: Promise<unknown[]>[] = [];
+    for (let p = 2; p <= totalPaginas; p++) {
+      pagePromises.push(
+        fetchApi(`/api/Comercios?pagina=${p}&qtdPagina=100`, { method: 'GET', skipToast: true })
+          .then((pageData) => normalizeApiList<unknown>(pageData))
+          .catch(() => [])
+      );
+    }
+    const otherPages = await Promise.all(pagePromises);
+    for (const pageItems of otherPages) {
+      allItems.push(...pageItems);
+    }
+  }
+
+  const namedItems = allItems.filter((item): item is RawComercioItem => {
+    if (!item || typeof item !== 'object') return false;
+    const nome = (item as RawComercioItem).nome;
+    return typeof nome === 'string' && nome.trim().length > 0;
+  });
+
+  const checks = await Promise.all(
+    namedItems.map(async (item) => {
+      const id = item.id ?? item.idComercio;
+      if (id === undefined || id === null) {
+        return false;
+      }
+      try {
+        const services = await fetchApi(`/api/Servicos/Todos/${id}`, {
+          method: 'GET',
+          skipToast: true,
+          notFoundAsEmpty: true,
+        });
+        return Array.isArray(services) && services.length > 0;
+      } catch {
+        return true;
+      }
+    })
+  );
+
+  return namedItems.filter((_, index) => checks[index]);
+}
+
+export function useComerciosPublicos<T = unknown>() {
   return useQuery({
     queryKey: queryKeys.comerciosPublicos,
-    queryFn: async () => {
-      const data = await fetchApi('/api/Comercios', { method: 'GET', skipToast: true });
-      return normalizeApiList<any>(data);
-    },
+    queryFn: () => fetchComerciosAgendaveis() as Promise<T[]>,
+    staleTime: 5 * 60 * 1000,
   });
 }
 

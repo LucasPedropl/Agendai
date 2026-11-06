@@ -20,6 +20,12 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { getFriendlyErrorMessage } from '@/lib/errors';
+import {
+  MIN_SERVICE_DURATION_MINUTES,
+  MAX_SERVICE_DURATION_MINUTES,
+  timeSpanToMinutes,
+  minutesToTimeSpan,
+} from '@/lib/serviceDuration';
 
 interface CategoriaItem {
   id: number;
@@ -90,7 +96,7 @@ export default function AdminServicosPage() {
       
       setDescricao(servico.descricao || '');
       setPreco(servico.preco?.toString() || '');
-      setDuracao(servico.duracao || '');
+      setDuracao(String(timeSpanToMinutes(servico.duracao) ?? ''));
       setAtivo(servico.ativo !== false);
     } else {
       setEditingId(null);
@@ -108,10 +114,11 @@ export default function AdminServicosPage() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Ensure duracao has seconds (HH:MM:SS)
-    let formattedDuracao = duracao;
-    if (duracao && duracao.split(':').length === 2) {
-      formattedDuracao = `${duracao}:00`;
+    const minutes = Number(duracao);
+    if (!Number.isInteger(minutes) || minutes < MIN_SERVICE_DURATION_MINUTES || minutes > MAX_SERVICE_DURATION_MINUTES) {
+      showToast('Informe a duração em minutos, entre 1 e 720.', 'error');
+      setIsSubmitting(false);
+      return;
     }
 
     if (!comercioId) {
@@ -139,7 +146,7 @@ export default function AdminServicosPage() {
       servico: nome, // Adding this because API said it's required
       descricao,
       preco: parseFloat(preco) || 0,
-      duracao: formattedDuracao,
+      duracao: minutesToTimeSpan(minutes),
       ativo
     };
 
@@ -406,13 +413,15 @@ export default function AdminServicosPage() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="duracao">Duração</label>
+              <label className="text-sm font-medium" htmlFor="duracao">Duração (minutos)</label>
               <Input 
                 id="duracao" 
-                type="time"
-                step="1"
+                type="number"
+                min={MIN_SERVICE_DURATION_MINUTES}
+                max={MAX_SERVICE_DURATION_MINUTES}
+                step={1}
                 required
-                placeholder="00:20:00" 
+                placeholder="30" 
                 value={duracao} 
                 onChange={(e) => setDuracao(e.target.value)} 
               />

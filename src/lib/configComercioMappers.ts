@@ -62,10 +62,18 @@ function mapHorario(raw: unknown): HorarioAtendimento | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
   const h = raw as Record<string, unknown>;
   const dias = readRecord(h, 'dias', 'Dias');
+  let horaInicio = String(readRecord(h, 'horaInicio', 'HoraInicio') ?? '08:00:00');
+  let horaFim = String(readRecord(h, 'horaFim', 'HoraFim') ?? '18:00:00');
+
+  if (horaInicio.startsWith('00:00') && horaFim.startsWith('00:00')) {
+    horaInicio = '08:00:00';
+    horaFim = '18:00:00';
+  }
+
   return {
     dias: Array.isArray(dias) ? (dias as number[]) : [1, 2, 3, 4, 5],
-    horaInicio: String(readRecord(h, 'horaInicio', 'HoraInicio') ?? '08:00:00'),
-    horaFim: String(readRecord(h, 'horaFim', 'HoraFim') ?? '18:00:00'),
+    horaInicio,
+    horaFim,
     intervalo: Boolean(readRecord(h, 'intervalo', 'Intervalo')),
     inicioIntervalo: readRecord(h, 'inicioIntervalo', 'InicioIntervalo') as string | undefined,
     fimIntervalo: readRecord(h, 'fimIntervalo', 'FimIntervalo') as string | undefined,
@@ -170,6 +178,30 @@ export function isValidConfigResponse(data: unknown): data is Record<string, unk
  */
 export function configExistsOnServer(config: ComercioConfiguracao): boolean {
   return (config.idConfigComercio ?? 0) > 0;
+}
+
+export function validateBusinessHours(config: ComercioConfiguracao): string | null {
+  if (!config.horarioAtendimento || !config.horarioAtendimento.dias || config.horarioAtendimento.dias.length === 0) {
+    return 'Selecione ao menos um dia de atendimento.';
+  }
+
+  const horaInicio = config.horarioAtendimento.horaInicio?.slice(0, 5) ?? '';
+  const horaFim = config.horarioAtendimento.horaFim?.slice(0, 5) ?? '';
+  if (horaFim <= horaInicio) {
+    return 'O horário de fechamento deve ser depois da abertura.';
+  }
+
+  if (config.configuracao?.horarioPorProfissional && config.funcionarios && config.funcionarios.length > 0) {
+    for (const f of config.funcionarios) {
+      const fInicio = f.horaInicio?.slice(0, 5) ?? '';
+      const fFim = f.horaFim?.slice(0, 5) ?? '';
+      if (fFim <= fInicio) {
+        return 'O horário de fechamento de cada profissional deve ser depois da abertura.';
+      }
+    }
+  }
+
+  return null;
 }
 
 export function mapConfigFromApi(data: Record<string, unknown>, comercioId: number): ComercioConfiguracao {

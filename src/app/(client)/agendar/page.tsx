@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { fetchApi } from '@/lib/api';
 import { extractHorariosDisponiveis, normalizeApiList, toApiTimeSpan } from '@/lib/apiHelpers';
 import { useComerciosPublicos } from '@/hooks/useClienteQueries';
 import { EstablishmentCard } from '@/components/EstablishmentCard';
+import { SearchableSelect } from '@/components/ui/searchable-select';
+import { extractComercioLocation, listComercioLocations } from '@/lib/comercioLocation';
+import { mergeProfessionalSlots, ProfessionalSlots } from '@/lib/agendaSlots';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 import {
   Search,
   Star,
@@ -72,6 +76,7 @@ export default function AgendarPage() {
   const [profissionais, setProfissionais] = useState<Profissional[]>([]);
   const [isStepLoading, setIsStepLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedLocationKey, setSelectedLocationKey] = useState('');
   
   const toast = useToast();
   const { user } = useAuth();
@@ -86,6 +91,8 @@ export default function AgendarPage() {
   // Available Slots State
   const [availableDates, setAvailableDates] = useState<number[]>([]);
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+  const [professionalByTime, setProfessionalByTime] = useState<Record<string, string>>({});
+  const [isLoadingDates, setIsLoadingDates] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
   // --- Data Loading Handlers ---
@@ -101,6 +108,12 @@ export default function AgendarPage() {
 
       setServicos(Array.isArray(servicesData) ? servicesData : []);
       setProfissionais(Array.isArray(professionalsData) ? professionalsData : []);
+      setSelectedService(null);
+      setSelectedProfessional(null);
+      setSelectedDate(null);
+      setSelectedTime(null);
+      setAvailableTimes([]);
+      setProfessionalByTime({});
       setStep(2);
     } catch (err) {
       toast.error('Erro ao carregar informações do estabelecimento.');
@@ -116,6 +129,9 @@ export default function AgendarPage() {
 
   const handleSelectProfessional = async (prof: Profissional | null) => {
     setSelectedProfessional(prof);
+    setSelectedDate(null);
+    setSelectedTime(null);
+    setAvailableTimes([]);
     setIsStepLoading(true);
     try {
       await loadAvailableDates(currentMonth, prof);
@@ -130,6 +146,8 @@ export default function AgendarPage() {
   const loadAvailableDates = async (date: Date, prof: Profissional | null) => {
     if (!selectedService || !selectedEstabelecimento) return;
 
+    setIsLoadingDates(true);
+    setAvailableDates([]);
     try {
       const queryParams = new URLSearchParams({
         ano: date.getFullYear().toString(),
@@ -138,10 +156,16 @@ export default function AgendarPage() {
         profissionalId: prof?.id?.toString() || '',
         comercioId: selectedEstabelecimento.id.toString(),
       });
-      const data = await fetchApi(`/api/Agenda/Agenda-Datas/?${queryParams.toString()}`, { method: 'GET' });
+      const data = await fetchApi(`/api/Agenda/Agenda-Datas/?${queryParams.toString()}`, {
+        method: 'GET',
+        skipToast: true,
+      });
       setAvailableDates(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error('Erro ao carregar datas:', err);
+      setAvailableDates([]);
+      toast.error('Não foi possível carregar as datas disponíveis.');
+    } finally {
+      setIsLoadingDates(false);
     }
   };
 
@@ -149,21 +173,13 @@ export default function AgendarPage() {
     const prevMonth = addMonths(currentMonth, -1);
     if (isBefore(startOfMonth(prevMonth), startOfMonth(new Date()))) return;
     setCurrentMonth(prevMonth);
-    loadAvailableDates(prevMonth, selectedProfessional);
+    void loadAvailableDates(prevMonth, selectedProfessional);
   };
 
   const handleNextMonth = () => {
     const nextMonth = addMonths(currentMonth, 1);
     setCurrentMonth(nextMonth);
-    loadAvailableDates(nextMonth, selectedProfessional);
-  };
-
-  const generateFallbackSlots = (): string[] => {
-    return [
-      '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-      '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
-      '16:00', '16:30', '17:00', '17:30', '18:00'
-    ];
+    void loadAvailableDates(nextMonth, selectedProfessional);
   };
 
   const handleSelectDate = async (date: Date) => {
@@ -172,23 +188,61 @@ export default function AgendarPage() {
     setSelectedDate(date);
     setSelectedTime(null);
     setIsStepLoading(true);
+
     try {
-      const queryParams = new URLSearchParams({
-        dataEscolhida: date.toISOString(),
-        servicoId: selectedService.id.toString(),
-        profissionalId: selectedProfessional?.id?.toString() || '',
-        comercioId: selectedEstabelecimento.id.toString(),
-      });
-      const data = await fetchApi(`/api/Agenda/Agenda-Horarios/?${queryParams.toString()}`, { method: 'GET', skipToast: true });
-      const times = extractHorariosDisponiveis(data);
-      if (times.length > 0) {
-        setAvailableTimes(times);
-      } else {
-        setAvailableTimes(generateFallbackSlots());
+      const professionalIds: string[] = selectedProfessional
+        ? [selectedProfessional.id.toString()]
+        : profissionais.map((p) => p.id.toString());
+
+      if (professionalIds.length === 0) {
+        setAvailableTimes([]);
+        setProfessionalByTime({});
+        return;
       }
-    } catch (err) {
-      console.warn('Backend retornou erro ao consultar horários. Usando horários operacionais padrão.', err);
-      setAvailableTimes(generateFallbackSlots());
+
+      const results = await Promise.allSettled(
+        professionalIds.map(async (profId) => {
+          const queryParams = new URLSearchParams({
+            dataEscolhida: date.toISOString(),
+            servicoId: selectedService.id.toString(),
+            profissionalId: profId,
+            comercioId: selectedEstabelecimento.id.toString(),
+          });
+          const data = await fetchApi(`/api/Agenda/Agenda-Horarios/?${queryParams.toString()}`, {
+            method: 'GET',
+            skipToast: true,
+          });
+          const times = extractHorariosDisponiveis(data);
+          return {
+            professionalId: profId,
+            times,
+          };
+        })
+      );
+
+      const successfulSlots: ProfessionalSlots[] = [];
+      let successCount = 0;
+
+      for (const res of results) {
+        if (res.status === 'fulfilled') {
+          successCount++;
+          successfulSlots.push(res.value);
+        }
+      }
+
+      if (successCount === 0) {
+        setAvailableTimes([]);
+        setProfessionalByTime({});
+        toast.error('Não foi possível carregar os horários. Tente novamente.');
+      } else {
+        const merged = mergeProfessionalSlots(successfulSlots);
+        setAvailableTimes(merged.times);
+        setProfessionalByTime(merged.professionalByTime);
+      }
+    } catch {
+      setAvailableTimes([]);
+      setProfessionalByTime({});
+      toast.error('Não foi possível carregar os horários. Tente novamente.');
     } finally {
       setIsStepLoading(false);
     }
@@ -197,35 +251,64 @@ export default function AgendarPage() {
   const handleConfirmBooking = async () => {
     if (!selectedTime || !selectedDate || !selectedService || !user) return;
 
+    const professionalId = selectedProfessional?.id?.toString() ?? professionalByTime[selectedTime];
+    if (!professionalId) {
+      toast.error('Selecione outro horário.');
+      return;
+    }
+
     setIsStepLoading(true);
     try {
       await fetchApi('/api/Agenda', {
         method: 'POST',
         skipToast: true,
         body: {
-          idProfissional: selectedProfessional?.id?.toString() || '',
-          idProssional: selectedProfessional?.id?.toString() || '',
+          idProfissional: professionalId,
+          idProssional: professionalId,
           idUsuario: String(user.id),
           data: selectedDate.toISOString(),
           horario: toApiTimeSpan(selectedTime),
           idServico: selectedService.id,
         },
       });
+
+      if (!selectedProfessional) {
+        const matchingProf = profissionais.find((p) => p.id.toString() === professionalId) ?? null;
+        if (matchingProf) {
+          setSelectedProfessional(matchingProf);
+        }
+      }
+
       setStep(5);
       toast.success('Agendamento realizado com sucesso!');
-    } catch (err) {
-      toast.error('Erro ao realizar agendamento.');
+    } catch (err: unknown) {
+      toast.error(getFriendlyErrorMessage(err, 'Não foi possível realizar o agendamento.'));
     } finally {
       setIsStepLoading(false);
     }
   };
 
   const estabelecimentosList = estabelecimentos as Estabelecimento[];
+  const locations = useMemo(() => {
+    return listComercioLocations(estabelecimentosList.map((e) => e.endereco));
+  }, [estabelecimentosList]);
+
+  const locationOptions = useMemo(() => {
+    return [
+      { value: '', label: 'Todas as localizações' },
+      ...locations.map((loc) => ({ value: loc.key, label: loc.label })),
+    ];
+  }, [locations]);
+
   // A API lista também comércios com cadastro incompleto (nome nulo). Não dá para agendar
   // neles e o nome nulo derrubava a tela inteira no toLowerCase — ficam fora da lista.
   const term = searchTerm.toLowerCase();
   const filteredEstabelecimentos = estabelecimentosList.filter((est) => {
     if (!est.nome) return false;
+    if (selectedLocationKey) {
+      const loc = extractComercioLocation(est.endereco);
+      if (loc?.key !== selectedLocationKey) return false;
+    }
     return (
       est.nome.toLowerCase().includes(term) ||
       (est.endereco ?? '').toLowerCase().includes(term)
@@ -296,6 +379,8 @@ export default function AgendarPage() {
           setSelectedProfessional(null);
           setSelectedDate(null);
           setSelectedTime(null);
+          setAvailableTimes([]);
+          setProfessionalByTime({});
         }}
         className="w-full sm:w-auto h-12 px-8 rounded-xl text-muted-foreground hover:text-destructive"
       >
@@ -312,7 +397,7 @@ export default function AgendarPage() {
       exit={{ opacity: 0, y: -20 }}
       className="space-y-6"
     >
-      <div className="relative overflow-hidden rounded-3xl bg-primary/10 p-8 border border-primary/20">
+      <div className="relative rounded-3xl bg-primary/10 p-8 border border-primary/20">
         <h1 className="text-3xl font-extrabold mb-4">Onde vamos hoje?</h1>
         <div className="relative max-w-md group">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -324,12 +409,28 @@ export default function AgendarPage() {
             className="w-full pl-12 pr-4 py-4 bg-background border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
           />
         </div>
-        <Sparkles className="absolute right-0 top-0 w-48 h-48 text-primary/5 -rotate-12" />
+        {locations.length > 0 && (
+          <div className="relative z-20 max-w-md mt-3">
+            <SearchableSelect
+              options={locationOptions}
+              value={selectedLocationKey}
+              onChange={setSelectedLocationKey}
+              placeholder="Todas as localizações"
+            />
+          </div>
+        )}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-3xl">
+          <Sparkles className="absolute right-0 top-0 w-48 h-48 text-primary/5 -rotate-12 pointer-events-none" />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoadingEstabelecimentos ? (
           [1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-48 w-full rounded-3xl" />)
+        ) : filteredEstabelecimentos.length === 0 ? (
+          <div className="col-span-full py-16 text-center text-muted-foreground">
+            <p className="text-lg">Nenhum estabelecimento encontrado para esta busca.</p>
+          </div>
         ) : (
           filteredEstabelecimentos.map((est) => (
             <EstablishmentCard
@@ -420,37 +521,43 @@ export default function AgendarPage() {
         <p className="text-muted-foreground">Selecione seu profissional preferido ou deixe conosco.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <button
-          onClick={() => handleSelectProfessional(null)}
-          className="flex flex-col items-center p-8 bg-primary/5 border-2 border-primary/20 rounded-3xl hover:bg-primary/10 hover:border-primary transition-all group"
-        >
-          <div className="w-20 h-20 bg-primary text-white rounded-full flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform">
-            <Sparkles className="w-10 h-10" />
-          </div>
-          <h4 className="font-bold text-lg">Qualquer Profissional</h4>
-          <p className="text-xs text-muted-foreground text-center mt-2">
-            Iremos selecionar o melhor horário disponível para você.
-          </p>
-        </button>
-
-        {profissionais.map((prof) => (
+      {profissionais.length === 0 ? (
+        <div className="py-12 text-center text-muted-foreground">
+          <p className="text-lg">Este estabelecimento ainda não tem profissionais disponíveis para agendamento.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <button
-            key={prof.id}
-            onClick={() => handleSelectProfessional(prof)}
-            className="flex flex-col items-center p-8 bg-card border border-border rounded-3xl hover:border-primary transition-all group"
+            onClick={() => handleSelectProfessional(null)}
+            className="flex flex-col items-center p-8 bg-primary/5 border-2 border-primary/20 rounded-3xl hover:bg-primary/10 hover:border-primary transition-all group"
           >
-            <div className="w-20 h-20 bg-accent text-primary rounded-full flex items-center justify-center mb-4 text-2xl font-bold group-hover:scale-110 transition-transform">
-              {prof.nome.charAt(0)}
+            <div className="w-20 h-20 bg-primary text-white rounded-full flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform">
+              <Sparkles className="w-10 h-10" />
             </div>
-            <h4 className="font-bold text-lg">{prof.nome}</h4>
-            <div className="flex items-center gap-1 mt-2 text-amber-500">
-              <Star className="w-3 h-3 fill-current" />
-              <span className="text-xs font-bold">4.9</span>
-            </div>
+            <h4 className="font-bold text-lg">Qualquer Profissional</h4>
+            <p className="text-xs text-muted-foreground text-center mt-2">
+              Iremos selecionar o melhor horário disponível para você.
+            </p>
           </button>
-        ))}
-      </div>
+
+          {profissionais.map((prof) => (
+            <button
+              key={prof.id}
+              onClick={() => handleSelectProfessional(prof)}
+              className="flex flex-col items-center p-8 bg-card border border-border rounded-3xl hover:border-primary transition-all group"
+            >
+              <div className="w-20 h-20 bg-accent text-primary rounded-full flex items-center justify-center mb-4 text-2xl font-bold group-hover:scale-110 transition-transform">
+                {prof.nome.charAt(0)}
+              </div>
+              <h4 className="font-bold text-lg">{prof.nome}</h4>
+              <div className="flex items-center gap-1 mt-2 text-amber-500">
+                <Star className="w-3 h-3 fill-current" />
+                <span className="text-xs font-bold">4.9</span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
       {renderNavigationButtons()}
     </motion.div>
   );
@@ -516,18 +623,27 @@ export default function AgendarPage() {
                       ${
                         isSelected
                           ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-105 z-10'
-                          : isAvailable
+                          : isAvailable && !isPast
                             ? 'hover:bg-primary/10 hover:text-primary text-foreground font-medium'
                             : 'text-muted-foreground/30 cursor-not-allowed'
                       }
                     `}
                   >
                     <span className="text-sm">{format(day, 'd')}</span>
-                    {isAvailable && !isSelected && <div className="w-1 h-1 bg-primary rounded-full mt-1" />}
+                    {isAvailable && !isPast && !isSelected && <div className="w-1 h-1 bg-primary rounded-full mt-1" />}
                   </button>
                 );
               })}
             </div>
+
+            {!isLoadingDates && availableDates.length === 0 && (
+              <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Info className="w-4 h-4 shrink-0" />
+                <p>
+                  Não há datas disponíveis em {format(currentMonth, 'MMMM', { locale: ptBR })}. Tente o próximo mês ou outro estabelecimento.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Time & Confirm */}
@@ -697,6 +813,8 @@ export default function AgendarPage() {
               setSelectedProfessional(null);
               setSelectedDate(null);
               setSelectedTime(null);
+              setAvailableTimes([]);
+              setProfessionalByTime({});
             }}
           >
             Fazer novo agendamento

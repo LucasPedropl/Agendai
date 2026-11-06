@@ -16,6 +16,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { fetchApi } from '@/lib/api';
 import { normalizeApiList } from '@/lib/apiHelpers';
+import { fetchComerciosAgendaveis } from '@/hooks/useClienteQueries';
 import { queryKeys } from '@/lib/queryKeys';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Sidebar } from './Sidebar';
@@ -72,10 +73,8 @@ export function ClientLayout() {
     }
     void queryClient.prefetchQuery({
       queryKey: queryKeys.comerciosPublicos,
-      queryFn: async () => {
-        const data = await fetchApi('/api/Comercios', { method: 'GET', skipToast: true } as RequestInit);
-        return Array.isArray(data) ? data : [];
-      },
+      queryFn: fetchComerciosAgendaveis,
+      staleTime: 5 * 60 * 1000,
     });
   }, [user?.id, queryClient]);
 
