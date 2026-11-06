@@ -219,7 +219,7 @@ export async function fetchApi(endpoint: string, options: FetchApiOptions = {}):
       }
     }
 
-    const errorData: unknown = await response.json().catch(() => null);
+    const errorData = await readErrorBody(response);
     console.error(`API Error (${response.status}) em ${path}:`, errorData);
 
     const { friendlyMessage, rawMessage, isGenericMessage } = describeApiErrorBody(
@@ -286,6 +286,18 @@ export function buildAuthHeaders(): HeadersInit {
     headers.Authorization = `Bearer ${token}`;
   }
   return headers;
+}
+
+/** A API .NET devolve `BadRequest("texto")` como text/plain: `response.json()` perderia a mensagem. */
+async function readErrorBody(response: Response): Promise<unknown> {
+  const text = await response.text().catch(() => '');
+  if (!text.trim()) return null;
+
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return text;
+  }
 }
 
 /**

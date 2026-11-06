@@ -11,7 +11,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { User } from '@/types';
 import { GoogleLogin } from '@react-oauth/google';
 import FacebookLogin from '@greatsumini/react-facebook-login';
-import { getFriendlyErrorMessage } from '@/lib/errors';
+import { getFriendlyErrorMessage, isApiError } from '@/lib/errors';
+
+const PENDING_CPF_MISMATCH_API_MESSAGE = 'Dados cadastrais incompatíveis com o cadastro existente.';
+const PENDING_CPF_MISMATCH_USER_MESSAGE =
+  'Este e-mail já tem um cadastro pendente com outro CPF. Informe o CPF usado na primeira tentativa ou fale com o estabelecimento.';
 
 export default function CadastroPage() {
   const { type, '*': splat } = useParams<{ type: string, '*': string }>();
@@ -271,7 +275,10 @@ export default function CadastroPage() {
       setIsSuccess(true);
     } catch (err: unknown) {
       console.error(err);
-      const message = getFriendlyErrorMessage(err, 'Não foi possível concluir o cadastro. Verifique os dados e tente novamente.');
+      const isPendingCpfMismatch = isApiError(err) && err.rawMessage === PENDING_CPF_MISMATCH_API_MESSAGE;
+      const message = isPendingCpfMismatch
+        ? PENDING_CPF_MISMATCH_USER_MESSAGE
+        : getFriendlyErrorMessage(err, 'Não foi possível concluir o cadastro. Verifique os dados e tente novamente.');
       setError(message);
     } finally {
       setIsLoading(false);
