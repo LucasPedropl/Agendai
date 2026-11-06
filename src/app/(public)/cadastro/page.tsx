@@ -15,7 +15,7 @@ import { getFriendlyErrorMessage, isApiError } from '@/lib/errors';
 
 const PENDING_CPF_MISMATCH_API_MESSAGE = 'Dados cadastrais incompatíveis com o cadastro existente.';
 const PENDING_CPF_MISMATCH_USER_MESSAGE =
-  'Este e-mail já tem um cadastro pendente com outro CPF. Informe o CPF usado na primeira tentativa ou fale com o estabelecimento.';
+  'Não foi possível concluir o cadastro com este convite. Fale com o estabelecimento.';
 
 export default function CadastroPage() {
   const { type, '*': splat } = useParams<{ type: string, '*': string }>();
