@@ -8,8 +8,7 @@ import { Modal } from '@/components/ui/modal';
 import { PageHeader } from '@/components/ui/page-header';
 import { PageLoader } from '@/components/ui/page-loader';
 import { StatusBadge, getStatusVariant } from '@/components/ui/status-badge';
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, AlertCircle } from 'lucide-react';
-import { IS_ADMIN_AGENDA_CLIENT_NAME_UNRELIABLE } from '@/lib/apiHelpers';
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { queryKeys } from '@/lib/queryKeys';
 import { useComercioId } from '@/hooks/useComercioId';
 import { useAgendaComercio } from '@/hooks/useAdminQueries';
@@ -77,17 +76,6 @@ export default function AdminAgendaPage() {
           Novo Agendamento
         </Button>
       </PageHeader>
-
-      {IS_ADMIN_AGENDA_CLIENT_NAME_UNRELIABLE && (
-        <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          <AlertCircle className="h-5 w-5 shrink-0 text-amber-600" />
-          <p>
-            Agendamentos criados pelo estabelecimento podem exibir o <strong>nome do profissional</strong> no lugar do
-            cliente na listagem — bug conhecido na API (<code className="text-xs">Comercio-Agendar</code>). O horário é
-            reservado corretamente; a correção do nome depende do backend.
-          </p>
-        </div>
-      )}
 
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4 space-y-0 pb-4">
