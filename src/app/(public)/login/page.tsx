@@ -16,7 +16,6 @@ import {
 } from '@/lib/apiHelpers';
 import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
-import FacebookLogin from '@greatsumini/react-facebook-login';
 import { useToast } from '@/contexts/ToastContext';
 import { getFriendlyErrorMessage, hasApiStatus } from '@/lib/errors';
 
@@ -40,16 +39,38 @@ export default function LoginPage() {
   const toast = useToast();
 
   const defaults = QA_CREDENTIALS[type] ?? QA_CREDENTIALS.cliente;
-  const [email, setEmail] = useState(defaults.email);
-  const [password, setPassword] = useState(defaults.password);
+  const [rememberMe, setRememberMe] = useState(() => {
+    return typeof window !== 'undefined' && localStorage.getItem('agendai_remember_me') === 'true';
+  });
+  const [email, setEmail] = useState(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('agendai_remember_me') === 'true') {
+      return localStorage.getItem('agendai_remember_email') || defaults.email;
+    }
+    return defaults.email;
+  });
+  const [password, setPassword] = useState(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('agendai_remember_me') === 'true') {
+      return localStorage.getItem('agendai_remember_password') || defaults.password;
+    }
+    return defaults.password;
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    const creds = QA_CREDENTIALS[type] ?? QA_CREDENTIALS.cliente;
-    setEmail(creds.email);
-    setPassword(creds.password);
+    const isRemembered = localStorage.getItem('agendai_remember_me') === 'true';
+    if (isRemembered) {
+      const savedEmail = localStorage.getItem('agendai_remember_email');
+      const savedPassword = localStorage.getItem('agendai_remember_password');
+      if (savedEmail) setEmail(savedEmail);
+      if (savedPassword) setPassword(savedPassword);
+      setRememberMe(true);
+    } else {
+      const creds = QA_CREDENTIALS[type] ?? QA_CREDENTIALS.cliente;
+      setEmail(creds.email);
+      setPassword(creds.password);
+    }
     setError('');
   }, [type]);
 
