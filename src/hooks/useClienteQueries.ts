@@ -3,17 +3,84 @@ import { fetchApi } from '@/lib/api';
 import { normalizeApiList } from '@/lib/apiHelpers';
 import { queryKeys } from '@/lib/queryKeys';
 
+interface RawClienteAgendamento {
+  id?: number | string;
+  dataAgendamento?: string;
+  servicoNome?: string;
+  profissionalNome?: string;
+  status?: string;
+  valor?: number;
+  [key: string]: unknown;
+}
+
 /**
  * `GET /api/Agenda/Cliente` — desde 09/09/2026 a API tira o usuário do JWT; a rota
  * antiga `/Cliente/{id}` não existe mais. `userId` sobrou apenas como chave de cache
  * (troca de conta na mesma aba não pode reaproveitar a lista anterior).
+ *
+ * BUG BACKEND CONHECIDO (AgendaController.cs:336):
+ * O backend filtra `a.DataAgendamento > DateTime.UtcNow` para agendamentos futuros,
+ * mas grava `DataAgendamento` como data pura (00:00:00). Com isso, agendamentos marcados
+ * para o dia de HOJE são omitidos de `/api/Agenda/Cliente` e caem no `/api/Agenda/Cliente-Historico`
+ * (`a.DataAgendamento < DateTime.UtcNow`).
+ * Além disso, `AgendaView` não inclui `status` (que é sempre `Confirmado` na query da API).
+ * Aqui consultamos ambos os endpoints com fallback seguro e mesclamos os agendamentos ativos de hoje.
  */
 export function useClienteAgendamentos<T = Record<string, unknown>>(userId: string | undefined) {
   return useQuery({
     queryKey: userId ? queryKeys.clienteAgendamentos(userId) : ['cliente', 'agendamentos', 'none'],
     queryFn: async () => {
-      const data = await fetchApi('/api/Agenda/Cliente');
-      return normalizeApiList<T>(data);
+      const [futurosRaw, historicoRaw] = await Promise.all([
+        // Erro aqui tem de virar estado de erro na tela, não "nenhum agendamento".
+        fetchApi('/api/Agenda/Cliente', { notFoundAsEmpty: true }),
+        fetchApi('/api/Agenda/Cliente-Historico', { notFoundAsEmpty: true, skipToast: true }).catch(() => []),
+      ]);
+
+      const futuros = normalizeApiList<RawClienteAgendamento>(futurosRaw, ['Agenda Vazia']);
+      const historico = normalizeApiList<RawClienteAgendamento>(historicoRaw, ['Histórico Vazio', 'Agenda Vazia']);
+
+      const mappedFuturos: RawClienteAgendamento[] = futuros.map((item) => ({
+        status: 'Confirmado',
+        profissionalNome: 'Profissional',
+        ...item,
+      }));
+
+      const activeIds = new Set(
+        mappedFuturos
+          .map((f) => f.id)
+          .filter((id): id is string | number => id !== undefined)
+      );
+
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hojeDateStr = `${year}-${month}-${day}`;
+
+      const hojeDoHistorico: RawClienteAgendamento[] = historico
+        .filter((h) => {
+          if (!h || (h.id !== undefined && activeIds.has(h.id))) return false;
+          const rawDate = typeof h.dataAgendamento === 'string' ? h.dataAgendamento : '';
+          const itemDateStr = rawDate.split('T')[0];
+          const status = String(h.status || '').toLowerCase();
+          const isAtivo = status === 'confirmado' || status === 'pendente';
+          return isAtivo && (itemDateStr === hojeDateStr || new Date(rawDate) >= new Date(hojeDateStr));
+        })
+        .map((h) => ({
+          profissionalNome: 'Profissional',
+          ...h,
+          status: h.status || 'Confirmado',
+        }));
+
+      const combined: RawClienteAgendamento[] = [...hojeDoHistorico, ...mappedFuturos];
+
+      combined.sort((a, b) => {
+        const da = a.dataAgendamento ? new Date(a.dataAgendamento).getTime() : 0;
+        const db = b.dataAgendamento ? new Date(b.dataAgendamento).getTime() : 0;
+        return da - db;
+      });
+
+      return combined as T[];
     },
     enabled: Boolean(userId),
   });
