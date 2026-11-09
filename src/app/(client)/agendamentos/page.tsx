@@ -32,10 +32,14 @@ interface Agendamento {
   id: number;
   dataAgendamento: string;
   servicoNome: string;
-  profissionalNome: string;
-  status: 'Pendente' | 'Confirmado' | 'Concluído' | 'Cancelado';
+  profissionalNome?: string;
+  status?: 'Pendente' | 'Confirmado' | 'Concluído' | 'Cancelado' | string;
   estabelecimentoNome?: string;
   valor?: number;
+  horaAgendamento?: string;
+  horario?: string;
+  idProfissional?: string;
+  idServico?: number;
 }
 
 export default function ClientDashboardPage() {
@@ -44,6 +48,7 @@ export default function ClientDashboardPage() {
   const { data: agendamentos = [], isPending: isLoading } = useClienteAgendamentos<Agendamento>(userId);
   const [activeTab, setActiveTab] = useState('Todos');
   const tabs = ['Todos', 'Pendentes', 'Confirmados', 'Concluídos', 'Cancelados'];
+  const [searchTerm, setSearchTerm] = useState('');
   const queryClient = useQueryClient();
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   
@@ -54,6 +59,7 @@ export default function ClientDashboardPage() {
   const [isRescheduling, setIsRescheduling] = useState(false);
 
   const [selectedAgendamentoId, setSelectedAgendamentoId] = useState<number | null>(null);
+  const [selectedAgendamento, setSelectedAgendamento] = useState<Agendamento | null>(null);
 
   const agendamentosList = agendamentos;
 
@@ -70,6 +76,7 @@ export default function ClientDashboardPage() {
     } finally {
       setCancelModalOpen(false);
       setSelectedAgendamentoId(null);
+      setSelectedAgendamento(null);
     }
   };
 
@@ -79,10 +86,16 @@ export default function ClientDashboardPage() {
     
     setIsRescheduling(true);
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         data: new Date(rescheduleDate).toISOString(),
         horario: rescheduleTime.length === 5 ? `${rescheduleTime}:00` : rescheduleTime
       };
+      if (selectedAgendamento?.idProfissional) {
+        payload.idProfissional = selectedAgendamento.idProfissional;
+      }
+      if (selectedAgendamento?.idServico) {
+        payload.idServico = selectedAgendamento.idServico;
+      }
       
       await fetchApi(`/api/Agenda/Reagendar/${selectedAgendamentoId}`, { 
         method: 'PUT',
@@ -99,46 +112,69 @@ export default function ClientDashboardPage() {
     } finally {
       setIsRescheduling(false);
       setSelectedAgendamentoId(null);
+      setSelectedAgendamento(null);
       setRescheduleDate('');
       setRescheduleTime('');
     }
   };
 
-  const getStatusConfig = (status: string) => {
-    switch (status) {
-      case 'Confirmado':
+  const getStatusConfig = (status?: string) => {
+    const s = (status || '').toLowerCase();
+    switch (s) {
+      case 'confirmado':
         return {
+          label: 'Confirmado',
           icon: <CheckCircle2 className="h-4 w-4" />,
           color: 'bg-green-500/10 text-green-600 border-green-500/20',
           dot: 'bg-green-500'
         };
-      case 'Cancelado':
+      case 'cancelado':
         return {
+          label: 'Cancelado',
           icon: <XCircle className="h-4 w-4" />,
           color: 'bg-red-500/10 text-red-600 border-red-500/20',
           dot: 'bg-red-500'
         };
-      case 'Concluído':
+      case 'concluído':
+      case 'concluido':
+      case 'finalizado':
         return {
+          label: 'Concluído',
           icon: <CheckCircle2 className="h-4 w-4" />,
           color: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
           dot: 'bg-blue-500'
         };
-      default:
+      case 'pendente':
         return {
+          label: 'Pendente',
           icon: <AlertCircle className="h-4 w-4" />,
           color: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
           dot: 'bg-amber-500'
+        };
+      default:
+        return {
+          label: status || 'Confirmado',
+          icon: <CheckCircle2 className="h-4 w-4" />,
+          color: 'bg-green-500/10 text-green-600 border-green-500/20',
+          dot: 'bg-green-500'
         };
     }
   };
 
   const filteredAgendamentos = agendamentosList.filter(a => {
-    if (activeTab === 'Todos') return true;
-    if (activeTab === 'Pendentes') return a.status === 'Pendente';
-    if (activeTab === 'Confirmados') return a.status === 'Confirmado';
-    if (activeTab === 'Concluídos') return a.status === 'Concluído';
-    if (activeTab === 'Cancelados') return a.status === 'Cancelado';
+    const rawStatus = (a.status || 'Confirmado').toLowerCase();
+    if (activeTab === 'Pendentes' && rawStatus !== 'pendente') return false;
+    if (activeTab === 'Confirmados' && rawStatus !== 'confirmado') return false;
+    if (activeTab === 'Concluídos' && rawStatus !== 'concluído' && rawStatus !== 'concluido' && rawStatus !== 'finalizado') return false;
+    if (activeTab === 'Cancelados' && rawStatus !== 'cancelado') return false;
+
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      const servico = (a.servicoNome || '').toLowerCase();
+      const prof = (a.profissionalNome || '').toLowerCase();
+      const estab = (a.estabelecimentoNome || '').toLowerCase();
+      return servico.includes(term) || prof.includes(term) || estab.includes(term);
+    }
     return true;
   });
 
@@ -189,6 +225,8 @@ export default function ClientDashboardPage() {
           <input 
             type="text" 
             placeholder="Buscar serviço..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-3 bg-card border border-border rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
           />
         </div>
@@ -227,7 +265,14 @@ export default function ClientDashboardPage() {
           >
             {filteredAgendamentos.map((agendamento) => {
               const data = new Date(agendamento.dataAgendamento);
+              const isValidDate = !isNaN(data.getTime());
               const config = getStatusConfig(agendamento.status);
+              const profNome = agendamento.profissionalNome || 'Profissional';
+              const rawHora = agendamento.horaAgendamento || agendamento.horario;
+              const formattedTime = rawHora 
+                ? String(rawHora).slice(0, 5) 
+                : (isValidDate && format(data, "HH:mm") !== "00:00" ? format(data, "HH:mm") : "--:--");
+              const isPendenteOuConfirmado = config.label === 'Pendente' || config.label === 'Confirmado';
               
               return (
                 <motion.div
@@ -246,7 +291,7 @@ export default function ClientDashboardPage() {
                     <div className="flex items-center gap-2">
                       <div className={`px-4 py-1.5 rounded-full border text-xs font-bold flex items-center gap-2 ${config.color}`}>
                         <div className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
-                        {agendamento.status}
+                        {config.label}
                       </div>
                     </div>
 
@@ -265,11 +310,11 @@ export default function ClientDashboardPage() {
                     <div className="grid grid-cols-2 gap-3 bg-accent/30 p-4 rounded-2xl border border-border/50">
                       <div className="flex flex-col items-center justify-center border-r border-border/50">
                         <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Data</span>
-                        <span className="text-sm font-bold">{format(data, "dd/MM/yyyy")}</span>
+                        <span className="text-sm font-bold">{isValidDate ? format(data, "dd/MM/yyyy") : '--/--/----'}</span>
                       </div>
                       <div className="flex flex-col items-center justify-center">
                         <span className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider mb-1">Hora</span>
-                        <span className="text-sm font-bold">{format(data, "HH:mm")}</span>
+                        <span className="text-sm font-bold">{formattedTime}</span>
                       </div>
                     </div>
 
@@ -277,11 +322,11 @@ export default function ClientDashboardPage() {
                     <div className="flex items-center justify-between pt-2">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-bold">
-                          {agendamento.profissionalNome.charAt(0)}
+                          {profNome.charAt(0)}
                         </div>
                         <div>
                           <p className="text-[10px] font-bold uppercase text-muted-foreground">Profissional</p>
-                          <p className="text-sm font-bold">{agendamento.profissionalNome}</p>
+                          <p className="text-sm font-bold">{profNome}</p>
                         </div>
                       </div>
                       <div className="text-right">
@@ -294,26 +339,28 @@ export default function ClientDashboardPage() {
 
                     {/* Action */}
                     <div className="pt-4 border-t border-border/50 flex gap-3">
-                      {(agendamento.status === 'Pendente' || agendamento.status === 'Confirmado') && (
+                      {isPendenteOuConfirmado && (
                         <Button 
                           variant="outline" 
                           className="flex-1 rounded-xl h-10 font-bold text-xs hover:bg-primary/5 hover:text-primary hover:border-primary/20"
                           onClick={() => {
                             setSelectedAgendamentoId(agendamento.id);
-                            setRescheduleDate(agendamento.dataAgendamento.split('T')[0] || '');
-                            setRescheduleTime('');
+                            setSelectedAgendamento(agendamento);
+                            setRescheduleDate(agendamento.dataAgendamento?.split('T')[0] || '');
+                            setRescheduleTime(rawHora ? String(rawHora).slice(0, 5) : '');
                             setRescheduleModalOpen(true);
                           }}
                         >
                           Reagendar
                         </Button>
                       )}
-                      {agendamento.status === 'Pendente' && (
+                      {isPendenteOuConfirmado && (
                         <Button 
                           variant="ghost" 
                           className="flex-1 rounded-xl h-10 font-bold text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
                           onClick={() => {
                             setSelectedAgendamentoId(agendamento.id);
+                            setSelectedAgendamento(agendamento);
                             setCancelModalOpen(true);
                           }}
                         >

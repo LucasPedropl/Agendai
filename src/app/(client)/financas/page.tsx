@@ -119,7 +119,7 @@ export default function ClientFinancasPage() {
             <p className="text-3xl font-black">R$ 0,00</p>
             <p className="text-xs opacity-70">Nenhum pagamento pendente para este mês.</p>
           </div>
-          <Button variant="outline" className="relative z-10 w-full rounded-2xl font-bold h-12 shadow-lg group-hover:scale-[1.02] transition-transform">
+          <Button variant="outline" className="relative z-10 w-full rounded-2xl font-bold h-12 shadow-lg group-hover:scale-[1.02] transition-transform text-foreground">
             Ver Faturas <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
           <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
