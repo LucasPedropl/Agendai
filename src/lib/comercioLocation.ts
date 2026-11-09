@@ -11,7 +11,7 @@ function countAccents(str: string): number {
   return matches ? matches.length : 0;
 }
 
-function normalizeKey(str: string): string {
+export function normalizeKey(str: string): string {
   return str
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -66,4 +66,24 @@ export function listComercioLocations(enderecos: Array<string | null | undefined
   }
 
   return Array.from(map.values()).sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
+}
+
+/**
+ * Verifica se o endereço corresponde à cidade informada (insensível a maiúsculas/minúsculas e acentos, match parcial).
+ */
+export function matchesCity(endereco: string | null | undefined, filterCity: string): boolean {
+  if (!endereco || !filterCity) return true;
+  const normalizedFilter = normalizeKey(filterCity);
+  if (!normalizedFilter) return true;
+
+  const loc = extractComercioLocation(endereco);
+  if (loc) {
+    const normalizedLoc = normalizeKey(loc.label);
+    if (normalizedLoc.includes(normalizedFilter)) {
+      return true;
+    }
+  }
+
+  const normalizedAddr = normalizeKey(endereco);
+  return normalizedAddr.includes(normalizedFilter);
 }
