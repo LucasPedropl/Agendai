@@ -9,6 +9,35 @@ interface Option {
   label: string;
 }
 
+/** Retorna data local no formato YYYY-MM-DD */
+export function getTodayDateLocal(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/** Retorna hora local no formato HH:mm */
+export function getCurrentTimeLocal(): string {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+
+/** Verifica se data/hora estão no passado (horário local) */
+export function isPastDateTime(dateStr: string, timeStr?: string): boolean {
+  if (!dateStr) return false;
+  const today = getTodayDateLocal();
+  if (dateStr < today) return true;
+  if (dateStr === today && timeStr) {
+    const nowTime = getCurrentTimeLocal();
+    return timeStr < nowTime;
+  }
+  return false;
+}
+
 export function useAppointmentForm(onSuccess?: () => void) {
   const { token } = useAuth();
   const { comercioId } = useComercioId();
@@ -80,6 +109,30 @@ export function useAppointmentForm(onSuccess?: () => void) {
     }
   }, [token, comercioId, error]);
 
+  const minDate = useMemo(() => getTodayDateLocal(), []);
+  const minTime = useMemo(() => {
+    return data === minDate ? getCurrentTimeLocal() : undefined;
+  }, [data, minDate]);
+
+  const dateError = useMemo(() => {
+    if (!data) return null;
+    const today = getTodayDateLocal();
+    if (data < today) return 'Não é permitido selecionar uma data anterior a hoje.';
+    return null;
+  }, [data]);
+
+  const timeError = useMemo(() => {
+    if (!data || !horario) return null;
+    const today = getTodayDateLocal();
+    const nowTime = getCurrentTimeLocal();
+    if (data === today && horario < nowTime) {
+      return 'Não é permitido selecionar um horário anterior ao horário atual.';
+    }
+    return null;
+  }, [data, horario]);
+
+  const isDateTimeInvalid = Boolean(dateError || timeError);
+
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
@@ -93,10 +146,24 @@ export function useAppointmentForm(onSuccess?: () => void) {
       return;
     }
 
+    // Re-validação rigorosa de data e hora no submit (horário local)
+    const currentToday = getTodayDateLocal();
+    const currentTime = getCurrentTimeLocal();
+
+    if (data < currentToday) {
+      error("Não é possível agendar em uma data anterior a hoje.");
+      return;
+    }
+
+    if (data === currentToday && horario < currentTime) {
+      error("Não é possível agendar em um horário anterior ao horário atual.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      const dataIso = new Date(data).toISOString();
+      const dataIso = `${data}T00:00:00.000Z`;
       const horarioComSegundos = horario.length === 5 ? `${horario}:00` : horario;
 
       const payload = {
@@ -156,6 +223,11 @@ export function useAppointmentForm(onSuccess?: () => void) {
     isSubmitting,
     fetchOptions,
     handleSubmit,
-    resetForm
+    resetForm,
+    minDate,
+    minTime,
+    dateError,
+    timeError,
+    isDateTimeInvalid,
   };
 }

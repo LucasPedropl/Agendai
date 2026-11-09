@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SearchableSelect } from '@/components/ui/searchable-select';
-import { useAppointmentForm } from '../hooks/useAppointmentForm';
+import { useAppointmentForm, getTodayDateLocal, getCurrentTimeLocal, isPastDateTime } from '../hooks/useAppointmentForm';
 import { Loader2 } from 'lucide-react';
 
 interface AppointmentFormProps {
@@ -20,7 +20,12 @@ export function AppointmentForm({ onSuccess, onCancel, initialData, initialTime 
     isLoadingOptions, 
     isSubmitting, 
     fetchOptions, 
-    handleSubmit 
+    handleSubmit,
+    minDate,
+    minTime,
+    dateError,
+    timeError,
+    isDateTimeInvalid,
   } = useAppointmentForm(onSuccess);
 
   useEffect(() => {
@@ -28,8 +33,23 @@ export function AppointmentForm({ onSuccess, onCancel, initialData, initialTime 
   }, [fetchOptions]);
 
   useEffect(() => {
-    if (initialData) setters.setData(initialData);
-    if (initialTime) setters.setHorario(initialTime);
+    if (initialData) {
+      const today = getTodayDateLocal();
+      const safeDate = initialData < today ? today : initialData;
+      setters.setData(safeDate);
+
+      if (initialTime) {
+        if (safeDate === today) {
+          const nowTime = getCurrentTimeLocal();
+          const safeTime = initialTime < nowTime ? nowTime : initialTime;
+          setters.setHorario(safeTime);
+        } else {
+          setters.setHorario(initialTime);
+        }
+      }
+    } else if (initialTime) {
+      setters.setHorario(initialTime);
+    }
   }, [initialData, initialTime, setters]);
 
   if (isLoadingOptions) {
@@ -50,10 +70,14 @@ export function AppointmentForm({ onSuccess, onCancel, initialData, initialTime 
             id="data" 
             type="date"
             required 
+            min={minDate}
             value={formState.data} 
             onChange={(e) => setters.setData(e.target.value)}
-            className="rounded-xl"
+            className={`rounded-xl ${dateError ? 'border-destructive focus-visible:ring-destructive/30' : ''}`}
           />
+          {dateError && (
+            <p className="text-xs text-destructive font-medium">{dateError}</p>
+          )}
         </div>
         <div className="space-y-2">
           <label className="text-sm font-semibold text-foreground" htmlFor="horario">Horário</label>
@@ -61,10 +85,14 @@ export function AppointmentForm({ onSuccess, onCancel, initialData, initialTime 
             id="horario" 
             type="time"
             required 
+            min={minTime}
             value={formState.horario} 
             onChange={(e) => setters.setHorario(e.target.value)}
-            className="rounded-xl"
+            className={`rounded-xl ${timeError ? 'border-destructive focus-visible:ring-destructive/30' : ''}`}
           />
+          {timeError && (
+            <p className="text-xs text-destructive font-medium">{timeError}</p>
+          )}
         </div>
       </div>
 
@@ -123,8 +151,8 @@ export function AppointmentForm({ onSuccess, onCancel, initialData, initialTime 
         )}
         <Button 
           type="submit" 
-          disabled={isSubmitting}
-          className="rounded-xl px-8 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
+          disabled={isSubmitting || isDateTimeInvalid}
+          className="rounded-xl px-8 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100"
         >
           {isSubmitting ? (
             <>
