@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,6 @@ import { CheckCircle2, Eye, EyeOff, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { User } from '@/types';
 import { GoogleLogin } from '@react-oauth/google';
-import FacebookLogin from '@greatsumini/react-facebook-login';
 import { getFriendlyErrorMessage, isApiError } from '@/lib/errors';
 
 const PENDING_CPF_MISMATCH_API_MESSAGE = 'Dados cadastrais incompatíveis com o cadastro existente.';
@@ -49,6 +48,43 @@ export default function CadastroPage() {
   const { login } = useAuth();
   
   const [step, setStep] = useState(initialEmail ? 1 : 1); // Start at step 1 anyway
+
+  const [googleBtnWidth, setGoogleBtnWidth] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const estimated = window.innerWidth - 32;
+      return Math.min(400, Math.max(200, Math.floor(estimated)));
+    }
+    return 400;
+  });
+  const googleContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = googleContainerRef.current;
+    if (!el) return;
+
+    const updateWidth = () => {
+      const width = el.clientWidth;
+      if (width > 0) {
+        const clamped = Math.min(400, Math.max(200, Math.floor(width)));
+        setGoogleBtnWidth((prev) => (prev !== clamped ? clamped : prev));
+      }
+    };
+
+    updateWidth();
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width = entry.contentRect.width;
+        if (width > 0) {
+          const clamped = Math.min(400, Math.max(200, Math.floor(width)));
+          setGoogleBtnWidth((prev) => (prev !== clamped ? clamped : prev));
+        }
+      }
+    });
+
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [step]);
 
   const isCliente = type === 'cliente';
   const isProfissional = type === 'profissional';
@@ -192,35 +228,62 @@ export default function CadastroPage() {
     setStep(prev => prev - 1);
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'facebook', tokenPayload: any) => {
+  const handleSocialLogin = async (tokenPayload: { idToken: string }) => {
     setIsLoading(true);
     setError('');
 
     try {
-      const endpoint = provider === 'google' ? '/api/Login/google-login' : '/api/Login/facebook-login';
-      const response = await fetchApi(endpoint, {
+      const response = await fetchApi('/api/Login/google-login', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(tokenPayload)
+        body: JSON.stringify(tokenPayload),
       });
 
-      const token = response.token || response.accessToken || (typeof response === 'string' ? response : 'mock-jwt-token');
-      
-      const mockUser: User = type === 'cliente' 
-        ? { id: '1', nome: response.nome || 'Usuário', email: response.email || '', tipo: 'cliente' }
-        : { id: 1, nome: response.nome || 'Estabelecimento', email: response.email || '', endereco: '', imagem: '', avaliacao: 5, totalAvaliacoes: 0, horarioFuncionamento: '', tipo: 'estabelecimento' };
-      
-      login(mockUser, token, type as any);
+      const token = response.token || response.accessToken || (typeof response === 'string' ? response : '');
+      if (!token) {
+        throw new Error('Não foi possível concluir o login com o Google.');
+      }
 
-      navigate(type === 'cliente' ? '/app' : '/estabelecimento/dashboard');
+      const realType: 'cliente' | 'profissional' | 'estabelecimento' =
+        type === 'profissional' || type === 'estabelecimento' ? type : 'cliente';
+
+      const buildMockUser = (userType: 'cliente' | 'profissional' | 'estabelecimento'): User => {
+        const id = response.id || response.usuarioId || 1;
+        const nome = String(response.nome || 'Usuário');
+        const userEmail = String(response.email || formData.email || '');
+
+        if (userType === 'cliente') {
+          return { id: String(id), nome, email: userEmail, tipo: 'cliente' };
+        }
+        if (userType === 'profissional') {
+          return { id: String(id), nome, email: userEmail } as User;
+        }
+        return {
+          id: Number(id) || 1,
+          nome,
+          email: userEmail,
+          endereco: '',
+          imagem: '',
+          avaliacao: 5,
+          totalAvaliacoes: 0,
+          horarioFuncionamento: '',
+          tipo: 'estabelecimento',
+        };
+      };
+
+      const mockUser = buildMockUser(realType);
+      
+      login(mockUser, token, realType);
+
+      navigate(realType === 'cliente' ? '/app' : '/estabelecimento/dashboard');
     } catch (err: unknown) {
       console.error(err);
       setError(
         getFriendlyErrorMessage(
           err,
-          `Não foi possível entrar com ${provider === 'google' ? 'Google' : 'Facebook'}. Tente novamente.`,
+          'Não foi possível entrar com o Google. Tente novamente.',
         ),
       );
     } finally {
@@ -290,16 +353,16 @@ export default function CadastroPage() {
       <div className="flex min-h-[calc(100vh-160px)] items-center justify-center px-4 py-12">
         <Card className="w-full max-w-md text-center">
           <CardHeader>
-            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-              <CheckCircle2 className="h-6 w-6 text-green-600" />
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-950/40">
+              <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
-            <CardTitle className="text-2xl font-bold">Cadastro Realizado!</CardTitle>
-            <CardDescription className="text-base mt-2">
+            <CardTitle className="text-2xl font-bold text-foreground">Cadastro Realizado!</CardTitle>
+            <CardDescription className="text-base mt-2 text-muted-foreground">
               Enviamos um email de confirmação para <strong>{formData.email}</strong>.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-gray-600 mb-6">
+            <p className="text-sm text-muted-foreground mb-6">
               Por favor, verifique sua caixa de entrada e clique no link enviado para ativar sua conta.
               Você só poderá fazer login após a ativação.
             </p>
@@ -421,20 +484,20 @@ export default function CadastroPage() {
   return (
     <div className="w-full max-w-md mx-auto">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900">Criar Conta</h1>
-        <p className="text-gray-600">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Criar Conta</h1>
+        <p className="mt-2 text-muted-foreground">
           Cadastre-se como {isCliente ? 'Cliente' : isProfissional ? 'Profissional' : 'Estabelecimento'}
         </p>
       </div>
 
       <div className="mb-6">
-        <div className="flex justify-between text-xs font-medium text-gray-500 mb-2">
+        <div className="flex justify-between text-xs font-medium text-muted-foreground mb-2">
           <span>Etapa {step} de {totalSteps}</span>
           <span>{Math.round((step / totalSteps) * 100)}%</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-muted rounded-full h-2">
           <div 
-            className="bg-indigo-600 h-2 rounded-full transition-all duration-300" 
+            className="bg-primary h-2 rounded-full transition-all duration-300" 
             style={{ width: `${(step / totalSteps) * 100}%` }}
           ></div>
         </div>
@@ -444,62 +507,38 @@ export default function CadastroPage() {
         
         {step === 1 && (
           <>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="flex-1 overflow-hidden rounded-md h-10 flex items-center justify-center border">
-                <GoogleLogin
-                  onSuccess={credentialResponse => {
-                    handleSocialLogin('google', { idToken: credentialResponse.credential });
-                  }}
-                  onError={() => {
-                    setError('Falha ao autenticar com o Google.');
-                  }}
-                  type="standard"
-                  theme="outline"
-                  size="large"
-                />
-              </div>
-
-              <FacebookLogin
-                appId={import.meta.env.VITE_FACEBOOK_APP_ID || "123456789"}
-                onSuccess={(response) => {
-                  handleSocialLogin('facebook', { accessToken: response.accessToken });
+            <div ref={googleContainerRef} className="w-full flex justify-center">
+              <GoogleLogin
+                key={googleBtnWidth}
+                onSuccess={(credentialResponse) => {
+                  if (credentialResponse.credential) {
+                    handleSocialLogin({ idToken: credentialResponse.credential });
+                  }
                 }}
-                onFail={(error) => {
-                  console.error('Facebook Login Error:', error);
-                  setError('Falha ao autenticar com o Facebook.');
+                onError={() => {
+                  setError('Falha ao autenticar com o Google.');
                 }}
-                onProfileSuccess={(response) => {
-                  console.log('Get Profile Success!', response);
-                }}
-                render={({ onClick }) => (
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={onClick}
-                    disabled
-                    className="flex-1 flex items-center justify-center gap-2 hover:bg-blue-50 hover:text-blue-600 transition-all h-10 opacity-50 cursor-not-allowed"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M13.397 20.997v-8.196h2.765l.411-3.209h-3.176V7.548c0-.926.258-1.56 1.587-1.56h1.684V3.127A22.336 22.336 0 0 0 14.201 3c-2.444 0-4.122 1.492-4.122 4.231v2.355H7.332v3.209h2.753v8.202h3.312z"></path>
-                    </svg>
-                    Facebook
-                  </Button>
-                )}
+                type="standard"
+                theme="outline"
+                size="large"
+                text="signup_with"
+                width={googleBtnWidth}
               />
             </div>
+
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+                <span className="w-full border-t border-border" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-gray-500">Ou continue com e-mail</span>
+                <span className="bg-background px-3 text-muted-foreground">Ou continue com e-mail</span>
               </div>
             </div>
           </>
         )}
 
         {error && (
-          <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">
+          <div className="rounded-xl bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
             {error}
           </div>
         )}
@@ -531,15 +570,15 @@ export default function CadastroPage() {
         <Button 
           type="button" 
           variant="outline" 
-          className="w-full border-dashed border-gray-400 text-gray-500 hover:text-gray-700" 
+          className="w-full border-dashed border-border text-muted-foreground hover:text-foreground" 
           onClick={handleFillRandomData}
         >
           Preencher Dados Aleatórios (Dev)
         </Button>
       </form>
-      <div className="mt-6 text-center text-sm text-gray-500">
+      <div className="mt-6 text-center text-sm text-muted-foreground">
         Já tem uma conta?{' '}
-        <Link to={`/login?type=${type}`} className="text-indigo-600 hover:underline">
+        <Link to={`/login?type=${type}`} className="text-primary font-semibold hover:underline">
           Entrar
         </Link>
       </div>

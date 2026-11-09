@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,37 @@ import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import { useToast } from '@/contexts/ToastContext';
 import { getFriendlyErrorMessage, hasApiStatus } from '@/lib/errors';
+
+interface PasswordCredentialData {
+  id: string;
+  password: string;
+  name?: string;
+  iconURL?: string;
+}
+
+interface PasswordCredentialInstance extends Credential {
+  readonly password?: string;
+  readonly name?: string;
+  readonly iconURL?: string;
+}
+
+interface PasswordCredentialConstructor {
+  new (data: PasswordCredentialData | HTMLFormElement): PasswordCredentialInstance;
+}
+
+declare global {
+  const PasswordCredential: PasswordCredentialConstructor;
+  interface Window {
+    PasswordCredential?: PasswordCredentialConstructor;
+  }
+  interface CredentialRequestOptions {
+    password?: boolean;
+  }
+}
+
+const REMEMBER_ME_KEY = 'agendai_remember_me';
+const REMEMBER_EMAIL_KEY = 'agendai_remember_email';
+const OLD_REMEMBER_PASSWORD_KEY = 'agendai_remember_password';
 
 const typeLabels: Record<string, string> = {
   cliente: 'Cliente',
@@ -40,17 +71,17 @@ export default function LoginPage() {
 
   const defaults = QA_CREDENTIALS[type] ?? QA_CREDENTIALS.cliente;
   const [rememberMe, setRememberMe] = useState(() => {
-    return typeof window !== 'undefined' && localStorage.getItem('agendai_remember_me') === 'true';
+    return typeof window !== 'undefined' && localStorage.getItem(REMEMBER_ME_KEY) === 'true';
   });
   const [email, setEmail] = useState(() => {
-    if (typeof window !== 'undefined' && localStorage.getItem('agendai_remember_me') === 'true') {
-      return localStorage.getItem('agendai_remember_email') || defaults.email;
+    if (typeof window !== 'undefined' && localStorage.getItem(REMEMBER_ME_KEY) === 'true') {
+      return localStorage.getItem(REMEMBER_EMAIL_KEY) || defaults.email;
     }
     return defaults.email;
   });
   const [password, setPassword] = useState(() => {
-    if (typeof window !== 'undefined' && localStorage.getItem('agendai_remember_me') === 'true') {
-      return localStorage.getItem('agendai_remember_password') || defaults.password;
+    if (typeof window !== 'undefined' && localStorage.getItem(REMEMBER_ME_KEY) === 'true') {
+      return '';
     }
     return defaults.password;
   });
@@ -58,18 +89,72 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  const [googleBtnWidth, setGoogleBtnWidth] = useState<number>(() => {
+    if (typeof window !== 'undefined') {
+      const estimated = window.innerWidth - 32;
+      return Math.min(400, Math.max(200, Math.floor(estimated)));
+    }
+    return 400;
+  });
+  const googleContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const isRemembered = localStorage.getItem('agendai_remember_me') === 'true';
+    const el = googleContainerRef.current;
+    if (!el) return;
+
+    const updateWidth = () => {
+      const width = el.clientWidth;
+      if (width > 0) {
+        const clamped = Math.min(400, Math.max(200, Math.floor(width)));
+        setGoogleBtnWidth((prev) => (prev !== clamped ? clamped : prev));
+      }
+    };
+
+    updateWidth();
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const width = entry.contentRect.width;
+        if (width > 0) {
+          const clamped = Math.min(400, Math.max(200, Math.floor(width)));
+          setGoogleBtnWidth((prev) => (prev !== clamped ? clamped : prev));
+        }
+      }
+    });
+
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    // Purge any forbidden plaintext password
+    localStorage.removeItem(OLD_REMEMBER_PASSWORD_KEY);
+
+    const isRemembered = localStorage.getItem(REMEMBER_ME_KEY) === 'true';
     if (isRemembered) {
-      const savedEmail = localStorage.getItem('agendai_remember_email');
-      const savedPassword = localStorage.getItem('agendai_remember_password');
+      const savedEmail = localStorage.getItem(REMEMBER_EMAIL_KEY);
       if (savedEmail) setEmail(savedEmail);
-      if (savedPassword) setPassword(savedPassword);
       setRememberMe(true);
+
+      // Attempt to prefill password via Credential Management API (Chromium)
+      if (typeof window !== 'undefined' && 'credentials' in navigator) {
+        navigator.credentials
+          .get({ password: true, mediation: 'optional' })
+          .then((cred) => {
+            const pwCred = cred as PasswordCredentialInstance | null;
+            if (pwCred && pwCred.password) {
+              setPassword(pwCred.password);
+            }
+          })
+          .catch(() => {
+            // Silently ignore if not supported or no credentials
+          });
+      }
     } else {
       const creds = QA_CREDENTIALS[type] ?? QA_CREDENTIALS.cliente;
       setEmail(creds.email);
       setPassword(creds.password);
+      setRememberMe(false);
     }
     setError('');
   }, [type]);
@@ -124,12 +209,11 @@ export default function LoginPage() {
     navigate(getDashboardPath(actualUserType));
   };
 
-  const handleSocialLogin = async (provider: 'google' | 'facebook', tokenPayload: Record<string, unknown>) => {
+  const handleSocialLogin = async (tokenPayload: Record<string, unknown>) => {
     setIsLoading(true);
     setError('');
     try {
-      const endpoint = provider === 'google' ? '/api/Login/google-login' : '/api/Login/facebook-login';
-      const response = await fetchApi(endpoint, {
+      const response = await fetchApi('/api/Login/google-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(tokenPayload),
@@ -143,7 +227,7 @@ export default function LoginPage() {
     } catch (err: unknown) {
       const errorMessage = getFriendlyErrorMessage(
         err,
-        `Não foi possível entrar com ${provider === 'google' ? 'Google' : 'Facebook'}. Tente novamente.`,
+        'Não foi possível entrar com Google. Tente novamente.',
       );
       setError(errorMessage);
       toast.error(errorMessage);
@@ -167,6 +251,26 @@ export default function LoginPage() {
         console.error('Login sem token no corpo da resposta:', response);
         throw new Error('Não foi possível concluir o login. Tente novamente em alguns instantes.');
       }
+
+      // Gerenciamento de credenciais e flag "Lembrar meu e-mail e senha"
+      if (rememberMe) {
+        localStorage.setItem(REMEMBER_ME_KEY, 'true');
+        localStorage.setItem(REMEMBER_EMAIL_KEY, email);
+        if (typeof window !== 'undefined' && 'PasswordCredential' in window && 'credentials' in navigator) {
+          try {
+            await navigator.credentials.store(
+              new PasswordCredential({ id: email, password, name: email })
+            );
+          } catch (credErr) {
+            console.warn('Falha ao salvar credencial no gerenciador de senhas:', credErr);
+          }
+        }
+      } else {
+        localStorage.removeItem(REMEMBER_ME_KEY);
+        localStorage.removeItem(REMEMBER_EMAIL_KEY);
+      }
+      localStorage.removeItem(OLD_REMEMBER_PASSWORD_KEY);
+
       handleAuthSuccess(token, response);
     } catch (err: unknown) {
       // 400/401 aqui é recusa de credencial, não sessão expirada — a API nem sempre
@@ -202,37 +306,19 @@ export default function LoginPage() {
       </div>
 
       <form onSubmit={handleLogin} className="space-y-5">
-        <div className="flex flex-col sm:flex-row gap-2">
-          <div className="flex-1 overflow-hidden rounded-xl h-10 flex items-center justify-center border border-border">
-            <GoogleLogin
-              onSuccess={(credentialResponse) => {
-                handleSocialLogin('google', { idToken: credentialResponse.credential });
-              }}
-              onError={() => setError('Falha ao autenticar com o Google.')}
-              type="standard"
-              theme="outline"
-              size="large"
-            />
-          </div>
-          <FacebookLogin
-            appId={import.meta.env.VITE_FACEBOOK_APP_ID || '123456789'}
-            onSuccess={(response) => handleSocialLogin('facebook', { accessToken: response.accessToken })}
-            onFail={(fbError) => {
-              console.error('Facebook Login Error:', fbError);
-              setError('Falha ao autenticar com o Facebook.');
+        <div ref={googleContainerRef} className="w-full flex justify-center">
+          <GoogleLogin
+            key={googleBtnWidth}
+            onSuccess={(credentialResponse) => {
+              if (credentialResponse.credential) {
+                handleSocialLogin({ idToken: credentialResponse.credential });
+              }
             }}
-            onProfileSuccess={() => {}}
-            render={({ onClick }) => (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClick}
-                disabled
-                className="flex-1 h-10 opacity-50 cursor-not-allowed"
-              >
-                Facebook
-              </Button>
-            )}
+            onError={() => setError('Falha ao autenticar com o Google.')}
+            type="standard"
+            theme="outline"
+            size="large"
+            width={googleBtnWidth}
           />
         </div>
 
@@ -249,12 +335,13 @@ export default function LoginPage() {
           <label className="text-sm font-medium text-foreground" htmlFor="email">E-mail</label>
           <Input
             id="email"
+            name="username"
             type="email"
             placeholder="seu@email.com"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
+            autoComplete="username"
           />
         </div>
 
@@ -268,6 +355,7 @@ export default function LoginPage() {
           <div className="relative">
             <Input
               id="password"
+              name="password"
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               required
@@ -284,6 +372,23 @@ export default function LoginPage() {
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <input
+            id="rememberMe"
+            name="rememberMe"
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="h-4 w-4 rounded border-input text-primary focus:ring-primary accent-primary cursor-pointer"
+          />
+          <label
+            htmlFor="rememberMe"
+            className="text-sm text-muted-foreground select-none cursor-pointer"
+          >
+            Lembrar meu e-mail e senha
+          </label>
         </div>
 
         {error && (
