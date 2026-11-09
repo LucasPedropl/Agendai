@@ -35,6 +35,11 @@ import AdminWhatsAppPage from '@/app/(admin)/whatsapp/page';
 import AdminIntegracoesPage from '@/app/(admin)/integracoes/page';
 import AdminConfigPage from '@/app/(admin)/config/page';
 import AgendarPage from '@/app/(client)/agendar/page';
+import { BookingLayout } from '@/features/booking/components/BookingLayout';
+import { ServiceStep } from '@/features/booking/components/ServiceStep';
+import { ProfessionalStep } from '@/features/booking/components/ProfessionalStep';
+import { CalendarStep } from '@/features/booking/components/CalendarStep';
+import { ConfirmStep } from '@/features/booking/components/ConfirmStep';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import {
@@ -90,6 +95,12 @@ function AppRoutes() {
         {/* Client Routes */}
         <Route path="/app" element={<ProtectedRoute allowedType="cliente"><ClientLayout /></ProtectedRoute>}>
           <Route index element={<AgendarPage />} />
+          <Route path="estabelecimento/:comercioId" element={<BookingLayout />}>
+            <Route index element={<ServiceStep />} />
+            <Route path="profissional" element={<ProfessionalStep />} />
+            <Route path="horario" element={<CalendarStep />} />
+            <Route path="confirmar" element={<ConfirmStep />} />
+          </Route>
           <Route path="agendamentos" element={<ClientDashboardPage />} />
           <Route path="historico" element={<ClientHistoryPage />} />
           <Route path="perfil" element={<ClientProfilePage />} />
