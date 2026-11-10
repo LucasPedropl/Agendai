@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
   CalendarIcon, 
   ClockIcon, 
@@ -22,7 +22,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { motion, AnimatePresence } from 'motion/react';
-import { cn } from '@/lib/utils';
+import { cn, findActiveNavLabel } from '@/lib/utils';
 
 /**
  * ClientLayout (Smart Component)
@@ -44,6 +44,30 @@ export function ClientLayout() {
   });
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  const userId = user?.id ? String(user.id) : undefined;
+
+  const { data: usuarioPerfil } = useQuery<{ nome?: string; sobrenome?: string } | null>({
+    queryKey: userId ? queryKeys.clientePerfil(userId) : (['cliente', 'perfil'] as const),
+    queryFn: async () => {
+      const data: unknown = await fetchApi(`/api/Usuario/${userId}`, { skipToast: true });
+      if (data && typeof data === 'object') {
+        const record = data as Record<string, unknown>;
+        return {
+          nome: typeof record.nome === 'string' ? record.nome : undefined,
+          sobrenome: typeof record.sobrenome === 'string' ? record.sobrenome : undefined,
+        };
+      }
+      return null;
+    },
+    enabled: Boolean(userId),
+  });
+
+  const clienteNomeCompleto = [usuarioPerfil?.nome, usuarioPerfil?.sobrenome]
+    .filter((part): part is string => typeof part === 'string' && part.trim().length > 0)
+    .map((part) => part.trim())
+    .join(' ');
+  const displayName = clienteNomeCompleto || user?.nome || 'Usuário';
 
   useEffect(() => {
     const userId = user?.id ? String(user.id) : undefined;
@@ -118,9 +142,16 @@ export function ClientLayout() {
     }
   ];
 
-  const currentPathLabel = navCategories
-    .flatMap(cat => cat.items)
-    .find(item => location.pathname === item.to || location.pathname.startsWith(item.to + '/'))?.label || "Área do Cliente";
+  const extraRouteLabels: ReadonlyArray<{ to: string; label: string }> = [
+    { to: '/app/perfil', label: 'Meu Perfil' },
+    { to: '/app/estabelecimento', label: 'Agendar Serviço' },
+  ];
+
+  const currentPathLabel = findActiveNavLabel(
+    location.pathname,
+    [...navCategories.flatMap((cat) => cat.items), ...extraRouteLabels],
+    'Área do Cliente'
+  );
 
   return (
     <div className="h-screen bg-background text-foreground flex overflow-hidden">
@@ -129,10 +160,11 @@ export function ClientLayout() {
         isMobileOpen={isMobileSidebarOpen}
         onMobileClose={() => setIsMobileSidebarOpen(false)}
         navCategories={navCategories}
-        userName={user?.nome}
+        userName={displayName}
         userRole="Cliente"
         onLogout={handleLogout}
         commerceName="Agendai"
+        showWorkspaceSelector={false}
       />
 
       <div className={cn(
@@ -143,8 +175,8 @@ export function ClientLayout() {
           onToggleSidebar={toggleSidebar}
           theme={theme as 'light' | 'dark'}
           onToggleTheme={toggleTheme}
-          userName={user?.nome}
-          userInitials={user?.nome?.charAt(0) || 'C'}
+          userName={displayName}
+          userInitials={displayName ? displayName.charAt(0).toUpperCase() : 'U'}
           isProfileOpen={isProfileOpen}
           onToggleProfile={() => setIsProfileOpen(!isProfileOpen)}
           breadcrumb={currentPathLabel}
@@ -166,7 +198,7 @@ export function ClientLayout() {
                 className="absolute right-8 top-16 mt-2 w-56 origin-top-right rounded-xl bg-background border border-border p-1 shadow-2xl z-50 overflow-hidden"
               >
                 <div className="px-3 py-2 border-b border-border mb-1">
-                  <p className="text-xs font-bold truncate text-foreground">{user?.nome}</p>
+                  <p className="text-xs font-bold truncate text-foreground">{displayName}</p>
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Cliente</p>
                 </div>
                 <button 

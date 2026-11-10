@@ -21,9 +21,15 @@ export function UpcomingAppointmentsCard({
       <div>
         <CardHeader className="border-b border-border bg-muted/20 pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-bold text-foreground">
-              {isProfissional ? 'Meus Próximos Atendimentos' : 'Próximos Clientes'}
-            </CardTitle>
+            <div>
+              <CardTitle className="text-base font-bold text-foreground">
+                {isProfissional ? 'Próximos atendimentos do estabelecimento' : 'Próximos Clientes'}
+              </CardTitle>
+              {isProfissional && (
+                // GET /api/Agenda/Comercio/{id} não diz qual profissional atende.
+                <p className="mt-1 text-xs text-muted-foreground">Inclui os horários de toda a equipe.</p>
+              )}
+            </div>
             <button
               type="button"
               onClick={() => navigate(`${basePath}/agenda`)}

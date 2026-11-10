@@ -31,6 +31,10 @@ import {
 } from '@/hooks/useAdminQueries';
 import { AppointmentForm } from '@/features/agenda/components/AppointmentForm';
 import { Cliente } from '@/types';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { useToast } from '@/contexts/ToastContext';
+import { fetchApi } from '@/lib/api';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 
 interface AgendaItem {
   id: string;
@@ -146,7 +150,10 @@ function mapAgendaItem(raw: Record<string, unknown>, index: number): AgendaItem 
 
 export default function AdminAgendaPage() {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const { comercioId, isLoading: isLoadingComercio } = useComercioId();
+  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
   const { data: rawList = [], isPending: isLoadingAgenda } = useAgendaComercio(comercioId);
   const { data: servicosList = [] } = useServicosComercio(comercioId);
   const { data: clientesList = [] } = useComercioUsuarios<Cliente>(comercioId, 'Clientes');
@@ -178,6 +185,27 @@ export default function AdminAgendaPage() {
   const refreshAgenda = () => {
     if (comercioId) {
       void queryClient.invalidateQueries({ queryKey: queryKeys.agendaComercio(comercioId) });
+    }
+  };
+
+  /** `DELETE /api/Agenda/Comercio-Cancela/{id}` com corpo `true` (Admin e Profissional). */
+  const handleCancelAppointment = async () => {
+    if (!selectedAppointmentForDetails) return;
+    setIsCancelling(true);
+    try {
+      await fetchApi(`/api/Agenda/Comercio-Cancela/${selectedAppointmentForDetails.id}`, {
+        method: 'DELETE',
+        body: 'true',
+        skipToast: true,
+      });
+      toast.success('Agendamento cancelado.');
+      setIsCancelConfirmOpen(false);
+      setSelectedAppointmentForDetails(null);
+      refreshAgenda();
+    } catch (err: unknown) {
+      toast.error(getFriendlyErrorMessage(err, 'Não foi possível cancelar o agendamento.'));
+    } finally {
+      setIsCancelling(false);
     }
   };
 
@@ -491,7 +519,17 @@ export default function AdminAgendaPage() {
             </div>
 
             {/* Ações */}
-            <div className="pt-3 flex justify-end border-t border-border">
+            <div className="pt-3 flex justify-end gap-2 border-t border-border">
+              {!/cancel|conclu/i.test(enrichedAppointmentDetails.status) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsCancelConfirmOpen(true)}
+                  className="rounded-xl text-red-600 hover:text-red-700 hover:bg-red-500/10"
+                >
+                  Cancelar agendamento
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -504,6 +542,18 @@ export default function AdminAgendaPage() {
           </div>
         )}
       </Modal>
+
+      <ConfirmDialog
+        isOpen={isCancelConfirmOpen}
+        onClose={() => setIsCancelConfirmOpen(false)}
+        onConfirm={handleCancelAppointment}
+        title="Cancelar agendamento?"
+        description="O horário volta a ficar livre na agenda. Essa ação não pode ser desfeita."
+        confirmLabel="Cancelar agendamento"
+        cancelLabel="Voltar"
+        variant="destructive"
+        isLoading={isCancelling}
+      />
 
       {/* Modal de Novo Agendamento */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Novo Agendamento" size="lg">

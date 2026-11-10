@@ -10,9 +10,8 @@ import {
   Receipt,
   PieChart,
   ChevronRight,
-  MoreVertical,
-  Filter
 } from 'lucide-react';
+import { formatBRL } from '@/lib/utils';
 import { Pagamento } from '@/hooks/useFinance';
 import { useClientePagamentos } from '@/hooks/useClienteQueries';
 import { Button } from '@/components/ui/button';
@@ -31,13 +30,35 @@ export default function ClientFinancasPage() {
   const pagamentosList = pagamentos as Pagamento[];
 
   const stats = useMemo(() => {
-    const total = pagamentosList.reduce((acc, curr) => acc + curr.valor, 0);
+    const valorDe = (p: Pagamento) => (Number.isFinite(Number(p.valor)) ? Number(p.valor) : 0);
+    const pagos = pagamentosList.filter((p) => p.statusPagamento === PAYMENT_STATUS.Pago);
+    const total = pagos.reduce((acc, curr) => acc + valorDe(curr), 0);
+    // Média só sobre os meses em que houve pagamento (antes dividia sempre por 12).
+    const meses = new Set(
+      pagos
+        .map((p) => new Date(p.dataCriacao))
+        .filter((d) => !Number.isNaN(d.getTime()))
+        .map((d) => `${d.getFullYear()}-${d.getMonth()}`),
+    );
+    const agora = new Date();
+    const pendenteDoMes = pagamentosList
+      .filter((p) => p.statusPagamento === PAYMENT_STATUS.Pendente)
+      .filter((p) => {
+        const d = new Date(p.dataCriacao);
+        return d.getFullYear() === agora.getFullYear() && d.getMonth() === agora.getMonth();
+      })
+      .reduce((acc, curr) => acc + valorDe(curr), 0);
     return {
       totalGasto: total,
-      servicosRealizados: pagamentosList.length,
-      mediaMensal: pagamentosList.length > 0 ? total / 12 : 0,
+      servicosRealizados: pagos.length,
+      mediaMensal: meses.size > 0 ? total / meses.size : 0,
+      faturaAtual: pendenteDoMes,
     };
   }, [pagamentosList]);
+
+  const scrollToHistorico = () => {
+    document.getElementById('historico-pagamentos')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const getStatusBadge = (status: number) => {
     const label = getPaymentStatusLabel(status);
@@ -96,7 +117,7 @@ export default function ClientFinancasPage() {
                 </div>
                 <div>
                   <p className="text-[10px] font-bold uppercase text-slate-500">Média Mensal</p>
-                  <p className="text-sm font-bold">R$ {stats.mediaMensal.toFixed(2)}</p>
+                  <p className="text-sm font-bold">{formatBRL(stats.mediaMensal)}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -116,10 +137,18 @@ export default function ClientFinancasPage() {
         <div className="bg-primary p-10 rounded-[2.5rem] text-primary-foreground shadow-xl flex flex-col justify-between relative overflow-hidden group">
           <div className="relative z-10 space-y-4">
             <h3 className="text-xl font-bold">Fatura Atual</h3>
-            <p className="text-3xl font-black">R$ 0,00</p>
-            <p className="text-xs opacity-70">Nenhum pagamento pendente para este mês.</p>
+            <p className="text-3xl font-black">{formatBRL(stats.faturaAtual)}</p>
+            <p className="text-xs opacity-70">
+              {stats.faturaAtual > 0
+                ? 'Pagamentos pendentes neste mês.'
+                : 'Nenhum pagamento pendente para este mês.'}
+            </p>
           </div>
-          <Button variant="outline" className="relative z-10 w-full rounded-2xl font-bold h-12 shadow-lg group-hover:scale-[1.02] transition-transform text-foreground">
+          <Button
+            variant="outline"
+            onClick={scrollToHistorico}
+            className="relative z-10 w-full rounded-2xl font-bold h-12 shadow-lg group-hover:scale-[1.02] transition-transform text-foreground"
+          >
             Ver Faturas <ChevronRight className="h-4 w-4 ml-1" />
           </Button>
           <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -127,15 +156,12 @@ export default function ClientFinancasPage() {
       </div>
 
       {/* Transactions Section */}
-      <div className="space-y-6">
+      <div id="historico-pagamentos" className="space-y-6 scroll-mt-6">
         <div className="flex items-center justify-between px-2">
           <h2 className="text-2xl font-extrabold flex items-center gap-3">
             <TrendingUp className="h-6 w-6 text-primary" />
             Histórico de Pagamentos
           </h2>
-          <Button variant="ghost" size="sm" className="rounded-xl font-bold text-xs gap-2">
-            <Filter className="h-4 w-4" /> Filtrar
-          </Button>
         </div>
 
         <div className="bg-card border border-border rounded-[2.5rem] overflow-hidden shadow-sm">
@@ -195,9 +221,6 @@ export default function ClientFinancasPage() {
                     </div>
                     <div className="flex items-center gap-4">
                       {getStatusBadge(pagamento.statusPagamento)}
-                      <button className="h-10 w-10 rounded-xl bg-accent flex items-center justify-center text-muted-foreground hover:bg-primary/10 hover:text-primary transition-all">
-                        <MoreVertical className="h-5 w-5" />
-                      </button>
                     </div>
                   </div>
                 </motion.div>

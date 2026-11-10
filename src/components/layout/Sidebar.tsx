@@ -26,6 +26,8 @@ interface SidebarProps {
   onLogout: () => void;
   commerceName?: string;
   commerceInitials?: string;
+  workspaceSubtitle?: string;
+  showWorkspaceSelector?: boolean;
 }
 
 export function Sidebar({
@@ -38,6 +40,8 @@ export function Sidebar({
   onLogout,
   commerceName = 'Agendai HQ',
   commerceInitials = 'HQ',
+  workspaceSubtitle,
+  showWorkspaceSelector = true,
 }: SidebarProps) {
   return (
     <>
@@ -84,12 +88,14 @@ export function Sidebar({
           )}
         </div>
 
-        <WorkspaceSelector
-          isCollapsed={isCollapsed}
-          name={commerceName}
-          initials={commerceInitials}
-          plan="Professional Plan"
-        />
+        {showWorkspaceSelector && (
+          <WorkspaceSelector
+            isCollapsed={isCollapsed}
+            name={commerceName}
+            initials={commerceInitials}
+            plan={workspaceSubtitle}
+          />
+        )}
 
         <nav
           className={cn(

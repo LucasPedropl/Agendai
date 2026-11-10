@@ -7,6 +7,7 @@ import { getFriendlyErrorMessage } from '@/lib/errors';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { User } from '@/types';
+import { getDashboardPath, getUserIdFromToken, resolveUserTypeFromAuth } from '@/lib/apiHelpers';
 
 type EmailActivationResponse = { token?: string; permissao?: string };
 
@@ -51,15 +52,18 @@ export default function AtivarContaPage() {
       try {
         const activation = await postEmailActivation(userId, token);
         if (activation.token) {
-          const isCliente = activation.permissao === 'Cliente';
-          const userType = isCliente ? 'cliente' : 'estabelecimento';
-          
-          const mockUser: User = isCliente 
-            ? { id: userId, nome: 'Usuário', email: '', tipo: 'cliente' }
-            : { id: 1, nome: 'Estabelecimento', email: '', endereco: '', imagem: '', avaliacao: 5, totalAvaliacoes: 0, horarioFuncionamento: '', tipo: 'estabelecimento' };
-          
-          login(mockUser, activation.token, userType);
-          setRedirectPath(isCliente ? '/app' : '/estabelecimento/dashboard');
+          // Mesma resolução do login: Cliente, Profissional ou Estabelecimento (antes
+          // todo não-cliente virava estabelecimento e o profissional caía no painel errado).
+          const userType = resolveUserTypeFromAuth(activation.token, activation.permissao);
+          const realId = getUserIdFromToken(activation.token) || userId;
+
+          const activatedUser: User =
+            userType === 'estabelecimento'
+              ? { id: Number(realId), nome: 'Estabelecimento', email: '', endereco: '', imagem: '', avaliacao: 5, totalAvaliacoes: 0, horarioFuncionamento: '', tipo: 'estabelecimento' }
+              : ({ id: String(realId), nome: userType === 'profissional' ? 'Profissional' : 'Usuário', email: '', tipo: userType } as User);
+
+          login(activatedUser, activation.token, userType);
+          setRedirectPath(getDashboardPath(userType));
         }
 
         setStatus('success');

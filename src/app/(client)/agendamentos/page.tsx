@@ -10,7 +10,6 @@ import {
   ChevronRight,
   Filter,
   Search,
-  MoreVertical,
   CalendarDays,
   Sparkles
 } from 'lucide-react';
@@ -27,6 +26,7 @@ import { Input } from '@/components/ui/input';
 import { fetchApi } from '@/lib/api';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/queryKeys';
+import { formatBRL } from '@/lib/utils';
 
 interface Agendamento {
   id: number;
@@ -271,7 +271,8 @@ export default function ClientDashboardPage() {
               const rawHora = agendamento.horaAgendamento || agendamento.horario;
               const formattedTime = rawHora 
                 ? String(rawHora).slice(0, 5) 
-                : (isValidDate && format(data, "HH:mm") !== "00:00" ? format(data, "HH:mm") : "--:--");
+                // A API do cliente não devolve a hora (AgendaView sem HoraAgendamento).
+                : (isValidDate && format(data, "HH:mm") !== "00:00" ? format(data, "HH:mm") : "Não informada");
               const isPendenteOuConfirmado = config.label === 'Pendente' || config.label === 'Confirmado';
               
               return (
@@ -280,12 +281,6 @@ export default function ClientDashboardPage() {
                   key={agendamento.id}
                   className="group bg-card border border-border rounded-[2rem] p-6 hover:shadow-xl hover:border-primary/20 transition-all duration-300 relative overflow-hidden"
                 >
-                  <div className="absolute top-0 right-0 p-4">
-                    <button className="text-muted-foreground hover:text-foreground">
-                      <MoreVertical className="h-5 w-5" />
-                    </button>
-                  </div>
-
                   <div className="space-y-6">
                     {/* Status & Badge */}
                     <div className="flex items-center gap-2">
@@ -300,10 +295,12 @@ export default function ClientDashboardPage() {
                       <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
                         {agendamento.servicoNome}
                       </h3>
-                      <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
-                        <MapPin className="h-3.5 w-3.5" />
-                        {agendamento.estabelecimentoNome || 'Estabelecimento Local'}
-                      </p>
+                      {agendamento.estabelecimentoNome && (
+                        <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
+                          <MapPin className="h-3.5 w-3.5" />
+                          {agendamento.estabelecimentoNome}
+                        </p>
+                      )}
                     </div>
 
                     {/* Date & Time Box */}
@@ -332,7 +329,7 @@ export default function ClientDashboardPage() {
                       <div className="text-right">
                         <p className="text-[10px] font-bold uppercase text-muted-foreground">Valor</p>
                         <p className="text-sm font-extrabold text-foreground">
-                          {agendamento.valor ? `R$ ${agendamento.valor.toFixed(2)}` : 'A consultar'}
+                          {agendamento.valor ? formatBRL(Number(agendamento.valor)) : 'A consultar'}
                         </p>
                       </div>
                     </div>

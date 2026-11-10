@@ -35,7 +35,7 @@ import { Topbar } from './Topbar';
 import { motion, AnimatePresence } from 'motion/react';
 import { Modal } from '@/components/ui/modal';
 import { AppointmentForm } from '@/features/agenda/components/AppointmentForm';
-import { cn } from '@/lib/utils';
+import { cn, findActiveNavLabel } from '@/lib/utils';
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { fetchApi } from '@/lib/api';
@@ -49,7 +49,7 @@ import { queryKeys } from '@/lib/queryKeys';
 
 function AdminLayoutShell() {
   const { logout, user, token, userType } = useAuth();
-  const { comercioId, isLoading: isLoadingCommerce, hasCommerce, reload, error: comercioError } = useComercioContext();
+  const { comercios, comercioId, isLoading: isLoadingCommerce, hasCommerce, reload, error: comercioError } = useComercioContext();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
@@ -68,6 +68,16 @@ function AdminLayoutShell() {
 
   const roleLabel = userType === 'estabelecimento' ? 'Administrador' : (userType as string) === 'profissional' ? 'Profissional' : 'Estabelecimento';
   const isProfissional = userType === 'profissional';
+
+  const activeCommerce = comercios.find((c) => c.id === comercioId) ?? comercios[0];
+  const commerceName = activeCommerce?.nome?.trim() || (isProfissional ? 'Meu Espaço' : 'Estabelecimento');
+  const commerceInitials = (() => {
+    const parts = commerceName.split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return 'HQ';
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  })();
+  const workspaceSubtitle = isProfissional ? 'Profissional' : 'Estabelecimento';
 
   useEffect(() => {
     if (!token) return;
@@ -175,9 +185,15 @@ function AdminLayoutShell() {
     ])
   ];
 
-  const currentPathLabel = navCategories
-    .flatMap(cat => cat.items)
-    .find(item => location.pathname === item.to || location.pathname.startsWith(item.to + '/'))?.label || "Dashboard";
+  const extraRouteLabels: ReadonlyArray<{ to: string; label: string }> = [
+    { to: basePath, label: 'Dashboard' },
+  ];
+
+  const currentPathLabel = findActiveNavLabel(
+    location.pathname,
+    [...navCategories.flatMap((cat) => cat.items), ...extraRouteLabels],
+    'Dashboard'
+  );
 
   const mobileNavItems = [
     { to: `${basePath}/dashboard`, icon: MobileDashboardIcon, label: 'Início' },
@@ -221,7 +237,9 @@ function AdminLayoutShell() {
         userName={user?.nome}
         userRole={roleLabel}
         onLogout={handleLogout}
-        commerceName="Agendai HQ"
+        commerceName={commerceName}
+        commerceInitials={commerceInitials}
+        workspaceSubtitle={workspaceSubtitle}
       />
 
       <div className={cn(

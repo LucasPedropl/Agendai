@@ -69,13 +69,15 @@ export default function LoginPage() {
   const { login } = useAuth();
   const toast = useToast();
 
-  const defaults = QA_CREDENTIALS[type] ?? QA_CREDENTIALS.cliente;
+  const isDev = import.meta.env.DEV;
+  const defaults = isDev ? (QA_CREDENTIALS[type] ?? QA_CREDENTIALS.cliente) : { email: '', password: '' };
   const [rememberMe, setRememberMe] = useState(() => {
     return typeof window !== 'undefined' && localStorage.getItem(REMEMBER_ME_KEY) === 'true';
   });
   const [email, setEmail] = useState(() => {
     if (typeof window !== 'undefined' && localStorage.getItem(REMEMBER_ME_KEY) === 'true') {
-      return localStorage.getItem(REMEMBER_EMAIL_KEY) || defaults.email;
+      const saved = localStorage.getItem(REMEMBER_EMAIL_KEY);
+      if (saved) return saved;
     }
     return defaults.email;
   });
@@ -151,9 +153,14 @@ export default function LoginPage() {
           });
       }
     } else {
-      const creds = QA_CREDENTIALS[type] ?? QA_CREDENTIALS.cliente;
-      setEmail(creds.email);
-      setPassword(creds.password);
+      if (import.meta.env.DEV) {
+        const creds = QA_CREDENTIALS[type] ?? QA_CREDENTIALS.cliente;
+        setEmail(creds.email);
+        setPassword(creds.password);
+      } else {
+        setEmail('');
+        setPassword('');
+      }
       setRememberMe(false);
     }
     setError('');

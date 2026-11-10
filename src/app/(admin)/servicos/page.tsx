@@ -20,6 +20,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { getFriendlyErrorMessage } from '@/lib/errors';
+import { formatBRL } from '@/lib/utils';
 import {
   MIN_SERVICE_DURATION_MINUTES,
   MAX_SERVICE_DURATION_MINUTES,
@@ -136,12 +137,8 @@ export default function AdminServicosPage() {
 
     const payload = {
       comercioId: activeCommerceId,
-      categoria: [
-        {
-          idCategoria: catId
-        }
-      ],
-      icone: "string",
+      categoria: catId > 0 ? [{ idCategoria: catId }] : [],
+      icone: "",
       nome,
       servico: nome, // Adding this because API said it's required
       descricao,
@@ -278,8 +275,14 @@ export default function AdminServicosPage() {
   const getCategoriaNome = (servico: ServicoItem) =>
     servico.categorias?.[0]?.nome ?? servico.categoria ?? 'Sem categoria';
 
-  const formatPreco = (preco: number | string | undefined) =>
-    typeof preco === 'number' ? `R$ ${preco.toFixed(2)}` : preco ?? '—';
+  const formatPreco = (preco: number | string | undefined) => {
+    if (typeof preco === 'number') return formatBRL(preco);
+    if (typeof preco === 'string') {
+      const parsed = parseFloat(preco);
+      return Number.isFinite(parsed) ? formatBRL(parsed) : preco;
+    }
+    return preco ?? '—';
+  };
 
   const formatDuracao = (duracao: string | undefined) => {
     if (!duracao) return '—';
