@@ -14,6 +14,11 @@ export function useAcessoBixsStatus() {
     queryKey: queryKeys.acessoBixsStatus,
     queryFn: () => acessoBixsService.getStatus(),
     retry: false,
+    refetchOnWindowFocus: true,
+    refetchInterval: (query) => {
+      const result = query.state.data;
+      return result?.kind === 'loaded' && result.data.estado === 'Solicitado' ? 30_000 : false;
+    },
   });
 }
 

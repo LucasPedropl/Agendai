@@ -94,6 +94,10 @@ export const AcessoBixsRequestInputSchema = z
     /** Marca a reativação; vem do `estado` retornado por `/Comercios/status-acesso`. */
     isReactivation: z.boolean(),
   })
+  .refine((data) => data.isReactivation || data.password.length >= 8, {
+    message: 'A senha precisa ter pelo menos 8 caracteres.',
+    path: ['password'],
+  })
   .refine((data) => data.requestPayment || data.requestWhatsapp, {
     message: 'Marque ao menos Pagamentos ou WhatsApp.',
     path: ['requestPayment'],

@@ -76,8 +76,8 @@ export function AcessoBixsPanel() {
       const minutes = Math.round(VERIFICATION_CODE_TTL_SECONDS / 60);
       toast.success(
         emailAdmin
-          ? `Enviamos um código de 6 dígitos para ${emailAdmin}. Válido por ${minutes} minutos.`
-          : `Enviamos um código de 6 dígitos para o e-mail do administrador. Válido por ${minutes} minutos.`,
+          ? `Enviamos um código de 6 dígitos para ${emailAdmin}. Válido por ${minutes} minutos. Confira também a caixa de spam.`
+          : `Enviamos um código de 6 dígitos para o e-mail do administrador. Válido por ${minutes} minutos. Confira também a caixa de spam.`,
       );
     } catch (err) {
       if (err instanceof VerificationCodeEndpointMissingError) {
@@ -219,6 +219,19 @@ export function AcessoBixsPanel() {
             <ModuleStatusRow icon={CreditCard} label="Pagamentos" estado={status.payment} />
             <ModuleStatusRow icon={MessageSquare} label="WhatsApp" estado={status.whatsapp} />
           </div>
+          {status.payment === 'Inativo' ? (
+            <p className="text-sm text-amber-700 dark:text-amber-300" role="alert">
+              O módulo Pagamentos não foi liberado. Fale com o suporte.
+            </p>
+          ) : null}
+          {status.whatsapp === 'Inativo' ? (
+            <p className="text-sm text-amber-700 dark:text-amber-300" role="alert">
+              O módulo WhatsApp não foi liberado. Fale com o suporte.
+            </p>
+          ) : null}
+          <p className="text-xs text-muted-foreground">
+            Acabou de ser liberado? Saia e entre de novo no Agendai para ativar a integração.
+          </p>
         </div>
       );
     }

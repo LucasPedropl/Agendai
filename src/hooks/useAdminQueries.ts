@@ -44,6 +44,21 @@ export function useHistoricoComercio(
   });
 }
 
+/** Histórico de todos os meses (periodo 0); a API já exclui `Cancelado` quando não há filtro de status. */
+export function useHistoricoComercioTodos(comercioId: number | null) {
+  return useQuery({
+    queryKey: comercioId
+      ? queryKeys.historicoComercio(comercioId, '0', 'todos-os-meses')
+      : ['agenda', 'historico', 'todos', 'none'],
+    queryFn: async () => {
+      const path = buildComercioHistoricoPath({ comercioId: comercioId!, periodo: '0' });
+      const data = await fetchApi(path, { skipToast: true });
+      return normalizeApiList<Record<string, unknown>>(data, ['Histórico Vazio']);
+    },
+    enabled: Boolean(comercioId),
+  });
+}
+
 /** A API devolve `{message}` (ou, antes, uma string pura). */
 export function extractApiMessage(payload: unknown): string | null {
   if (typeof payload === 'string') return payload.trim() || null;

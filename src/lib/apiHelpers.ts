@@ -240,7 +240,10 @@ export async function fetchAdminComercios(
 export function mapWhatsAppStatus(raw: string | null | undefined): string {
   if (!raw) return 'DISCONNECTED';
   const lower = raw.toLowerCase();
+  if (lower.includes('token')) return 'TOKEN_PENDING';
   if (lower === 'connected' || lower === 'conectado') return 'CONNECTED';
+  if (lower === 'connecting' || lower === 'conectando') return 'CONNECTING';
+  if (lower === 'qr_required') return 'QR_REQUIRED';
   if (lower.includes('qr') || lower === 'qrcode_ready') return 'QRCODE_READY';
   if (
     lower.includes('sessão não encontrada') ||

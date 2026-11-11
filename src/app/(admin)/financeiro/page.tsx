@@ -36,7 +36,13 @@ import {
   Cell
 } from 'recharts';
 import { Transacao } from '@/types';
-import { usePagamentosEmpresa } from '@/hooks/useAdminQueries';
+import {
+  usePagamentosEmpresa,
+  useAgendaComercio,
+  useHistoricoComercioTodos,
+  useServicosComercio,
+} from '@/hooks/useAdminQueries';
+import { formatBRL } from '@/lib/utils';
 import { useComercioId } from '@/hooks/useComercioId';
 import { mapPaymentStatusToUi, getPaymentMethodLabel } from '@/lib/paymentEnums';
 import { getFriendlyErrorMessage } from '@/lib/errors';
@@ -66,6 +72,44 @@ interface RawPagamento {
 
 type StatusFilterOption = 'todos' | 'pago' | 'pendente' | 'cancelado' | 'reembolsado';
 
+interface RawServico {
+  id?: number | string;
+  Id?: number | string;
+  nome?: string;
+  Nome?: string;
+  preco?: number;
+  Preco?: number;
+}
+
+function normalizeStatus(value: unknown): string {
+  return String(value ?? '').toLowerCase().replace(/[\s_-]/g, '');
+}
+
+function isNaoRealizado(status: unknown, incluiCancelado: boolean): boolean {
+  const s = normalizeStatus(status);
+  if (s.includes('naocompareceu')) return true;
+  return incluiCancelado && s.includes('cancel');
+}
+
+function toDayKey(value: unknown): string {
+  const raw = String(value ?? '');
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(raw);
+  return match ? `${match[1]}-${match[2]}-${match[3]}` : '';
+}
+
+function localTodayKey(now: Date): string {
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${mm}-${dd}`;
+}
+
+function isHoraPassada(hora: unknown, now: Date): boolean {
+  const match = /^(\d{1,2}):(\d{2})/.exec(String(hora ?? ''));
+  if (!match) return false;
+  const minutes = Number(match[1]) * 60 + Number(match[2]);
+  return minutes <= now.getHours() * 60 + now.getMinutes();
+}
+
 export default function AdminFinanceiroPage() {
   const { comercioId, isLoading: isComercioLoading } = useComercioId();
   
@@ -76,6 +120,72 @@ export default function AdminFinanceiroPage() {
     error: pagamentosError,
     refetch: refetchPagamentos
   } = usePagamentosEmpresa<RawPagamento>(comercioId);
+
+  const historicoQuery = useHistoricoComercioTodos(comercioId);
+  const agendaQuery = useAgendaComercio(comercioId);
+  const servicosQuery = useServicosComercio<RawServico>(comercioId);
+
+  const isRealizadosLoading =
+    historicoQuery.isPending || agendaQuery.isPending || servicosQuery.isPending;
+  const isRealizadosError =
+    historicoQuery.isError || agendaQuery.isError || servicosQuery.isError;
+
+  const realizados = useMemo(() => {
+    const historico = historicoQuery.data ?? [];
+    const agenda = agendaQuery.data ?? [];
+    const servicos = servicosQuery.data ?? [];
+    const now = new Date();
+    const todayKey = localTodayKey(now);
+
+    const priceById = new Map<string, number>();
+    const priceByName = new Map<string, number>();
+    for (const s of servicos) {
+      const preco = Number(s.preco ?? s.Preco ?? 0);
+      const id = s.id ?? s.Id;
+      const nome = s.nome ?? s.Nome;
+      if (id !== undefined && id !== null) priceById.set(String(id), preco);
+      if (nome) priceByName.set(nome.trim().toLowerCase(), preco);
+    }
+
+    const seen = new Set<string>();
+    let total = 0;
+    let count = 0;
+
+    const add = (item: Record<string, unknown>) => {
+      const id = String(item.id ?? item.Id ?? '');
+      if (id) {
+        if (seen.has(id)) return;
+        seen.add(id);
+      }
+      let valor = Number(item.valor ?? item.Valor);
+      if (!Number.isFinite(valor) || valor <= 0) {
+        const servicoId = item.servicoId ?? item.ServicoId;
+        const servicoNome = item.servicoNome ?? item.ServicoNome;
+        valor =
+          (servicoId !== undefined && servicoId !== null
+            ? priceById.get(String(servicoId))
+            : undefined) ??
+          (typeof servicoNome === 'string' ? priceByName.get(servicoNome.trim().toLowerCase()) : undefined) ??
+          0;
+      }
+      count += 1;
+      total += Number.isFinite(valor) && valor > 0 ? valor : 0;
+    };
+
+    for (const item of historico) {
+      if (isNaoRealizado(item.status ?? item.Status, false)) continue;
+      add(item);
+    }
+
+    for (const item of agenda) {
+      if (isNaoRealizado(item.status ?? item.Status, true)) continue;
+      if (toDayKey(item.dataAgendamento ?? item.DataAgendamento) !== todayKey) continue;
+      if (!isHoraPassada(item.horaAgendamento ?? item.HoraAgendamento, now)) continue;
+      add(item);
+    }
+
+    return { total, count };
+  }, [historicoQuery.data, agendaQuery.data, servicosQuery.data]);
 
   const [isMounted, setIsMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -220,7 +330,34 @@ export default function AdminFinanceiroPage() {
       )}
 
       {/* Stats Summary Card Grid */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-3">
+        <Card className="p-6 border border-border shadow-sm bg-card">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 bg-muted text-foreground rounded-lg">
+              <Calendar className="h-5 w-5" />
+            </div>
+            <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded-full">
+              Agenda
+            </span>
+          </div>
+          <p className="text-sm font-medium text-muted-foreground">Serviços realizados</p>
+          {isRealizadosLoading ? (
+            <div className="mt-2 h-8 w-32 animate-pulse rounded bg-muted" aria-label="Carregando" />
+          ) : isRealizadosError ? (
+            <>
+              <p className="text-2xl font-bold text-foreground mt-1">—</p>
+              <p className="text-xs text-muted-foreground mt-1">Não foi possível calcular.</p>
+            </>
+          ) : (
+            <>
+              <p className="text-2xl font-bold text-foreground mt-1">{formatBRL(realizados.total)}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {realizados.count} {realizados.count === 1 ? 'atendimento concluído' : 'atendimentos concluídos'}
+              </p>
+            </>
+          )}
+        </Card>
+
         <Card className="p-6 border border-border shadow-sm bg-card">
           <div className="flex items-center justify-between mb-4">
             <div className="p-2 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-lg">
@@ -233,7 +370,7 @@ export default function AdminFinanceiroPage() {
           </div>
           <p className="text-sm font-medium text-muted-foreground">Receitas Pagas</p>
           <p className="text-2xl font-bold text-foreground mt-1">
-            R$ {totalEntradas.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {formatBRL(totalEntradas)}
           </p>
         </Card>
 

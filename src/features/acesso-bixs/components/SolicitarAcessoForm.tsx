@@ -71,13 +71,10 @@ export function SolicitarAcessoForm({
     try {
       await onSendVerificationCode();
       setCodeNotice(null);
-      setResendCooldown(RESEND_COOLDOWN_SECONDS);
     } catch (err) {
-      if (err instanceof VerificationCodeEndpointMissingError) {
-        setCodeNotice(err.message);
-        return;
-      }
-      setCodeNotice(null);
+      setCodeNotice(err instanceof VerificationCodeEndpointMissingError ? err.message : null);
+    } finally {
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
     }
   };
 

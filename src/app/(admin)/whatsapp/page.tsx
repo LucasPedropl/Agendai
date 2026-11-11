@@ -1,7 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { PlugZap } from 'lucide-react';
+import { useAcessoBixsStatus } from '@/features/acesso-bixs/hooks/useAcessoBixs';
+import {
   RefreshCw, 
   QrCode, 
   CheckCircle2, 
@@ -18,7 +21,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { fetchApi } from '@/lib/api';
 import { mapWhatsAppStatus } from '@/lib/apiHelpers';
-import { useAuth } from '@/contexts/AuthContext';
 import { useComercioId } from '@/hooks/useComercioId';
 import { useToast } from '@/contexts/ToastContext';
 import { motion, AnimatePresence } from 'motion/react';
@@ -35,18 +37,94 @@ interface StatusConfigItem {
   badge: string;
 }
 
+const QR_MAX_RETRIES = 3;
+const QR_RETRY_DELAY_MS = 3000;
+const POLLING_STATUSES = ['QRCODE_READY', 'PENDING', 'CONNECTING', 'QR_REQUIRED'];
+const QR_VISIBLE_STATUSES = ['QRCODE_READY', 'QR_REQUIRED', 'CONNECTING'];
+const WHATSAPP_FALLBACK_ERROR =
+  'Integração WhatsApp indisponível no momento. Tente novamente mais tarde.';
+
+function toQrImageSrc(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const value = raw.trim();
+  if (!value) return null;
+  return value.startsWith('data:') ? value : `data:image/png;base64,${value}`;
+}
+
+function isTokenMessage(err: unknown): boolean {
+  return err instanceof Error && /token/i.test(err.message);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function BixsPendingCard({ description, integracoesPath }: { description: string; integracoesPath: string }) {
+  return (
+    <Card className="overflow-hidden border border-border bg-card shadow-sm">
+      <CardContent className="p-8 md:p-12">
+        <div className="flex flex-col md:flex-row items-center gap-10">
+          <div className="p-6 bg-amber-500/10 rounded-3xl ring-1 ring-amber-500/20">
+            <PlugZap className="h-16 w-16 text-amber-500" />
+          </div>
+          <div className="flex-1 text-center md:text-left space-y-4">
+            <h2 className="text-3xl font-bold text-foreground">Integração Bixs pendente</h2>
+            <p className="text-muted-foreground text-lg leading-relaxed">{description}</p>
+            <Link
+              to={integracoesPath}
+              className="inline-flex h-12 items-center justify-center rounded-2xl bg-primary px-8 font-bold text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              Ir para Integrações
+            </Link>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+const TOKEN_PENDING_DESCRIPTION =
+  'O WhatsApp só funciona depois que a integração com a Bixs for liberada para o seu estabelecimento. Depois da liberação, saia e entre de novo no Agendai para ativar.';
+const ACCESS_PENDING_DESCRIPTION =
+  'O WhatsApp só funciona depois que a integração com a Bixs for liberada para o seu estabelecimento. Peça a liberação da integração na página Integrações.';
+
 export default function AdminWhatsAppPage() {
-  const { token } = useAuth();
   const toast = useToast();
-  const { comercioId, isLoading: isLoadingComercio } = useComercioId();
+  const location = useLocation();
+  const { comercioId } = useComercioId();
+  const accessQuery = useAcessoBixsStatus();
   const [status, setStatus] = useState<string>('checking');
   const [qrCode, setQrCode] = useState<string | null>(null);
+  const [qrPreparing, setQrPreparing] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [showDisconnectDialog, setShowDisconnectDialog] = useState(false);
+  const qrCodeRef = useRef<string | null>(null);
+  const qrRequestInFlightRef = useRef(false);
+  const autoQrRequestedRef = useRef(false);
+  const mountedRef = useRef(true);
 
   const commerceId = comercioId;
+  const basePath = location.pathname.startsWith('/profissional') ? '/profissional' : '/estabelecimento';
+  const integracoesPath = `${basePath}/integracoes`;
+
+  const accessResult = accessQuery.data;
+  const accessBlocked =
+    accessResult?.kind === 'never_requested' ||
+    (accessResult?.kind === 'loaded' &&
+      (accessResult.data.estado !== 'Ativo' || accessResult.data.whatsapp !== 'Ativo'));
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    qrCodeRef.current = qrCode;
+  }, [qrCode]);
 
   const checkStatus = useCallback(async function(silent = false) {
     if (!commerceId) return;
@@ -57,51 +135,63 @@ export default function AdminWhatsAppPage() {
       });
 
       const mapped = mapWhatsAppStatus(data?.status);
-      setStatus(mapped);
+      // Durante o polling, a Bixs pode responder "disconnected" enquanto o QR ainda não foi lido.
+      if (!(silent && mapped === 'DISCONNECTED' && qrCodeRef.current)) {
+        setStatus(mapped);
+      }
       setPhoneNumber(data?.phone_number || data?.ntelefone || null);
-      
+
       if (mapped === 'CONNECTED') {
         setQrCode(null);
       }
     } catch (err) {
       console.error("Erro ao verificar status do WhatsApp:", err);
-      setStatus('ERROR');
+      setStatus(isTokenMessage(err) ? 'TOKEN_PENDING' : 'ERROR');
     } finally {
       if (!silent) setIsLoading(false);
     }
   }, [commerceId]);
 
-  const generateQrCode = async () => {
-    if (!commerceId) return;
+  const generateQrCode = useCallback(async (options: { silent?: boolean } = {}) => {
+    if (!commerceId || qrRequestInFlightRef.current) return;
+    qrRequestInFlightRef.current = true;
     setIsActionLoading(true);
     try {
-      const data = await fetchApi(`/api/WhatsApp/Obter-QrCode/${commerceId}`, {
-        skipToast: true,
-      });
-      
-      if (data?.qrCode) {
-        setQrCode(data.qrCode);
-        setStatus('QRCODE_READY');
-        toast.success('QR Code gerado com sucesso!');
-      } else {
-        setStatus('ERROR');
-        toast.error(
-          getFriendlyErrorMessage(data, 'Integração WhatsApp indisponível no momento. Tente novamente mais tarde.')
-        );
+      for (let attempt = 0; attempt <= QR_MAX_RETRIES; attempt += 1) {
+        const data = await fetchApi(`/api/WhatsApp/Obter-QrCode/${commerceId}`, {
+          skipToast: true,
+        });
+        const src = toQrImageSrc(data?.qrCode);
+        if (src) {
+          setQrPreparing(false);
+          setQrCode(src);
+          setStatus('QRCODE_READY');
+          if (!options.silent) toast.success('QR Code gerado com sucesso!');
+          return;
+        }
+        if (attempt < QR_MAX_RETRIES) {
+          setQrPreparing(true);
+          await sleep(QR_RETRY_DELAY_MS);
+          if (!mountedRef.current) return;
+        }
       }
+      setQrPreparing(false);
+      setQrCode(null);
+      setStatus('QR_FAILED');
     } catch (err: unknown) {
       console.error('Erro ao obter QR Code:', err);
-      setStatus('ERROR');
-      toast.error(
-        getFriendlyErrorMessage(
-          err,
-          'Integração WhatsApp indisponível no momento. Tente novamente mais tarde.',
-        ),
-      );
+      setQrPreparing(false);
+      if (isTokenMessage(err)) {
+        setStatus('TOKEN_PENDING');
+      } else {
+        setStatus('ERROR');
+        toast.error(getFriendlyErrorMessage(err, WHATSAPP_FALLBACK_ERROR));
+      }
     } finally {
-      setIsActionLoading(false);
+      qrRequestInFlightRef.current = false;
+      if (mountedRef.current) setIsActionLoading(false);
     }
-  };
+  }, [commerceId, toast]);
 
   const disconnect = async () => {
     if (!commerceId) return;
@@ -126,14 +216,22 @@ export default function AdminWhatsAppPage() {
   };
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (status === 'QRCODE_READY' || status === 'PENDING') {
-      interval = setInterval(() => {
-        checkStatus(true);
-      }, 5000);
-    }
-    return () => clearInterval(interval);
+    if (!POLLING_STATUSES.includes(status)) return;
+    const interval = window.setInterval(() => {
+      void checkStatus(true);
+    }, 5000);
+    return () => window.clearInterval(interval);
   }, [status, checkStatus]);
+
+  useEffect(() => {
+    if (status !== 'QR_REQUIRED') {
+      autoQrRequestedRef.current = false;
+      return;
+    }
+    if (qrCode || accessBlocked || autoQrRequestedRef.current) return;
+    autoQrRequestedRef.current = true;
+    void generateQrCode({ silent: true });
+  }, [status, qrCode, accessBlocked, generateQrCode]);
 
   useEffect(() => {
     checkStatus();
@@ -157,6 +255,33 @@ export default function AdminWhatsAppPage() {
       bgColor: 'bg-indigo-50',
       borderColor: 'border-indigo-100',
       badge: 'QR Code Pronto'
+    },
+    QR_REQUIRED: {
+      icon: QrCode,
+      title: 'Leitura do QR Code necessária',
+      description: 'Gere o QR Code e escaneie com o WhatsApp do seu celular.',
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-50',
+      borderColor: 'border-indigo-100',
+      badge: 'Precisa ler o QR'
+    },
+    CONNECTING: {
+      icon: Loader2,
+      title: 'Conectando…',
+      description: 'Estamos finalizando a conexão com o seu WhatsApp.',
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-50',
+      borderColor: 'border-indigo-100',
+      badge: 'Conectando…'
+    },
+    QR_FAILED: {
+      icon: AlertCircle,
+      title: 'Não foi possível gerar o QR Code',
+      description: 'O WhatsApp ainda não entregou o QR Code. Tente novamente em instantes.',
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-100',
+      badge: 'Tente de novo'
     },
     DISCONNECTED: {
       icon: XCircle,
@@ -188,8 +313,23 @@ export default function AdminWhatsAppPage() {
   };
 
   const currentStatus: StatusConfigItem = statusConfig[status] || statusConfig.ERROR;
+  const showQr = Boolean(qrCode) && QR_VISIBLE_STATUSES.includes(status);
+  const isSpinning = status === 'checking' || status === 'CONNECTING';
+  const pendingDescription =
+    status === 'TOKEN_PENDING'
+      ? TOKEN_PENDING_DESCRIPTION
+      : accessBlocked && status !== 'CONNECTED'
+        ? ACCESS_PENDING_DESCRIPTION
+        : null;
+  const connectLabel = showQr
+    ? 'Gerar novo QR Code'
+    : status === 'QR_REQUIRED'
+      ? 'Gerar QR Code'
+      : status === 'QR_FAILED'
+        ? 'Tentar novamente'
+        : 'Conectar agora';
 
-  if (isLoading && status === 'checking') {
+  if ((isLoading && status === 'checking') || accessQuery.isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
         <motion.div
@@ -252,6 +392,9 @@ export default function AdminWhatsAppPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main Status Panel */}
         <div className="lg:col-span-8 space-y-8">
+          {pendingDescription ? (
+            <BixsPendingCard description={pendingDescription} integracoesPath={integracoesPath} />
+          ) : (
           <Card className={`overflow-hidden border-none shadow-2xl shadow-slate-200/50 transition-all duration-500`}>
             <div className={`h-2 ${currentStatus.bgColor}`} style={{ backgroundColor: `var(--${currentStatus.color.split('-')[1]}-500)` }} />
             <CardContent className="p-0">
@@ -260,7 +403,7 @@ export default function AdminWhatsAppPage() {
                   <div className="relative group">
                     <div className={`absolute -inset-4 rounded-[2.5rem] ${currentStatus.bgColor} opacity-50 blur-xl group-hover:opacity-75 transition duration-500`} />
                     <div className="relative p-6 bg-white rounded-3xl shadow-xl ring-1 ring-slate-100">
-                      <currentStatus.icon className={`h-16 w-16 ${currentStatus.color} ${status === 'checking' ? 'animate-spin' : ''}`} />
+                      <currentStatus.icon className={`h-16 w-16 ${currentStatus.color} ${isSpinning ? 'animate-spin' : ''}`} />
                     </div>
                   </div>
 
@@ -283,7 +426,19 @@ export default function AdminWhatsAppPage() {
                 </div>
 
                 <AnimatePresence mode="wait">
-                  {status === 'QRCODE_READY' && qrCode ? (
+                  {qrPreparing ? (
+                    <motion.div
+                      key="qr-preparing"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="mt-12 flex items-center justify-center gap-2 text-indigo-600 font-bold text-sm"
+                      role="status"
+                    >
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Preparando o QR Code…
+                    </motion.div>
+                  ) : showQr ? (
                     <motion.div 
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -293,7 +448,7 @@ export default function AdminWhatsAppPage() {
                       <div className="grid md:grid-cols-2 gap-10 items-center">
                         <div className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-[2rem] border-2 border-white shadow-inner">
                           <div className="p-4 bg-white rounded-2xl shadow-2xl ring-1 ring-slate-100">
-                            <img src={qrCode} alt="WhatsApp QR Code" className="h-56 w-56 object-contain" />
+                            <img src={qrCode ?? undefined} alt="WhatsApp QR Code" className="h-56 w-56 object-contain" />
                           </div>
                           <div className="mt-6 flex items-center gap-2 text-indigo-600 font-bold text-sm animate-pulse">
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -341,15 +496,15 @@ export default function AdminWhatsAppPage() {
                   ) : (
                     <Button 
                       className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-12 h-14 font-bold shadow-xl shadow-indigo-100 hover:shadow-indigo-200 transition-all hover:-translate-y-0.5 active:translate-y-0"
-                      onClick={generateQrCode}
-                      disabled={isActionLoading || Boolean(qrCode) || status === 'QRCODE_READY'}
+                      onClick={() => void generateQrCode()}
+                      disabled={isActionLoading}
                     >
                       {isActionLoading ? (
                         <Loader2 className="h-5 w-5 animate-spin" />
                       ) : (
                         <QrCode className="mr-2 h-5 w-5" />
                       )}
-                      {status === 'QRCODE_READY' ? 'QR Code Gerado' : 'Conectar agora'}
+                      {connectLabel}
                     </Button>
                   )}
                   
@@ -360,6 +515,7 @@ export default function AdminWhatsAppPage() {
               </div>
             </CardContent>
           </Card>
+          )}
         </div>
 
         {/* Sidebar Info */}

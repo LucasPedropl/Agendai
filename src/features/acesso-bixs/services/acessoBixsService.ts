@@ -98,8 +98,8 @@ export const acessoBixsService = {
     // A API devolve 200 mesmo quando a Bixs recusa o envio — o corpo é a única pista.
     if (/erro ao enviar email/i.test(message)) {
       throw new Error(
-        'A Bixs recusou o envio do código. Tente novamente em alguns minutos; ' +
-          'se persistir, é falha de integração no backend.',
+        'Não conseguimos enviar o código agora. O problema está no servidor do Agendai, ' +
+          'não no seu e-mail. Tente de novo em alguns minutos; se continuar, fale com o suporte.',
       );
     }
 
@@ -165,7 +165,7 @@ export const acessoBixsService = {
       }
       if (/erro ao criar acesso/i.test(apiMessage)) {
         throw new Error(
-          'A API não conseguiu criar o acesso na Bixs. Isso costuma ser código expirado (validade de 15 minutos) ou já utilizado — peça um novo código. Se persistir, é falha de integração no backend.',
+          'A Bixs não aceitou a criação da conta. Confira se o CNPJ do estabelecimento está preenchido em Configurações e se sua senha tem pelo menos 8 caracteres. Se estiver tudo certo, peça um novo código e tente de novo.',
         );
       }
       throw new Error(apiMessage || 'Erro ao solicitar acesso.');
