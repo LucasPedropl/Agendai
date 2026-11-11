@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
+import { getUserIdFromToken } from '@/lib/apiHelpers';
 import { useComercioId } from '@/hooks/useComercioId';
 import { useDashboardData } from '@/hooks/useDashboardQueries';
 import { DashboardHeader } from '@/features/dashboard/components/DashboardHeader';
@@ -13,9 +14,9 @@ import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function AdminDashboardPage() {
-  const { user, userType } = useAuth();
+  const { user, userType, token } = useAuth();
   const isProfissional = userType === 'profissional';
-  const profissionalId = user?.id ? String(user.id) : null;
+  const profissionalId = (token ? getUserIdFromToken(token) : null) ?? (user?.id ? String(user.id) : null);
 
   const {
     comercioId,

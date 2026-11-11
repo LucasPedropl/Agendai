@@ -11,15 +11,22 @@ import { PageLoader } from '@/components/ui/page-loader';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { StatusBadge, getStatusVariant } from '@/components/ui/status-badge';
-import { Plus, Trash2, Phone, Users } from 'lucide-react';
+import { Plus, Trash2, Phone, Users, RotateCcw } from 'lucide-react';
 import { Profissional } from '@/types';
 import { fetchApi } from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useComercioId } from '@/hooks/useComercioId';
-import { useComercioUsuarios, useDesativarComercioUsuario } from '@/hooks/useAdminQueries';
+import {
+  extractApiMessage,
+  useComercioUsuarios,
+  useDesativarComercioUsuario,
+  useReativarComercioUsuario,
+} from '@/hooks/useAdminQueries';
 import { getFriendlyErrorMessage } from '@/lib/errors';
+
+const isInativo = (status?: string) => status?.toLowerCase() === 'inativo';
 
 export default function AdminProfissionaisPage() {
   const queryClient = useQueryClient();
@@ -28,6 +35,7 @@ export default function AdminProfissionaisPage() {
   const { comercioId, isLoading: isLoadingComercio } = useComercioId();
   const { data: profissionais = [], isPending: isLoading } = useComercioUsuarios<Profissional>(comercioId, 'Profissionais');
   const desativarMutation = useDesativarComercioUsuario('Profissionais', comercioId);
+  const reativarMutation = useReativarComercioUsuario('Profissionais', comercioId);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
@@ -45,8 +53,8 @@ export default function AdminProfissionaisPage() {
     if (!confirmId) return;
     setIsDeactivating(true);
     try {
-      await desativarMutation.mutateAsync(confirmId);
-      showToast('Profissional desativado.', 'success');
+      const message = await desativarMutation.mutateAsync(confirmId);
+      showToast(message ?? 'Profissional desativado.', 'success');
       setConfirmId(null);
     } catch (err: unknown) {
       showToast(getFriendlyErrorMessage(err, 'Não foi possível desativar o profissional.'), 'error');
@@ -55,12 +63,21 @@ export default function AdminProfissionaisPage() {
     }
   };
 
+  const handleReativar = async (id: string) => {
+    try {
+      const message = await reativarMutation.mutateAsync(id);
+      showToast(message ?? 'Profissional reativado.', 'success');
+    } catch (err: unknown) {
+      showToast(getFriendlyErrorMessage(err, 'Não foi possível reativar o profissional.'), 'error');
+    }
+  };
+
   const handleInviteProfissional = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
       if (!comercioId) return;
-      await fetchApi('/api/ComercioUsuarios/Cadastrar-Funcionario-Cliente', {
+      const response: unknown = await fetchApi('/api/ComercioUsuarios/Cadastrar-Funcionario-Cliente', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: JSON.stringify({ idComercio: comercioId, nome, email, permissao: 1 }),
@@ -69,7 +86,7 @@ export default function AdminProfissionaisPage() {
       setIsModalOpen(false);
       setNome('');
       setEmail('');
-      showToast('Convite enviado com sucesso!', 'success');
+      showToast(extractApiMessage(response) ?? 'Convite enviado com sucesso!', 'success');
       refreshProfissionais();
     } catch (err: unknown) {
       showToast(getFriendlyErrorMessage(err, 'Não foi possível enviar o convite ao profissional.'), 'error');
@@ -95,9 +112,9 @@ export default function AdminProfissionaisPage() {
         isOpen={!!confirmId}
         onClose={() => setConfirmId(null)}
         onConfirm={handleDesativar}
-        title="Remover profissional"
+        title="Desativar profissional"
         description="O profissional perderá acesso ao estabelecimento. Você pode convidá-lo novamente depois."
-        confirmLabel="Remover"
+        confirmLabel="Desativar"
         variant="destructive"
         isLoading={isDeactivating}
       />
@@ -124,7 +141,7 @@ export default function AdminProfissionaisPage() {
                     {profissional.status && (
                       <StatusBadge
                         label={profissional.status}
-                        variant={getStatusVariant(profissional.status)}
+                        variant={isInativo(profissional.status) ? 'danger' : getStatusVariant(profissional.status)}
                         className="mt-1"
                       />
                     )}
@@ -136,15 +153,28 @@ export default function AdminProfissionaisPage() {
                   <Phone className="h-4 w-4" />
                   {profissional.telefone || 'Sem telefone'}
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full mt-4 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
-                  onClick={() => setConfirmId(String(profissional.id))}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Remover
-                </Button>
+                {isInativo(profissional.status) ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-4"
+                    disabled={reativarMutation.isPending}
+                    onClick={() => void handleReativar(String(profissional.id))}
+                  >
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Reativar
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-4 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
+                    onClick={() => setConfirmId(String(profissional.id))}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Desativar
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ))}

@@ -11,125 +11,40 @@ import { PageLoader } from '@/components/ui/page-loader';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { StatusBadge, getStatusVariant } from '@/components/ui/status-badge';
-import { Search, Mail, Phone, Calendar, Plus, Users, UserX, Loader2 } from 'lucide-react';
+import { Search, Mail, Phone, Calendar, Plus, Users, UserX, RotateCcw } from 'lucide-react';
 import { Cliente } from '@/types';
 import { fetchApi } from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { useToast } from '@/contexts/ToastContext';
 import { useComercioId } from '@/hooks/useComercioId';
 import {
+  extractApiMessage,
   useComercioUsuarios,
   useDesativarComercioUsuario,
-  useAgendaComercio,
-  useHistoricoComercio,
+  useReativarComercioUsuario,
 } from '@/hooks/useAdminQueries';
 import { getFriendlyErrorMessage } from '@/lib/errors';
 
-/** Normaliza string para comparação sem case e sem espaços sobressalentes */
-function normalizeStr(val: unknown): string {
-  if (val === null || val === undefined) return '';
-  return String(val).trim().toLowerCase();
+/** `ultimaVisita` vem como "0001-01-01T00:00:00" quando o cliente nunca foi atendido. */
+function formatUltimaVisita(raw: unknown): string | null {
+  if (!raw) return null;
+  const d = new Date(String(raw));
+  if (isNaN(d.getTime()) || d.getFullYear() <= 1900) return null;
+  return d.toLocaleDateString('pt-BR');
 }
 
-/** Verifica se data é válida e não é DateTime.MinValue (ano 0001) */
-function isValidDate(dateVal: unknown): boolean {
-  if (!dateVal) return false;
-  const d = new Date(String(dateVal));
-  if (isNaN(d.getTime())) return false;
-  return d.getFullYear() > 1900;
-}
-
-/** Extrai timestamp para ordenação segura */
-function getAppointmentTimestamp(appointment: Record<string, unknown>): number {
-  const dateStr = String(
-    appointment.dataAgendamento ??
-      appointment.DataAgendamento ??
-      appointment.data ??
-      appointment.Data ??
-      ''
-  );
-  const timeStr = String(
-    appointment.horaAgendamento ??
-      appointment.HoraAgendamento ??
-      appointment.hora ??
-      appointment.Hora ??
-      '00:00:00'
-  );
-
-  if (!dateStr) return 0;
-  const cleanDate = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
-  const d = new Date(`${cleanDate}T${timeStr.slice(0, 8)}`);
-  return isNaN(d.getTime()) ? 0 : d.getTime();
-}
-
-/** Compara se o agendamento pertence ao cliente especificado */
-function matchesClient(
-  appointment: Record<string, unknown>,
-  client: Cliente & Record<string, unknown>
-): boolean {
-  // 1. Casamento por ID direto
-  const appClientId = normalizeStr(
-    appointment.usuarioId ??
-      appointment.UsuarioId ??
-      appointment.idUsuario ??
-      appointment.IdUsuario ??
-      appointment.clienteId ??
-      appointment.ClienteId
-  );
-  const clientId = normalizeStr(client.id ?? client.Id);
-
-  if (appClientId && clientId && appClientId === clientId) {
-    return true;
-  }
-
-  // 2. Casamento por Nome ou Email
-  const appClientName = normalizeStr(
-    appointment.usuarioNome ??
-      appointment.UsuarioNome ??
-      appointment.clienteNome ??
-      appointment.ClienteNome ??
-      appointment.cliente ??
-      appointment.Cliente
-  );
-
-  const clientName = normalizeStr(client.nome ?? client.Nome);
-  const clientEmail = normalizeStr(client.email ?? client.Email);
-
-  if (appClientName) {
-    if (clientName && appClientName === clientName) return true;
-    if (clientEmail && appClientName === clientEmail) return true;
-  }
-
-  return false;
-}
+const isInativo = (status?: string) => status?.toLowerCase() === 'inativo';
 
 export default function AdminClientesPage() {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const { comercioId, isLoading: isLoadingComercio } = useComercioId();
 
-  // Clientes do comércio
-  const {
-    data: clientesRaw = [],
-    isPending: isLoadingClientes,
-    isError: isClientesError,
-  } = useComercioUsuarios<Cliente & Record<string, unknown>>(comercioId, 'Clientes');
-
-  // Agenda ativa (hoje e futuro)
-  const {
-    data: agendaList = [],
-    isPending: isLoadingAgenda,
-    isError: isAgendaError,
-  } = useAgendaComercio(comercioId);
-
-  // Histórico de agendamentos passados
-  const {
-    data: historicoList = [],
-    isPending: isLoadingHistorico,
-    isError: isHistoricoError,
-  } = useHistoricoComercio(comercioId, '');
+  const { data: clientesRaw = [], isPending: isLoadingClientes } =
+    useComercioUsuarios<Cliente & Record<string, unknown>>(comercioId, 'Clientes');
 
   const desativarMutation = useDesativarComercioUsuario('Clientes', comercioId);
+  const reativarMutation = useReativarComercioUsuario('Clientes', comercioId);
 
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -142,7 +57,6 @@ export default function AdminClientesPage() {
   const refreshClientes = () => {
     if (comercioId) {
       void queryClient.invalidateQueries({ queryKey: queryKeys.comercioUsuarios('Clientes', comercioId) });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.agendaComercio(comercioId) });
     }
   };
 
@@ -150,8 +64,8 @@ export default function AdminClientesPage() {
     if (!confirmId) return;
     setIsDeactivating(true);
     try {
-      await desativarMutation.mutateAsync(confirmId);
-      showToast('Cliente desativado.', 'success');
+      const message = await desativarMutation.mutateAsync(confirmId);
+      showToast(message ?? 'Cliente desativado.', 'success');
       setConfirmId(null);
     } catch (err: unknown) {
       showToast(getFriendlyErrorMessage(err, 'Não foi possível desativar o cliente.'), 'error');
@@ -160,12 +74,21 @@ export default function AdminClientesPage() {
     }
   };
 
+  const handleReativar = async (id: string) => {
+    try {
+      const message = await reativarMutation.mutateAsync(id);
+      showToast(message ?? 'Cliente reativado.', 'success');
+    } catch (err: unknown) {
+      showToast(getFriendlyErrorMessage(err, 'Não foi possível reativar o cliente.'), 'error');
+    }
+  };
+
   const handleInviteCliente = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
       if (!comercioId) return;
-      await fetchApi('/api/ComercioUsuarios/Cadastrar-Funcionario-Cliente', {
+      const response: unknown = await fetchApi('/api/ComercioUsuarios/Cadastrar-Funcionario-Cliente', {
         method: 'POST',
         body: { idComercio: comercioId, nome, email, permissao: 0 },
         skipToast: true,
@@ -173,7 +96,7 @@ export default function AdminClientesPage() {
       setIsModalOpen(false);
       setNome('');
       setEmail('');
-      showToast('Convite enviado com sucesso!', 'success');
+      showToast(extractApiMessage(response) ?? 'Convite enviado com sucesso!', 'success');
       refreshClientes();
     } catch (err: unknown) {
       showToast(getFriendlyErrorMessage(err, 'Não foi possível enviar o convite ao cliente.'), 'error');
@@ -182,84 +105,20 @@ export default function AdminClientesPage() {
     }
   };
 
-  // Consolidação de todos os agendamentos conhecidos (agenda ativa + histórico)
-  const allAppointments = useMemo(() => {
-    // A API põe o agendamento de hoje tanto na agenda quanto no histórico
-    // (compara data sem hora com "agora"): deduplicar por id para não contar duas vezes.
-    const byId = new Map<string, Record<string, unknown>>();
-    const withoutId: Record<string, unknown>[] = [];
-    const sources = [
-      ...(Array.isArray(agendaList) ? agendaList : []),
-      ...(Array.isArray(historicoList) ? historicoList : []),
-    ] as Record<string, unknown>[];
-    for (const item of sources) {
-      const id = item.id ?? item.Id;
-      if (id === undefined || id === null) withoutId.push(item);
-      else if (!byId.has(String(id))) byId.set(String(id), item);
-    }
-    return [...byId.values(), ...withoutId];
-  }, [agendaList, historicoList]);
-
-  // Se a role não tem permissão para acessar agenda nem histórico (ex: 403), não podemos calcular com precisão
-  const isAppointmentDataUnavailable = isAgendaError && isHistoricoError;
-  const isAppointmentsLoading = isLoadingAgenda || isLoadingHistorico;
-
-  // Lista enriquecida de clientes com contagem e data calculadas client-side
-  const clientes = useMemo(() => {
-    return clientesRaw.map((cliente) => {
-      // Filtrar todos os agendamentos que pertencem a este cliente
-      const matched = allAppointments.filter((a) => matchesClient(a, cliente));
-
-      // Ordenar do mais recente para o mais antigo
-      matched.sort((a, b) => getAppointmentTimestamp(b) - getAppointmentTimestamp(a));
-
-      const rawUltimaVisita = cliente.ultimaVisita ?? cliente.UltimaVisita ?? cliente.ultimoAgendamento;
-      const hasValidBackendUltimaVisita = isValidDate(rawUltimaVisita);
-
-      // Calcular total de agendamentos
-      let total: number | null = null;
-      if (!isAppointmentDataUnavailable) {
-        total = matched.length;
-        // Se a busca client-side não encontrou registros nos endpoints de agenda/histórico,
-        // mas o backend retornou uma UltimaVisita válida, sabemos que existe pelo menos 1
-        if (total === 0 && hasValidBackendUltimaVisita) {
-          total = 1;
-        }
-      }
-
-      // Calcular data do último (ou próximo) agendamento
-      let ultimoAgendamentoFormatted: string | null = null;
-
-      if (matched.length > 0) {
-        const mostRecent = matched[0];
-        const dateRaw = String(
-          mostRecent.dataAgendamento ??
-            mostRecent.DataAgendamento ??
-            mostRecent.data ??
-            mostRecent.Data ??
-            ''
-        );
-        if (isValidDate(dateRaw)) {
-          const d = new Date(dateRaw);
-          ultimoAgendamentoFormatted = d.toLocaleDateString('pt-BR');
-        }
-      } else if (hasValidBackendUltimaVisita) {
-        const d = new Date(String(rawUltimaVisita));
-        ultimoAgendamentoFormatted = d.toLocaleDateString('pt-BR');
-      }
-
-      return {
+  const clientes = useMemo(
+    () =>
+      clientesRaw.map((cliente) => ({
         ...cliente,
         id: String(cliente.id ?? cliente.Id ?? ''),
         nome: String(cliente.nome ?? cliente.Nome ?? 'Cliente'),
         email: cliente.email ? String(cliente.email) : undefined,
         telefone: cliente.telefone ? String(cliente.telefone) : undefined,
         status: String(cliente.status ?? cliente.Status ?? 'Ativo'),
-        computedTotal: total,
-        computedUltimoAgendamento: ultimoAgendamentoFormatted,
-      };
-    });
-  }, [clientesRaw, allAppointments, isAppointmentDataUnavailable]);
+        total: typeof cliente.totalAgendamentos === 'number' ? cliente.totalAgendamentos : null,
+        ultimaVisitaFormatada: formatUltimaVisita(cliente.ultimaVisita ?? cliente.UltimaVisita),
+      })),
+    [clientesRaw]
+  );
 
   const filtered = useMemo(() => {
     const term = search.toLowerCase();
@@ -322,7 +181,7 @@ export default function AdminClientesPage() {
         onClose={() => setConfirmId(null)}
         onConfirm={handleDesativar}
         title="Desativar cliente"
-        description="O cliente perderá acesso ao estabelecimento. Esta ação pode ser revertida convidando-o novamente."
+        description="O cliente perderá acesso ao estabelecimento. Você pode reativá-lo depois."
         confirmLabel="Desativar"
         variant="destructive"
         isLoading={isDeactivating}
@@ -386,47 +245,44 @@ export default function AdminClientesPage() {
                       <td className="text-center">
                         <StatusBadge
                           label={cliente.status || 'Pendente'}
-                          variant={getStatusVariant(cliente.status || 'pendente')}
+                          variant={isInativo(cliente.status) ? 'danger' : getStatusVariant(cliente.status || 'pendente')}
                         />
                       </td>
                       <td className="text-center font-medium text-foreground">
-                        {isAppointmentsLoading ? (
-                          <span className="inline-flex items-center text-xs text-muted-foreground">
-                            <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                            calculando...
-                          </span>
-                        ) : isAppointmentDataUnavailable ? (
-                          <span title="Dados de agendamento não disponíveis para este perfil" className="text-muted-foreground">
-                            —
-                          </span>
-                        ) : cliente.computedTotal !== null ? (
-                          cliente.computedTotal
-                        ) : (
-                          '—'
-                        )}
+                        {cliente.total ?? '—'}
                       </td>
                       <td>
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <Calendar className="h-4 w-4" />
-                          {isAppointmentsLoading ? (
-                            <span className="text-xs text-muted-foreground">...</span>
-                          ) : cliente.computedUltimoAgendamento ? (
-                            <span className="text-foreground">{cliente.computedUltimoAgendamento}</span>
+                          {cliente.ultimaVisitaFormatada ? (
+                            <span className="text-foreground">{cliente.ultimaVisitaFormatada}</span>
                           ) : (
                             <span>—</span>
                           )}
                         </div>
                       </td>
                       <td className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          onClick={() => setConfirmId(String(cliente.id))}
-                        >
-                          <UserX className="h-4 w-4 mr-1" />
-                          Desativar
-                        </Button>
+                        {isInativo(cliente.status) ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={reativarMutation.isPending}
+                            onClick={() => void handleReativar(cliente.id)}
+                          >
+                            <RotateCcw className="h-4 w-4 mr-1" />
+                            Reativar
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => setConfirmId(cliente.id)}
+                          >
+                            <UserX className="h-4 w-4 mr-1" />
+                            Desativar
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))}

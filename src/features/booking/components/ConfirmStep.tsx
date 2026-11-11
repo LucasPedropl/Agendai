@@ -92,7 +92,6 @@ export function ConfirmStep() {
         skipToast: true,
         body: {
           idProfissional: professionalId,
-          idProssional: professionalId,
           idUsuario: String(user.id),
           data: bookingDate.toISOString(),
           horario: toApiTimeSpan(horario),

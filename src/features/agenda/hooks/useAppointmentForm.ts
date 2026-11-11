@@ -3,6 +3,7 @@ import { fetchApi } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/contexts/ToastContext';
 import { useComercioId } from '@/hooks/useComercioId';
+import { getFriendlyErrorMessage } from '@/lib/errors';
 
 interface Option {
   value: string;
@@ -46,7 +47,7 @@ export function useAppointmentForm(onSuccess?: () => void) {
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
 
   // Form state
-  const [idProssional, setIdProssional] = useState('');
+  const [idProfissional, setIdProfissional] = useState('');
   const [idUsuario, setIdUsuario] = useState('');
   const [data, setData] = useState('');
   const [horario, setHorario] = useState('');
@@ -136,7 +137,7 @@ export function useAppointmentForm(onSuccess?: () => void) {
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     
-    if (!idUsuario || idUsuario === 'undefined' || !idProssional || !idServico || !data || !horario) {
+    if (!idUsuario || idUsuario === 'undefined' || !idProfissional || !idServico || !data || !horario) {
       error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
@@ -167,8 +168,7 @@ export function useAppointmentForm(onSuccess?: () => void) {
       const horarioComSegundos = horario.length === 5 ? `${horario}:00` : horario;
 
       const payload = {
-        idProfissional: idProssional,
-        idProssional,
+        idProfissional,
         idUsuario,
         data: dataIso,
         horario: horarioComSegundos,
@@ -188,14 +188,14 @@ export function useAppointmentForm(onSuccess?: () => void) {
       if (onSuccess) onSuccess();
     } catch (err: unknown) {
       console.error("Erro ao cadastrar agendamento:", err);
-      error("Erro ao cadastrar agendamento");
+      error(getFriendlyErrorMessage(err, 'Erro ao cadastrar agendamento'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const resetForm = () => {
-    setIdProssional('');
+    setIdProfissional('');
     setIdUsuario('');
     setData('');
     setHorario('');
@@ -204,11 +204,11 @@ export function useAppointmentForm(onSuccess?: () => void) {
   };
 
   const formState = useMemo(() => ({ 
-    idProssional, idUsuario, data, horario, idServico, observacao 
-  }), [idProssional, idUsuario, data, horario, idServico, observacao]);
+    idProfissional, idUsuario, data, horario, idServico, observacao 
+  }), [idProfissional, idUsuario, data, horario, idServico, observacao]);
 
   const setters = useMemo(() => ({ 
-    setIdProssional, setIdUsuario, setData, setHorario, setIdServico, setObservacao 
+    setIdProfissional, setIdUsuario, setData, setHorario, setIdServico, setObservacao 
   }), []);
 
   const options = useMemo(() => ({ 

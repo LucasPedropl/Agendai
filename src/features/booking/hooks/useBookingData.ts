@@ -1,27 +1,18 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchApi } from '@/lib/api';
-import { normalizeApiList } from '@/lib/apiHelpers';
 import { Estabelecimento, Servico, Profissional } from '../types';
 
 export function useEstablishmentDetails(comercioId: number | undefined) {
-  // Como GET /api/Comercios/:id é restrito a Admin/Profissional (retorna 401 para Cliente),
-  // buscamos a lista pública em cache e localizamos o comércio pelo ID.
   return useQuery({
     queryKey: ['comercio-details', comercioId],
     queryFn: async (): Promise<Estabelecimento | null> => {
       if (!comercioId) return null;
       try {
-        const res = await fetchApi('/api/Comercios?pagina=1&qtdPagina=100', {
+        const res = await fetchApi(`/api/Comercios/${comercioId}`, {
           method: 'GET',
           skipToast: true,
         });
-        const list: Estabelecimento[] =
-          res && typeof res === 'object' && 'dados' in res && Array.isArray((res as { dados: Estabelecimento[] }).dados)
-            ? (res as { dados: Estabelecimento[] }).dados
-            : normalizeApiList<Estabelecimento>(res);
-
-        const found = list.find((e) => e.id === comercioId);
-        return found ?? null;
+        return res && typeof res === 'object' ? (res as Estabelecimento) : null;
       } catch {
         return null;
       }

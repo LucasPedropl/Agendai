@@ -107,11 +107,11 @@ export function AppointmentForm({ onSuccess, onCancel, initialData, initialTime 
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-semibold text-foreground" htmlFor="idProssional">Profissional</label>
+        <label className="text-sm font-semibold text-foreground" htmlFor="idProfissional">Profissional</label>
         <SearchableSelect 
           options={options.profissionaisOptions}
-          value={formState.idProssional}
-          onChange={setters.setIdProssional}
+          value={formState.idProfissional}
+          onChange={setters.setIdProfissional}
           placeholder="Selecione um profissional..."
         />
       </div>

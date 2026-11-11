@@ -33,13 +33,14 @@ interface Agendamento {
   dataAgendamento: string;
   servicoNome: string;
   profissionalNome?: string;
-  status?: 'Pendente' | 'Confirmado' | 'Concluído' | 'Cancelado' | string;
-  estabelecimentoNome?: string;
-  valor?: number;
+  profissionalId?: string;
+  status?: 'Pendente' | 'Confirmado' | 'Finalizado' | 'Cancelado' | 'NaoCompareceu' | string;
+  comercioId?: number;
+  comercioNome?: string;
+  estabelecimento?: string;
+  valor?: number | null;
   horaAgendamento?: string;
-  horario?: string;
-  idProfissional?: string;
-  idServico?: number;
+  servicoId?: number;
 }
 
 export default function ClientDashboardPage() {
@@ -90,11 +91,11 @@ export default function ClientDashboardPage() {
         data: new Date(rescheduleDate).toISOString(),
         horario: rescheduleTime.length === 5 ? `${rescheduleTime}:00` : rescheduleTime
       };
-      if (selectedAgendamento?.idProfissional) {
-        payload.idProfissional = selectedAgendamento.idProfissional;
+      if (selectedAgendamento?.profissionalId) {
+        payload.idProfissional = selectedAgendamento.profissionalId;
       }
-      if (selectedAgendamento?.idServico) {
-        payload.idServico = selectedAgendamento.idServico;
+      if (selectedAgendamento?.servicoId) {
+        payload.idServico = selectedAgendamento.servicoId;
       }
       
       await fetchApi(`/api/Agenda/Reagendar/${selectedAgendamentoId}`, { 
@@ -151,18 +152,25 @@ export default function ClientDashboardPage() {
           color: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
           dot: 'bg-amber-500'
         };
+      case 'naocompareceu':
+        return {
+          label: 'Não compareceu',
+          icon: <XCircle className="h-4 w-4" />,
+          color: 'bg-slate-500/10 text-slate-600 border-slate-500/20',
+          dot: 'bg-slate-500'
+        };
       default:
         return {
-          label: status || 'Confirmado',
+          label: status || '',
           icon: <CheckCircle2 className="h-4 w-4" />,
-          color: 'bg-green-500/10 text-green-600 border-green-500/20',
-          dot: 'bg-green-500'
+          color: 'bg-slate-500/10 text-slate-600 border-slate-500/20',
+          dot: 'bg-slate-500'
         };
     }
   };
 
   const filteredAgendamentos = agendamentosList.filter(a => {
-    const rawStatus = (a.status || 'Confirmado').toLowerCase();
+    const rawStatus = (a.status || '').toLowerCase();
     if (activeTab === 'Pendentes' && rawStatus !== 'pendente') return false;
     if (activeTab === 'Confirmados' && rawStatus !== 'confirmado') return false;
     if (activeTab === 'Concluídos' && rawStatus !== 'concluído' && rawStatus !== 'concluido' && rawStatus !== 'finalizado') return false;
@@ -172,7 +180,7 @@ export default function ClientDashboardPage() {
       const term = searchTerm.toLowerCase();
       const servico = (a.servicoNome || '').toLowerCase();
       const prof = (a.profissionalNome || '').toLowerCase();
-      const estab = (a.estabelecimentoNome || '').toLowerCase();
+      const estab = (a.comercioNome ?? a.estabelecimento ?? '').toLowerCase();
       return servico.includes(term) || prof.includes(term) || estab.includes(term);
     }
     return true;
@@ -267,12 +275,11 @@ export default function ClientDashboardPage() {
               const data = new Date(agendamento.dataAgendamento);
               const isValidDate = !isNaN(data.getTime());
               const config = getStatusConfig(agendamento.status);
-              const profNome = agendamento.profissionalNome || 'Profissional';
-              const rawHora = agendamento.horaAgendamento || agendamento.horario;
-              const formattedTime = rawHora 
-                ? String(rawHora).slice(0, 5) 
-                // A API do cliente não devolve a hora (AgendaView sem HoraAgendamento).
-                : (isValidDate && format(data, "HH:mm") !== "00:00" ? format(data, "HH:mm") : "Não informada");
+              const profNome = agendamento.profissionalNome || '';
+              const estabNome = agendamento.comercioNome ?? agendamento.estabelecimento;
+              const rawHora = agendamento.horaAgendamento;
+              const formattedTime = rawHora ? String(rawHora).slice(0, 5) : 'Não informada';
+              const temValor = typeof agendamento.valor === 'number' && agendamento.valor > 0;
               const isPendenteOuConfirmado = config.label === 'Pendente' || config.label === 'Confirmado';
               
               return (
@@ -295,10 +302,10 @@ export default function ClientDashboardPage() {
                       <h3 className="text-xl font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
                         {agendamento.servicoNome}
                       </h3>
-                      {agendamento.estabelecimentoNome && (
+                      {estabNome && (
                         <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
                           <MapPin className="h-3.5 w-3.5" />
-                          {agendamento.estabelecimentoNome}
+                          {estabNome}
                         </p>
                       )}
                     </div>
@@ -317,19 +324,23 @@ export default function ClientDashboardPage() {
 
                     {/* Professional */}
                     <div className="flex items-center justify-between pt-2">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-bold">
-                          {profNome.charAt(0)}
+                      {profNome ? (
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-bold">
+                            {profNome.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-bold uppercase text-muted-foreground">Profissional</p>
+                            <p className="text-sm font-bold">{profNome}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-[10px] font-bold uppercase text-muted-foreground">Profissional</p>
-                          <p className="text-sm font-bold">{profNome}</p>
-                        </div>
-                      </div>
+                      ) : (
+                        <div />
+                      )}
                       <div className="text-right">
                         <p className="text-[10px] font-bold uppercase text-muted-foreground">Valor</p>
                         <p className="text-sm font-extrabold text-foreground">
-                          {agendamento.valor ? formatBRL(Number(agendamento.valor)) : 'A consultar'}
+                          {temValor ? formatBRL(Number(agendamento.valor)) : 'A consultar'}
                         </p>
                       </div>
                     </div>

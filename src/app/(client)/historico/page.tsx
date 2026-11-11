@@ -18,15 +18,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { formatBRL } from '@/lib/utils';
 
 interface HistoryItem {
   id?: number;
   dataAgendamento: string;
   servicoNome: string;
+  horaAgendamento?: string;
   profissionalNome?: string;
-  estabelecimentoNome?: string;
-  status: 'Concluído' | 'Cancelado' | string;
-  valor: number;
+  comercioId?: number;
+  comercioNome?: string;
+  estabelecimento?: string;
+  status: 'Finalizado' | 'Cancelado' | 'NaoCompareceu' | string;
+  valor?: number | null;
 }
 
 export default function ClientHistoryPage() {
@@ -39,6 +43,7 @@ export default function ClientHistoryPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
+      case 'Finalizado':
       case 'Concluído':
         return (
           <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[10px] font-bold uppercase tracking-wider">
@@ -56,15 +61,20 @@ export default function ClientHistoryPage() {
       default:
         return (
           <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-500/10 text-slate-600 border border-slate-500/20 text-[10px] font-bold uppercase tracking-wider">
-            {status}
+            {status === 'NaoCompareceu' ? 'Não compareceu' : status}
           </div>
         );
     }
   };
 
   const filteredHistory = historyList.filter(item =>
-    item.servicoNome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.estabelecimentoNome || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (item.servicoNome || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.comercioNome ?? item.estabelecimento ?? '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Cancelado e "não compareceu" não entram no total gasto nem na contagem de serviços.
+  const realizados = historyList.filter(
+    (item) => item.status !== 'Cancelado' && item.status !== 'NaoCompareceu',
   );
 
   return (
@@ -138,6 +148,9 @@ export default function ClientHistoryPage() {
           <div className="space-y-4">
             {filteredHistory.map((item, index) => {
               const data = new Date(item.dataAgendamento);
+              const hora = item.horaAgendamento ? item.horaAgendamento.slice(0, 5) : '';
+              const estabNome = item.comercioNome ?? item.estabelecimento;
+              const temValor = typeof item.valor === 'number' && item.valor > 0;
               return (
                 <motion.div
                   key={index}
@@ -160,12 +173,20 @@ export default function ClientHistoryPage() {
                         <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-sm text-muted-foreground">
                           <span className="flex items-center gap-1.5">
                             <Calendar className="h-3.5 w-3.5" />
-                            {format(data, "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                            {format(data, "dd 'de' MMMM", { locale: ptBR })}
+                            {hora ? ` às ${hora}` : ''}
                           </span>
-                          <span className="flex items-center gap-1.5">
-                            <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-                            {item.estabelecimentoNome || 'Estabelecimento'}
-                          </span>
+                          {estabNome && (
+                            <span className="flex items-center gap-1.5">
+                              <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+                              {estabNome}
+                            </span>
+                          )}
+                          {item.profissionalNome && (
+                            <span className="flex items-center gap-1.5">
+                              {item.profissionalNome}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -177,9 +198,9 @@ export default function ClientHistoryPage() {
                       </div>
                       
                       <div className="text-right min-w-[100px]">
-                        <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-0.5">Valor Pago</p>
+                        <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-0.5">Valor</p>
                         <p className="text-xl font-extrabold text-foreground">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.valor)}
+                          {temValor ? formatBRL(Number(item.valor)) : 'A consultar'}
                         </p>
                       </div>
 
@@ -202,15 +223,13 @@ export default function ClientHistoryPage() {
             <div className="space-y-1">
               <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Total Gasto</p>
               <p className="text-3xl font-black text-primary">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
-                  historyList.reduce((acc, curr) => acc + (curr.valor || 0), 0)
-                )}
+                {formatBRL(realizados.reduce((acc, curr) => acc + (curr.valor || 0), 0))}
               </p>
             </div>
             <div className="w-px h-10 bg-primary/20 hidden md:block" />
             <div className="space-y-1">
               <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest">Total de Serviços</p>
-              <p className="text-3xl font-black text-primary">{history.length}</p>
+              <p className="text-3xl font-black text-primary">{realizados.length}</p>
             </div>
           </div>
           <Button className="h-12 px-8 rounded-2xl font-bold gap-2 shadow-lg shadow-primary/20">

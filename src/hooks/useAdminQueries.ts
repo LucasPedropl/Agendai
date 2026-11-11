@@ -44,20 +44,32 @@ export function useHistoricoComercio(
   });
 }
 
-export function useDesativarComercioUsuario(
+/** A API devolve `{message}` (ou, antes, uma string pura). */
+export function extractApiMessage(payload: unknown): string | null {
+  if (typeof payload === 'string') return payload.trim() || null;
+  if (payload && typeof payload === 'object') {
+    const message = (payload as { message?: unknown }).message;
+    if (typeof message === 'string') return message.trim() || null;
+  }
+  return null;
+}
+
+function useAlterarStatusComercioUsuario(
   tipo: 'Clientes' | 'Profissionais',
-  comercioId: number | null
+  comercioId: number | null,
+  action: 'Desativar-Usuario' | 'Reativar-Usuario'
 ) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (userId: string) => {
+    mutationFn: async (userId: string): Promise<string | null> => {
       if (!comercioId) {
         throw new Error('Comércio não identificado.');
       }
-      await fetchApi(`/api/ComercioUsuarios/Desativar-Usuario/${comercioId}/${userId}`, {
-        method: 'DELETE',
+      const data: unknown = await fetchApi(`/api/ComercioUsuarios/${action}/${comercioId}/${userId}`, {
+        method: action === 'Desativar-Usuario' ? 'DELETE' : 'PUT',
         skipToast: true,
       });
+      return extractApiMessage(data);
     },
     onSuccess: () => {
       if (comercioId) {
@@ -67,6 +79,20 @@ export function useDesativarComercioUsuario(
       }
     },
   });
+}
+
+export function useDesativarComercioUsuario(
+  tipo: 'Clientes' | 'Profissionais',
+  comercioId: number | null
+) {
+  return useAlterarStatusComercioUsuario(tipo, comercioId, 'Desativar-Usuario');
+}
+
+export function useReativarComercioUsuario(
+  tipo: 'Clientes' | 'Profissionais',
+  comercioId: number | null
+) {
+  return useAlterarStatusComercioUsuario(tipo, comercioId, 'Reativar-Usuario');
 }
 
 export function useComercioUsuarios<T = Record<string, unknown>>(

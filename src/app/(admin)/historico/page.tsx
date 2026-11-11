@@ -8,7 +8,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { StatusBadge, getStatusVariant } from '@/components/ui/status-badge';
 import { useComercioId } from '@/hooks/useComercioId';
 import { useHistoricoComercio } from '@/hooks/useAdminQueries';
-import { cn } from '@/lib/utils';
+import { cn, formatBRL } from '@/lib/utils';
 
 interface HistoricoItem {
   dataAgendamento: string;
@@ -16,6 +16,8 @@ interface HistoricoItem {
   usuarioNome: string;
   status: string;
   horaAgendamento?: string;
+  profissionalNome?: string;
+  valor?: number;
 }
 
 export default function AdminHistoryPage() {
@@ -34,13 +36,19 @@ export default function AdminHistoryPage() {
         usuarioNome: String(row.usuarioNome ?? ''),
         status: String(row.status ?? ''),
         horaAgendamento: row.horaAgendamento ? String(row.horaAgendamento) : undefined,
+        profissionalNome: row.profissionalNome ? String(row.profissionalNome) : undefined,
+        valor: typeof row.valor === 'number' && row.valor > 0 ? row.valor : undefined,
       })) as HistoricoItem[],
     [rawItems]
   );
 
   const filtered = items.filter((item) => {
     const term = searchTerm.toLowerCase();
-    return item.servicoNome?.toLowerCase().includes(term) || item.usuarioNome?.toLowerCase().includes(term);
+    return (
+      item.servicoNome?.toLowerCase().includes(term) ||
+      item.usuarioNome?.toLowerCase().includes(term) ||
+      item.profissionalNome?.toLowerCase().includes(term)
+    );
   });
 
   const concluidos = items.filter((i) => i.status?.toLowerCase().includes('finaliz')).length;
@@ -119,11 +127,15 @@ export default function AdminHistoryPage() {
             <Card key={idx} className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:border-primary/20 transition-colors">
               <div>
                 <p className="font-semibold text-foreground">{item.servicoNome}</p>
-                <p className="text-sm text-muted-foreground">{item.usuarioNome}</p>
+                <p className="text-sm text-muted-foreground">
+                  {item.usuarioNome}
+                  {item.profissionalNome ? ` · com ${item.profissionalNome}` : ''}
+                </p>
               </div>
               <div className="text-sm text-muted-foreground">
                 {new Date(item.dataAgendamento).toLocaleDateString('pt-BR')}
                 {item.horaAgendamento ? ` às ${String(item.horaAgendamento).slice(0, 5)}` : ''}
+                {item.valor ? ` · ${formatBRL(item.valor)}` : ''}
               </div>
               <StatusBadge label={item.status} variant={getStatusVariant(item.status)} />
             </Card>

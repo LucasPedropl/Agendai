@@ -23,12 +23,8 @@ export function UpcomingAppointmentsCard({
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-base font-bold text-foreground">
-                {isProfissional ? 'Próximos atendimentos do estabelecimento' : 'Próximos Clientes'}
+                {isProfissional ? 'Meus próximos atendimentos' : 'Próximos Clientes'}
               </CardTitle>
-              {isProfissional && (
-                // GET /api/Agenda/Comercio/{id} não diz qual profissional atende.
-                <p className="mt-1 text-xs text-muted-foreground">Inclui os horários de toda a equipe.</p>
-              )}
             </div>
             <button
               type="button"
@@ -73,6 +69,7 @@ export function UpcomingAppointmentsCard({
                       </p>
                       <p className="text-xs text-muted-foreground truncate italic">
                         {agendamento.servico}
+                        {!isProfissional && agendamento.profissional ? ` · com ${agendamento.profissional}` : ''}
                       </p>
                     </div>
                   </div>

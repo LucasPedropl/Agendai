@@ -19,6 +19,12 @@ export interface RawDashboardAgendaItem {
   ServicoNome?: string;
   usuarioNome?: string;
   UsuarioNome?: string;
+  usuarioId?: string;
+  profissionalId?: string;
+  profissionalNome?: string;
+  servicoId?: number;
+  valor?: number;
+  Valor?: number;
   status?: string;
   Status?: string;
 }
@@ -88,6 +94,7 @@ export interface UpcomingAppointment {
   horario: string;
   cliente: string;
   servico: string;
+  profissional?: string;
   valor: number;
   status: string;
   isToday: boolean;
@@ -292,9 +299,21 @@ export function useDashboardData({
     return servicePriceMap.get(servicoNome.trim().toLowerCase()) ?? 0;
   };
 
+  const getItemPrice = (item: RawDashboardAgendaItem): number => {
+    const valor = Number(item.valor ?? item.Valor);
+    if (Number.isFinite(valor) && valor > 0) return valor;
+    return getServicePrice(item.servicoNome ?? item.ServicoNome);
+  };
+
   // Cálculo das Métricas Principais
   const { metrics, weeklyFlow, upcomingAppointments, hasData } = useMemo(() => {
-    const agendaList = agendaQuery.data ?? [];
+    const agendaAll = agendaQuery.data ?? [];
+    const agendaList =
+      isProfissional && profissionalId
+        ? agendaAll.filter(
+            (item) => item.profissionalId?.toLowerCase() === profissionalId.toLowerCase()
+          )
+        : agendaAll;
     const histMesAtual = historicoMesAtualQuery.data ?? [];
     const histMesAnterior = historicoMesAnteriorQuery.data ?? [];
     const clientesList = clientesQuery.data ?? [];
@@ -311,8 +330,7 @@ export function useDashboardData({
     for (const item of histMesAtual) {
       const st = String(item.status ?? item.Status ?? '').toLowerCase();
       if (st.includes('finaliz') || st.includes('conclu')) {
-        const servName = item.servicoNome ?? item.ServicoNome;
-        receitaMesServicos += getServicePrice(servName);
+        receitaMesServicos += getItemPrice(item);
       }
     }
 
@@ -339,8 +357,7 @@ export function useDashboardData({
     for (const item of histMesAnterior) {
       const st = String(item.status ?? item.Status ?? '').toLowerCase();
       if (st.includes('finaliz') || st.includes('conclu')) {
-        const servName = item.servicoNome ?? item.ServicoNome;
-        receitaMesAnterior += getServicePrice(servName);
+        receitaMesAnterior += getItemPrice(item);
       }
     }
 
@@ -383,15 +400,17 @@ export function useDashboardData({
     sevenDaysAgo.setDate(now.getDate() - 7);
     const sevenDaysAgoStr = extractDateStr(sevenDaysAgo.toISOString());
 
-    const clientNamesWeek = new Set<string>();
+    const clientKeysWeek = new Set<string>();
     for (const item of [...agendaList, ...histMesAtual]) {
       const dStr = extractDateStr(item.dataAgendamento ?? item.DataAgendamento);
       if (dStr >= sevenDaysAgoStr) {
-        const clientName = (item.usuarioNome ?? item.UsuarioNome ?? '').trim();
-        if (clientName) clientNamesWeek.add(clientName.toLowerCase());
+        const clientKey = item.usuarioId
+          ? `id:${item.usuarioId.toLowerCase()}`
+          : `nome:${(item.usuarioNome ?? item.UsuarioNome ?? '').trim().toLowerCase()}`;
+        if (clientKey !== 'nome:') clientKeysWeek.add(clientKey);
       }
     }
-    const clientesSemana = clientNamesWeek.size;
+    const clientesSemana = clientKeysWeek.size;
 
     // 5. Taxa de Cancelamento no Mês
     // Considera todos os agendamentos registrados no mês atual (histórico + agenda)
@@ -458,8 +477,7 @@ export function useDashboardData({
           if (st.includes('cancel')) {
             diaCancelamentos += 1;
           } else if (st.includes('finaliz') || st.includes('conclu')) {
-            const serv = item.servicoNome ?? item.ServicoNome;
-            diaReceita += getServicePrice(serv);
+            diaReceita += getItemPrice(item);
           }
         }
       }
@@ -509,7 +527,8 @@ export function useDashboardData({
         const horario = formatHourMinute(item.horaAgendamento ?? item.HoraAgendamento);
         const cliente = String(item.usuarioNome ?? item.UsuarioNome ?? 'Cliente');
         const servico = String(item.servicoNome ?? item.ServicoNome ?? 'Serviço');
-        const valor = getServicePrice(servico);
+        const valor = getItemPrice(item);
+        const profissional = item.profissionalNome?.trim() || undefined;
         const rawStatus = String(item.status ?? item.Status ?? 'Confirmado');
 
         return {
@@ -518,6 +537,7 @@ export function useDashboardData({
           horario,
           cliente,
           servico,
+          profissional,
           valor,
           status: rawStatus,
           isToday: isDateToday(item.dataAgendamento ?? item.DataAgendamento),
@@ -544,6 +564,8 @@ export function useDashboardData({
     clientesQuery.data,
     pagamentosQuery.data,
     servicePriceMap,
+    isProfissional,
+    profissionalId,
   ]);
 
   const refetch = async () => {

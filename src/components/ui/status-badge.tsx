@@ -18,6 +18,8 @@ const variantStyles: Record<StatusVariant, string> = {
 
 export function getStatusVariant(status: string): StatusVariant {
   const s = status.toLowerCase();
+  // "inativo" contém "ativo": precisa ser testado antes.
+  if (s.includes('inativ')) return 'danger';
   if (s.includes('ativo') || s.includes('confirm') || s.includes('finaliz') || s.includes('conclu')) {
     return 'success';
   }

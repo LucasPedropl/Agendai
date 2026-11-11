@@ -33,6 +33,8 @@ import { AppointmentForm } from '@/features/agenda/components/AppointmentForm';
 import { Cliente } from '@/types';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useToast } from '@/contexts/ToastContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { getUserIdFromToken } from '@/lib/apiHelpers';
 import { fetchApi } from '@/lib/api';
 import { getFriendlyErrorMessage } from '@/lib/errors';
 
@@ -44,6 +46,7 @@ interface AgendaItem {
   cliente: string;
   status: string;
   profissional?: string;
+  profissionalId?: string;
   observacao?: string;
   duracao?: string;
   preco?: string | number;
@@ -133,6 +136,8 @@ function mapAgendaItem(raw: Record<string, unknown>, index: number): AgendaItem 
     raw.observacao ?? raw.Observacao ?? raw.notas ?? raw.notes ?? ''
   );
 
+  const valor = Number(raw.valor ?? raw.Valor);
+
   return {
     id: String(raw.id ?? raw.Id ?? index),
     data: String(raw.dataAgendamento ?? raw.DataAgendamento ?? raw.data ?? ''),
@@ -141,9 +146,10 @@ function mapAgendaItem(raw: Record<string, unknown>, index: number): AgendaItem 
     cliente: usuarioNome,
     status: String(raw.status ?? raw.Status ?? 'pendente').toLowerCase(),
     profissional: isValidValue(profissionalNome) ? profissionalNome : undefined,
+    profissionalId: isValidValue(raw.profissionalId) ? String(raw.profissionalId) : undefined,
     observacao: isValidValue(observacao) ? observacao : undefined,
     duracao: isValidValue(raw.duracao ?? raw.Duracao) ? String(raw.duracao ?? raw.Duracao) : undefined,
-    preco: isValidValue(raw.preco ?? raw.Preco ?? raw.valor ?? raw.Valor) ? (raw.preco ?? raw.Preco ?? raw.valor ?? raw.Valor) as string | number : undefined,
+    preco: valor > 0 ? valor : undefined,
     raw,
   };
 }
@@ -158,7 +164,16 @@ export default function AdminAgendaPage() {
   const { data: servicosList = [] } = useServicosComercio(comercioId);
   const { data: clientesList = [] } = useComercioUsuarios<Cliente>(comercioId, 'Clientes');
 
-  const agendamentos = useMemo(() => rawList.map(mapAgendaItem), [rawList]);
+  const { userType, token } = useAuth();
+  const isProfissional = userType === 'profissional';
+  const meuId = token ? getUserIdFromToken(token) : null;
+  const [somenteMeus, setSomenteMeus] = useState(true);
+
+  const agendamentos = useMemo(() => {
+    const all = rawList.map(mapAgendaItem);
+    if (!isProfissional || !somenteMeus || !meuId) return all;
+    return all.filter((a) => a.profissionalId?.toLowerCase() === meuId.toLowerCase());
+  }, [rawList, isProfissional, somenteMeus, meuId]);
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -307,6 +322,27 @@ export default function AdminAgendaPage() {
         </Button>
       </PageHeader>
 
+      {isProfissional && (
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant={somenteMeus ? 'default' : 'outline'}
+            onClick={() => setSomenteMeus(true)}
+          >
+            Só os meus
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={somenteMeus ? 'outline' : 'default'}
+            onClick={() => setSomenteMeus(false)}
+          >
+            Equipe toda
+          </Button>
+        </div>
+      )}
+
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-4 space-y-0 pb-4">
           <div className="flex items-center gap-3">
@@ -372,6 +408,7 @@ export default function AdminAgendaPage() {
                               <p className="text-sm font-semibold text-foreground">{agendamento.servico}</p>
                               <p className="text-xs text-muted-foreground mt-0.5">
                                 {agendamento.cliente} • {agendamento.hora.slice(0, 5)}
+                                {agendamento.profissional ? ` • com ${agendamento.profissional}` : ''}
                               </p>
                             </div>
                             <StatusBadge label={agendamento.status} variant={getStatusVariant(agendamento.status)} />
