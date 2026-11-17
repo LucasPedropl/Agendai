@@ -314,8 +314,8 @@ export default function AdminConfigPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Configurações</h1>
-        <p className="text-slate-500 text-sm">Gerencie os detalhes da sua empresa e preferências do sistema.</p>
+        <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
+        <p className="text-muted-foreground text-sm">Gerencie os detalhes da sua empresa e preferências do sistema.</p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-8">
@@ -327,18 +327,18 @@ export default function AdminConfigPage() {
               onClick={() => setActiveTab(item.id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
                 activeTab === item.id 
-                ? 'bg-slate-900 text-white shadow-md' 
-                : 'text-slate-600 hover:bg-slate-50'
+                ? 'bg-primary text-primary-foreground shadow-md' 
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               }`}
             >
               <item.icon className="h-4 w-4" />
               {item.label}
             </button>
           ))}
-          <div className="pt-4 mt-4 border-t border-slate-100">
+          <div className="pt-4 mt-4 border-t border-border">
             <button 
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 transition-all"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-destructive hover:bg-destructive/10 transition-all"
             >
               <LogOut className="h-4 w-4" />
               Sair da Conta
@@ -348,7 +348,7 @@ export default function AdminConfigPage() {
 
         {/* Content Area */}
         <main className="flex-1">
-          <Card className="border-none shadow-sm overflow-hidden">
+          <Card className="border-border shadow-sm overflow-hidden">
             <CardContent className="p-0">
               <div className="p-8">
                 {/* TAB EMPRESA */}
@@ -356,54 +356,54 @@ export default function AdminConfigPage() {
                   <div>
                     {isComercioIdLoading || isLoadingComercio ? (
                       <div className="p-12 flex flex-col items-center justify-center space-y-4">
-                        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-                        <p className="text-slate-500 text-sm animate-pulse">Carregando dados da empresa...</p>
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <p className="text-muted-foreground text-sm animate-pulse">Carregando dados da empresa...</p>
                       </div>
                     ) : comercioError ? (
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-800">
+                        <div className="flex items-center justify-between p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive">
                           <div className="flex items-center gap-3">
-                            <AlertCircle className="h-5 w-5 text-rose-600 shrink-0" />
+                            <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
                             <div>
                               <p className="text-sm font-bold">Falha ao carregar dados da empresa</p>
-                              <p className="text-xs text-rose-700">{comercioError}</p>
+                              <p className="text-xs opacity-90">{comercioError}</p>
                             </div>
                           </div>
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="border-rose-300 text-rose-700 hover:bg-rose-100"
+                            className="border-destructive/30 text-destructive hover:bg-destructive/10"
                             onClick={() => void loadComercio()}
                           >
                             <RefreshCw className="mr-2 h-3.5 w-3.5" />
                             Tentar novamente
                           </Button>
                         </div>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-muted-foreground">
                           O formulário de edição foi bloqueado para prevenir a sobrescrita acidental de dados com valores em branco.
                         </p>
                       </div>
                     ) : comercio ? (
                       <form onSubmit={handleUpdateComercio} className="space-y-8">
-                        <div className="border-b pb-4">
-                          <h2 className="text-xl font-bold text-slate-900">Informações da Empresa</h2>
-                          <p className="text-sm text-slate-500">Dados visíveis para seus clientes nas faturas e agendamentos.</p>
+                        <div className="border-b border-border pb-4">
+                          <h2 className="text-xl font-bold text-foreground">Informações da Empresa</h2>
+                          <p className="text-sm text-muted-foreground">Dados visíveis para seus clientes nas faturas e agendamentos.</p>
                         </div>
 
                         {/* Logo Section */}
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
                           <div className="relative group">
-                            <div className="h-24 w-24 rounded-2xl bg-slate-100 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden">
+                            <div className="h-24 w-24 rounded-2xl bg-muted border-2 border-dashed border-border flex items-center justify-center overflow-hidden">
                               {previewImage ? (
                                 <img src={previewImage} alt="Preview" className="h-full w-full object-cover" />
                               ) : (
-                                <Building2 className="h-10 w-10 text-slate-300" />
+                                <Building2 className="h-10 w-10 text-muted-foreground/50" />
                               )}
                             </div>
                             <button 
                               type="button"
                               onClick={() => fileInputRef.current?.click()}
-                              className="absolute -bottom-2 -right-2 p-2 bg-white rounded-full shadow-lg border border-slate-100 text-indigo-600 hover:bg-slate-50 transition-all active:scale-95"
+                              className="absolute -bottom-2 -right-2 p-2 bg-background rounded-full shadow-lg border border-border text-primary hover:bg-muted transition-all active:scale-95"
                               title="Alterar logo"
                             >
                               <Camera className="h-4 w-4" />
@@ -411,23 +411,23 @@ export default function AdminConfigPage() {
                           </div>
                           
                           <div className="space-y-1 flex-1">
-                            <h4 className="text-sm font-semibold text-slate-900">Logo da Empresa</h4>
+                            <h4 className="text-sm font-semibold text-foreground">Logo da Empresa</h4>
                             <div className="flex flex-col gap-2">
                               <div className="flex items-center gap-2">
                                 <Button 
                                   type="button" 
                                   variant="outline" 
                                   size="sm" 
-                                  className="h-9 px-4 border-slate-200 text-slate-700 font-medium"
+                                  className="h-9 px-4 font-medium"
                                   onClick={() => fileInputRef.current?.click()}
                                 >
                                   {selectedFile ? 'Alterar arquivo' : 'Escolher arquivo'}
                                 </Button>
-                                <span className="text-xs text-slate-500 truncate max-w-[200px]">
+                                <span className="text-xs text-muted-foreground truncate max-w-[200px]">
                                   {selectedFile ? selectedFile.name : 'Nenhum arquivo escolhido'}
                                 </span>
                               </div>
-                              <p className="text-xs text-slate-400">JPG, GIF ou PNG. Max 1MB.</p>
+                              <p className="text-xs text-muted-foreground">JPG, GIF ou PNG. Max 1MB.</p>
                             </div>
                             <input 
                               type="file" 
@@ -442,7 +442,7 @@ export default function AdminConfigPage() {
                         {/* Basic Info Fields */}
                         <div className="grid gap-6 md:grid-cols-2">
                           <div className="space-y-2 md:col-span-2">
-                            <label className="text-sm font-semibold text-slate-700">Nome da Empresa</label>
+                            <label className="text-sm font-semibold text-foreground">Nome da Empresa</label>
                             <Input 
                               value={comercio.nome} 
                               onChange={(e) => setComercio({ ...comercio, nome: e.target.value })} 
@@ -452,7 +452,7 @@ export default function AdminConfigPage() {
                           </div>
 
                           <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-700">Telefone de Contato</label>
+                            <label className="text-sm font-semibold text-foreground">Telefone de Contato</label>
                             <Input 
                               value={comercio.telefone} 
                               onChange={(e) => setComercio({ ...comercio, telefone: e.target.value })} 
@@ -461,7 +461,7 @@ export default function AdminConfigPage() {
                           </div>
 
                           <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-700">CNPJ</label>
+                            <label className="text-sm font-semibold text-foreground">CNPJ</label>
                             <Input 
                               value={comercio.cnpj} 
                               onChange={(e) => setComercio({ ...comercio, cnpj: e.target.value })} 
@@ -470,7 +470,7 @@ export default function AdminConfigPage() {
                           </div>
 
                           <div className="space-y-2 md:col-span-2">
-                            <label className="text-sm font-semibold text-slate-700">E-mail Comercial</label>
+                            <label className="text-sm font-semibold text-foreground">E-mail Comercial</label>
                             <Input 
                               type="email"
                               value={comercio.email} 
@@ -480,7 +480,7 @@ export default function AdminConfigPage() {
                           </div>
 
                           <div className="space-y-2 md:col-span-2">
-                            <label className="text-sm font-semibold text-slate-700">Endereço Completo</label>
+                            <label className="text-sm font-semibold text-foreground">Endereço Completo</label>
                             <Input 
                               value={comercio.endereco} 
                               onChange={(e) => setComercio({ ...comercio, endereco: e.target.value })} 
@@ -489,10 +489,10 @@ export default function AdminConfigPage() {
                           </div>
 
                           <div className="space-y-2 md:col-span-2">
-                            <label className="text-sm font-semibold text-slate-700">Descrição do Negócio</label>
+                            <label className="text-sm font-semibold text-foreground">Descrição do Negócio</label>
                             <textarea 
                               rows={3}
-                              className="w-full flex min-h-[80px] rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="w-full flex min-h-[80px] rounded-xl border border-border bg-secondary/30 px-4 py-2 text-sm text-foreground ring-offset-background placeholder:text-foreground/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary/50 disabled:cursor-not-allowed disabled:opacity-50"
                               placeholder="Fale um pouco sobre os serviços oferecidos"
                               value={comercio.descricao}
                               onChange={(e) => setComercio({ ...comercio, descricao: e.target.value })}
@@ -501,7 +501,7 @@ export default function AdminConfigPage() {
 
                           {/* Social Media */}
                           <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-700">Instagram</label>
+                            <label className="text-sm font-semibold text-foreground">Instagram</label>
                             <Input 
                               value={comercio.instagram} 
                               onChange={(e) => setComercio({ ...comercio, instagram: e.target.value })} 
@@ -509,7 +509,7 @@ export default function AdminConfigPage() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-700">Site</label>
+                            <label className="text-sm font-semibold text-foreground">Site</label>
                             <Input 
                               value={comercio.site} 
                               onChange={(e) => setComercio({ ...comercio, site: e.target.value })} 
@@ -520,12 +520,12 @@ export default function AdminConfigPage() {
 
                         {/* Automações Settings (Company Level) */}
                         <div className="pt-4 space-y-4">
-                          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Automações e Preferências</p>
+                          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Automações e Preferências</p>
                           <div className="grid gap-4">
-                            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                            <div className="flex items-center justify-between p-4 bg-muted/40 border border-border rounded-xl">
                               <div>
-                                <p className="text-sm font-bold text-slate-900">Notificar Novos Agendamentos</p>
-                                <p className="text-xs text-slate-500">Receba alertas cada vez que um cliente marcar horário.</p>
+                                <p className="text-sm font-bold text-foreground">Notificar Novos Agendamentos</p>
+                                <p className="text-xs text-muted-foreground">Receba alertas cada vez que um cliente marcar horário.</p>
                               </div>
                               <label className="relative inline-flex items-center cursor-pointer">
                                 <input 
@@ -534,13 +534,13 @@ export default function AdminConfigPage() {
                                   checked={comercio.notificarAgendamento}
                                   onChange={(e) => setComercio({ ...comercio, notificarAgendamento: e.target.checked })}
                                 />
-                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                <div className="w-11 h-6 bg-input peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                               </label>
                             </div>
-                            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                            <div className="flex items-center justify-between p-4 bg-muted/40 border border-border rounded-xl">
                               <div>
-                                <p className="text-sm font-bold text-slate-900">Lembrete para Clientes</p>
-                                <p className="text-xs text-slate-500">Enviar lembretes automáticos para evitar faltas.</p>
+                                <p className="text-sm font-bold text-foreground">Lembrete para Clientes</p>
+                                <p className="text-xs text-muted-foreground">Enviar lembretes automáticos para evitar faltas.</p>
                               </div>
                               <label className="relative inline-flex items-center cursor-pointer">
                                 <input 
@@ -549,13 +549,13 @@ export default function AdminConfigPage() {
                                   checked={comercio.lembrarAgendamento}
                                   onChange={(e) => setComercio({ ...comercio, lembrarAgendamento: e.target.checked })}
                                 />
-                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                <div className="w-11 h-6 bg-input peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                               </label>
                             </div>
-                            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                            <div className="flex items-center justify-between p-4 bg-muted/40 border border-border rounded-xl">
                               <div>
-                                <p className="text-sm font-bold text-slate-900">Resumo Diário</p>
-                                <p className="text-xs text-slate-500">Receba um resumo diário com os atendimentos programados.</p>
+                                <p className="text-sm font-bold text-foreground">Resumo Diário</p>
+                                <p className="text-xs text-muted-foreground">Receba um resumo diário com os atendimentos programados.</p>
                               </div>
                               <label className="relative inline-flex items-center cursor-pointer">
                                 <input 
@@ -564,7 +564,7 @@ export default function AdminConfigPage() {
                                   checked={comercio.resumoDiario}
                                   onChange={(e) => setComercio({ ...comercio, resumoDiario: e.target.checked })}
                                 />
-                                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                                <div className="w-11 h-6 bg-input peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                               </label>
                             </div>
                           </div>
@@ -574,7 +574,7 @@ export default function AdminConfigPage() {
                           <Button 
                             type="submit" 
                             disabled={isSavingComercio}
-                            className="bg-slate-900 hover:bg-black text-white px-10 h-11 shadow-lg shadow-slate-200 transition-all active:scale-95"
+                            className="px-10 h-11 transition-all active:scale-95"
                           >
                             {isSavingComercio ? (
                               <>
@@ -599,20 +599,20 @@ export default function AdminConfigPage() {
                   <div>
                     {isLoadingPerfil ? (
                       <div className="p-12 flex flex-col items-center justify-center space-y-4">
-                        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
-                        <p className="text-slate-500 text-sm animate-pulse">Carregando dados do perfil...</p>
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <p className="text-muted-foreground text-sm animate-pulse">Carregando dados do perfil...</p>
                       </div>
                     ) : perfilError ? (
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-800">
+                        <div className="flex items-center justify-between p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive">
                           <div className="flex items-center gap-3">
-                            <AlertCircle className="h-5 w-5 text-rose-600 shrink-0" />
+                            <AlertCircle className="h-5 w-5 text-destructive shrink-0" />
                             <p className="text-sm font-medium">{perfilError}</p>
                           </div>
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            className="border-rose-300 text-rose-700 hover:bg-rose-100"
+                            className="border-destructive/30 text-destructive hover:bg-destructive/10"
                             onClick={() => void loadPerfil()}
                           >
                             <RefreshCw className="mr-2 h-3.5 w-3.5" />
@@ -622,13 +622,13 @@ export default function AdminConfigPage() {
                       </div>
                     ) : (
                       <form onSubmit={handleUpdatePerfil} className="space-y-6">
-                        <div className="border-b pb-4 mb-6">
-                          <h2 className="text-xl font-bold text-slate-900">Informações Pessoais</h2>
-                          <p className="text-sm text-slate-500">Dados do seu cadastro de usuário.</p>
+                        <div className="border-b border-border pb-4 mb-6">
+                          <h2 className="text-xl font-bold text-foreground">Informações Pessoais</h2>
+                          <p className="text-sm text-muted-foreground">Dados do seu cadastro de usuário.</p>
                         </div>
                         <div className="grid gap-6 md:grid-cols-2">
                           <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-700">Nome</label>
+                            <label className="text-sm font-semibold text-foreground">Nome</label>
                             <Input 
                               value={perfil.nome} 
                               onChange={(e) => setPerfil({ ...perfil, nome: e.target.value })} 
@@ -638,18 +638,18 @@ export default function AdminConfigPage() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-700">Sobrenome</label>
+                            <label className="text-sm font-semibold text-foreground">Sobrenome</label>
                             <Input 
                               value={perfil.sobrenome} 
                               onChange={(e) => setPerfil({ ...perfil, sobrenome: e.target.value })} 
                             />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-700">E-mail</label>
-                            <Input value={perfil.email} readOnly className="bg-slate-50 cursor-not-allowed" />
+                            <label className="text-sm font-semibold text-foreground">E-mail</label>
+                            <Input value={perfil.email} readOnly className="bg-muted cursor-not-allowed text-muted-foreground" />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-700">Telefone</label>
+                            <label className="text-sm font-semibold text-foreground">Telefone</label>
                             <Input 
                               value={perfil.telefone} 
                               onChange={(e) => setPerfil({ ...perfil, telefone: e.target.value })} 
@@ -658,7 +658,7 @@ export default function AdminConfigPage() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-700">CPF</label>
+                            <label className="text-sm font-semibold text-foreground">CPF</label>
                             <Input 
                               value={perfil.cpf} 
                               onChange={(e) => setPerfil({ ...perfil, cpf: e.target.value })} 
@@ -667,7 +667,7 @@ export default function AdminConfigPage() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-700">Data de Nascimento</label>
+                            <label className="text-sm font-semibold text-foreground">Data de Nascimento</label>
                             <Input 
                               type="date"
                               value={perfil.dataNascimento} 
@@ -680,7 +680,7 @@ export default function AdminConfigPage() {
                           <Button 
                             type="submit" 
                             disabled={isSavingPerfil}
-                            className="bg-slate-900 hover:bg-black text-white px-8"
+                            className="px-8"
                           >
                             {isSavingPerfil ? (
                               <>

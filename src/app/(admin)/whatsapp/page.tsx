@@ -134,6 +134,12 @@ export default function AdminWhatsAppPage() {
         skipToast: true,
       });
 
+      if (typeof data?.message === 'string' && /token/i.test(data.message)) {
+        setStatus('TOKEN_PENDING');
+        setQrCode(null);
+        return;
+      }
+
       const mapped = mapWhatsAppStatus(data?.status);
       // Durante o polling, a Bixs pode responder "disconnected" enquanto o QR ainda não foi lido.
       if (!(silent && mapped === 'DISCONNECTED' && qrCodeRef.current)) {

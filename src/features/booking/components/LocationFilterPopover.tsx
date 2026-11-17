@@ -177,7 +177,7 @@ export function LocationFilterPopover({
           className={`
             absolute top-full mt-2 left-0 sm:left-auto sm:right-0 z-50
             w-[calc(100vw-2.5rem)] max-w-[320px] sm:w-80
-            bg-card border border-border rounded-2xl shadow-xl p-4 space-y-4
+            bg-background border border-border rounded-2xl shadow-xl p-4 space-y-4
             animate-in fade-in zoom-in-95 duration-150
           `}
         >
@@ -186,7 +186,9 @@ export function LocationFilterPopover({
               <MapPin className="h-3.5 w-3.5 text-primary" /> Localização
             </span>
             <button
+              type="button"
               onClick={() => setIsOpen(false)}
+              aria-label="Fechar filtro de localização"
               className="text-muted-foreground hover:text-foreground text-xs p-1"
             >
               <X className="h-4 w-4" />

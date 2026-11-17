@@ -1,424 +1,130 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  TrendingUp, 
-  DollarSign, 
-  Calendar,
-  ArrowUpRight,
-  Filter,
-  PieChart as PieChartIcon,
-  BarChart2,
-  Search,
-  AlertCircle,
-  RefreshCw
-} from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { AlertCircle, ArrowUpRight, Calendar, DollarSign, Filter, RefreshCw, Search, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from '@/components/ui/tabs';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
-} from 'recharts';
-import { Transacao } from '@/types';
-import {
-  usePagamentosEmpresa,
-  useAgendaComercio,
-  useHistoricoComercioTodos,
-  useServicosComercio,
-} from '@/hooks/useAdminQueries';
-import { formatBRL } from '@/lib/utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { usePagamentosEmpresa, useAgendaComercio, useHistoricoComercioTodos, useServicosComercio } from '@/hooks/useAdminQueries';
 import { useComercioId } from '@/hooks/useComercioId';
-import { mapPaymentStatusToUi, getPaymentMethodLabel } from '@/lib/paymentEnums';
+import { formatBRL } from '@/lib/utils';
 import { getFriendlyErrorMessage } from '@/lib/errors';
+import { FinanceCharts } from '@/features/financeiro/components/FinanceCharts';
+import {
+  UNKNOWN_SERVICE_NAME,
+  buildFinanceSummary, buildPerformedServices, filterFinanceTransactions, financeDate,
+  type FinancePayment, type FinanceService, type StatusFilter, type TransactionStatus,
+} from '@/features/financeiro/lib/financeAggregations';
 
-const COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899'];
-
-interface RawPagamento {
-  id?: number | string;
-  Id?: number | string;
-  agendamentoId?: number;
-  AgendamentoId?: number;
-  valor?: number;
-  Valor?: number;
-  codigoTransacao?: string;
-  CodigoTransacao?: string;
-  dataPagamento?: string | null;
-  DataPagamento?: string | null;
-  dataCriacao?: string;
-  DataCriacao?: string;
-  descricao?: string;
-  Descricao?: string;
-  statusPagamento?: number;
-  StatusPagamento?: number;
-  metodoPagamento?: number;
-  MetodoPagamento?: number;
-}
-
-type StatusFilterOption = 'todos' | 'pago' | 'pendente' | 'cancelado' | 'reembolsado';
-
-interface RawServico {
-  id?: number | string;
-  Id?: number | string;
-  nome?: string;
-  Nome?: string;
-  preco?: number;
-  Preco?: number;
-}
-
-function normalizeStatus(value: unknown): string {
-  return String(value ?? '').toLowerCase().replace(/[\s_-]/g, '');
-}
-
-function isNaoRealizado(status: unknown, incluiCancelado: boolean): boolean {
-  const s = normalizeStatus(status);
-  if (s.includes('naocompareceu')) return true;
-  return incluiCancelado && s.includes('cancel');
-}
-
-function toDayKey(value: unknown): string {
-  const raw = String(value ?? '');
-  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(raw);
-  return match ? `${match[1]}-${match[2]}-${match[3]}` : '';
-}
-
-function localTodayKey(now: Date): string {
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
-  return `${now.getFullYear()}-${mm}-${dd}`;
-}
-
-function isHoraPassada(hora: unknown, now: Date): boolean {
-  const match = /^(\d{1,2}):(\d{2})/.exec(String(hora ?? ''));
-  if (!match) return false;
-  const minutes = Number(match[1]) * 60 + Number(match[2]);
-  return minutes <= now.getHours() * 60 + now.getMinutes();
-}
+const STATUS_LABELS: Record<TransactionStatus, string> = {
+  performed: 'Serviço realizado', pago: 'Pago', pendente: 'Pendente', cancelado: 'Cancelado', reembolsado: 'Reembolsado',
+};
+const STATUS_STYLES: Record<TransactionStatus, string> = {
+  performed: 'bg-primary/10 text-primary',
+  pago: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
+  pendente: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+  cancelado: 'bg-destructive/10 text-destructive',
+  reembolsado: 'bg-muted text-muted-foreground',
+};
 
 export default function AdminFinanceiroPage() {
   const { comercioId, isLoading: isComercioLoading } = useComercioId();
-  
-  const { 
-    data: pagamentos = [], 
-    isPending: isLoadingPagamentos,
-    isError: isPagamentosError,
-    error: pagamentosError,
-    refetch: refetchPagamentos
-  } = usePagamentosEmpresa<RawPagamento>(comercioId);
-
-  const historicoQuery = useHistoricoComercioTodos(comercioId);
+  const paymentsQuery = usePagamentosEmpresa<FinancePayment>(comercioId);
+  const historyQuery = useHistoricoComercioTodos(comercioId);
   const agendaQuery = useAgendaComercio(comercioId);
-  const servicosQuery = useServicosComercio<RawServico>(comercioId);
-
-  const isRealizadosLoading =
-    historicoQuery.isPending || agendaQuery.isPending || servicosQuery.isPending;
-  const isRealizadosError =
-    historicoQuery.isError || agendaQuery.isError || servicosQuery.isError;
-
-  const realizados = useMemo(() => {
-    const historico = historicoQuery.data ?? [];
-    const agenda = agendaQuery.data ?? [];
-    const servicos = servicosQuery.data ?? [];
-    const now = new Date();
-    const todayKey = localTodayKey(now);
-
-    const priceById = new Map<string, number>();
-    const priceByName = new Map<string, number>();
-    for (const s of servicos) {
-      const preco = Number(s.preco ?? s.Preco ?? 0);
-      const id = s.id ?? s.Id;
-      const nome = s.nome ?? s.Nome;
-      if (id !== undefined && id !== null) priceById.set(String(id), preco);
-      if (nome) priceByName.set(nome.trim().toLowerCase(), preco);
-    }
-
-    const seen = new Set<string>();
-    let total = 0;
-    let count = 0;
-
-    const add = (item: Record<string, unknown>) => {
-      const id = String(item.id ?? item.Id ?? '');
-      if (id) {
-        if (seen.has(id)) return;
-        seen.add(id);
-      }
-      let valor = Number(item.valor ?? item.Valor);
-      if (!Number.isFinite(valor) || valor <= 0) {
-        const servicoId = item.servicoId ?? item.ServicoId;
-        const servicoNome = item.servicoNome ?? item.ServicoNome;
-        valor =
-          (servicoId !== undefined && servicoId !== null
-            ? priceById.get(String(servicoId))
-            : undefined) ??
-          (typeof servicoNome === 'string' ? priceByName.get(servicoNome.trim().toLowerCase()) : undefined) ??
-          0;
-      }
-      count += 1;
-      total += Number.isFinite(valor) && valor > 0 ? valor : 0;
-    };
-
-    for (const item of historico) {
-      if (isNaoRealizado(item.status ?? item.Status, false)) continue;
-      add(item);
-    }
-
-    for (const item of agenda) {
-      if (isNaoRealizado(item.status ?? item.Status, true)) continue;
-      if (toDayKey(item.dataAgendamento ?? item.DataAgendamento) !== todayKey) continue;
-      if (!isHoraPassada(item.horaAgendamento ?? item.HoraAgendamento, now)) continue;
-      add(item);
-    }
-
-    return { total, count };
-  }, [historicoQuery.data, agendaQuery.data, servicosQuery.data]);
-
-  const [isMounted, setIsMounted] = useState(false);
+  const servicesQuery = useServicosComercio<FinanceService>(comercioId);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<StatusFilterOption>('todos');
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const performed = useMemo(() => buildPerformedServices(
+    historyQuery.data ?? [], agendaQuery.data ?? [], servicesQuery.data ?? [], new Date(),
+  ), [historyQuery.data, agendaQuery.data, servicesQuery.data]);
+  const summary = useMemo(() => buildFinanceSummary(performed, paymentsQuery.data ?? [], new Date()), [performed, paymentsQuery.data]);
+  const filteredTransactions = useMemo(() => filterFinanceTransactions(summary.transactions, searchTerm, statusFilter), [summary.transactions, searchTerm, statusFilter]);
+  const servicesLoading = Boolean(comercioId) && (historyQuery.isPending || agendaQuery.isPending || servicesQuery.isPending);
+  const paymentsLoading = Boolean(comercioId) && paymentsQuery.isPending;
+  const servicesError = historyQuery.isError || agendaQuery.isError || servicesQuery.isError;
 
-  const transacoes = useMemo<Transacao[]>(() => {
-    return pagamentos.map((p) => {
-      const id = String(p.id ?? p.Id ?? '');
-      const rawDate = p.dataPagamento ?? p.dataCriacao ?? p.DataPagamento ?? p.DataCriacao;
-      const statusNum = Number(p.statusPagamento ?? p.StatusPagamento ?? 0);
-      const valorNum = Number(p.valor ?? p.Valor ?? 0);
-      const desc = String(p.descricao ?? p.Descricao ?? 'Pagamento de agendamento');
-
-      return {
-        id,
-        descricao: desc,
-        valor: valorNum,
-        data: rawDate ? String(rawDate) : new Date().toISOString(),
-        status: mapPaymentStatusToUi(statusNum),
-      };
-    });
-  }, [pagamentos]);
-
-  const filteredTransacoes = useMemo(() => {
-    return transacoes.filter((t) => {
-      const matchesSearch =
-        !searchTerm ||
-        t.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.valor.toString().includes(searchTerm) ||
-        t.id.includes(searchTerm);
-      const matchesStatus = statusFilter === 'todos' || t.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    });
-  }, [transacoes, searchTerm, statusFilter]);
-
-  const totalEntradas = useMemo(() => {
-    return pagamentos
-      .filter((p) => Number(p.statusPagamento ?? p.StatusPagamento) === 1)
-      .reduce((acc, p) => acc + Number(p.valor ?? p.Valor ?? 0), 0);
-  }, [pagamentos]);
-
-  const pagamentosPagosCount = useMemo(() => {
-    return pagamentos.filter((p) => Number(p.statusPagamento ?? p.StatusPagamento) === 1).length;
-  }, [pagamentos]);
-
-  // Monthly Revenue for Bar Chart (last 6 months)
-  const monthlyData = useMemo(() => {
-    const now = new Date();
-    const months: { key: string; name: string; receita: number }[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      const rawName = d.toLocaleDateString('pt-BR', { month: 'short' });
-      const name = rawName.charAt(0).toUpperCase() + rawName.slice(1).replace('.', '');
-      months.push({ key, name, receita: 0 });
-    }
-
-    pagamentos.forEach((p) => {
-      const statusNum = Number(p.statusPagamento ?? p.StatusPagamento);
-      if (statusNum === 1) {
-        const rawDate = p.dataPagamento ?? p.dataCriacao ?? p.DataPagamento ?? p.DataCriacao;
-        if (!rawDate) return;
-        const d = new Date(rawDate);
-        if (isNaN(d.getTime())) return;
-        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-        const target = months.find((m) => m.key === key);
-        if (target) {
-          target.receita += Number(p.valor ?? p.Valor ?? 0);
-        }
-      }
-    });
-
-    return months;
-  }, [pagamentos]);
-
-  // Pie Data (Paid valor grouped by metodoPagamento)
-  const pieData = useMemo(() => {
-    const groups = new Map<number, number>();
-    pagamentos.forEach((p) => {
-      const statusNum = Number(p.statusPagamento ?? p.StatusPagamento);
-      if (statusNum === 1) {
-        const method = Number(p.metodoPagamento ?? p.MetodoPagamento ?? 0);
-        const val = Number(p.valor ?? p.Valor ?? 0);
-        groups.set(method, (groups.get(method) ?? 0) + val);
-      }
-    });
-
-    const items: { name: string; value: number }[] = [];
-    groups.forEach((val, method) => {
-      if (val > 0) {
-        items.push({
-          name: getPaymentMethodLabel(method),
-          value: Number(val.toFixed(2)),
-        });
-      }
-    });
-    return items;
-  }, [pagamentos]);
-
-  const hasMonthlyData = monthlyData.some((m) => m.receita > 0);
-  const hasPieData = pieData.length > 0;
-
-  if (isComercioLoading || (isLoadingPagamentos && transacoes.length === 0)) {
-    return (
-      <div className="flex h-full items-center justify-center p-8">
-        <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary" />
-      </div>
-    );
+  if (isComercioLoading) {
+    return <div className="flex items-center justify-center p-12" role="status" aria-label="Carregando financeiro"><RefreshCw className="h-6 w-6 animate-spin text-primary" /></div>;
   }
 
   return (
     <div className="space-y-8 pb-8">
-      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Gestão Financeira</h1>
-        <p className="text-muted-foreground">Controle completo de receitas, faturamento e análise do negócio.</p>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Gestão financeira</h1>
+        <p className="text-muted-foreground">Acompanhe os serviços realizados, os pagamentos e a receita do negócio.</p>
       </div>
 
-      {/* Error Banner when Payments API fails */}
-      {isPagamentosError && (
-        <div className="flex items-center justify-between p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 dark:bg-rose-950/30 dark:border-rose-900/50 dark:text-rose-300">
+      {paymentsQuery.isError && (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card p-4 text-foreground">
           <div className="flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-rose-600 dark:text-rose-400 shrink-0" />
-            <p className="text-sm font-medium">
-              {getFriendlyErrorMessage(pagamentosError, 'Não foi possível carregar os dados financeiros.')}
-            </p>
+            <AlertCircle className="h-5 w-5 shrink-0 text-destructive" />
+            <p className="text-sm">{getFriendlyErrorMessage(paymentsQuery.error, 'Não foi possível carregar os pagamentos.')} Os serviços disponíveis continuam sendo exibidos.</p>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="border-rose-300 text-rose-700 hover:bg-rose-100 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-950/50"
-            onClick={() => refetchPagamentos()}
-          >
-            <RefreshCw className="mr-2 h-3.5 w-3.5" />
-            Tentar novamente
-          </Button>
+          <Button variant="outline" size="sm" onClick={() => void paymentsQuery.refetch()}><RefreshCw className="mr-2 h-3.5 w-3.5" />Tentar novamente</Button>
+        </div>
+      )}
+      {servicesError && (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-border bg-card p-4 text-foreground">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 shrink-0 text-destructive" />
+            <p className="text-sm">Não foi possível carregar todos os serviços. Os valores e gráficos podem estar incompletos.</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => { void historyQuery.refetch(); void agendaQuery.refetch(); void servicesQuery.refetch(); }}><RefreshCw className="mr-2 h-3.5 w-3.5" />Tentar novamente</Button>
         </div>
       )}
 
-      {/* Stats Summary Card Grid */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="p-6 border border-border shadow-sm bg-card">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-muted text-foreground rounded-lg">
-              <Calendar className="h-5 w-5" />
-            </div>
-            <span className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded-full">
-              Agenda
-            </span>
-          </div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Card className="border border-border bg-card p-6 shadow-sm">
+          <Calendar className="mb-4 h-5 w-5 text-primary" />
           <p className="text-sm font-medium text-muted-foreground">Serviços realizados</p>
-          {isRealizadosLoading ? (
-            <div className="mt-2 h-8 w-32 animate-pulse rounded bg-muted" aria-label="Carregando" />
-          ) : isRealizadosError ? (
-            <>
-              <p className="text-2xl font-bold text-foreground mt-1">—</p>
-              <p className="text-xs text-muted-foreground mt-1">Não foi possível calcular.</p>
-            </>
-          ) : (
-            <>
-              <p className="text-2xl font-bold text-foreground mt-1">{formatBRL(realizados.total)}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {realizados.count} {realizados.count === 1 ? 'atendimento concluído' : 'atendimentos concluídos'}
-              </p>
-            </>
-          )}
+          <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">{servicesLoading ? 'Carregando…' : servicesError ? '—' : formatBRL(summary.performedTotal)}</p>
+          <p className="mt-2 text-xs text-muted-foreground">{servicesError ? 'Dados incompletos' : `${summary.performedCount} atendimentos concluídos`}</p>
         </Card>
-
-        <Card className="p-6 border border-border shadow-sm bg-card">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-lg">
-              <TrendingUp className="h-5 w-5" />
-            </div>
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-1 rounded-full flex items-center">
-              <ArrowUpRight className="h-3 w-3 mr-1" />
-              Entradas
-            </span>
-          </div>
-          <p className="text-sm font-medium text-muted-foreground">Receitas Pagas</p>
-          <p className="text-2xl font-bold text-foreground mt-1">
-            {formatBRL(totalEntradas)}
-          </p>
+        <Card className="border border-border bg-card p-6 shadow-sm">
+          <TrendingUp className="mb-4 h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          <p className="text-sm font-medium text-muted-foreground">Total recebido</p>
+          <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">{paymentsLoading ? 'Carregando…' : paymentsQuery.isError ? '—' : formatBRL(summary.totalReceived)}</p>
+          <p className="mt-2 text-xs text-muted-foreground">Pagamentos confirmados no sistema</p>
         </Card>
-
-        <Card className="p-6 border-none shadow-sm bg-primary text-primary-foreground">
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-2 bg-primary-foreground/20 text-primary-foreground rounded-lg">
-              <DollarSign className="h-5 w-5" />
-            </div>
-            <span className="text-xs font-medium text-primary-foreground/80 bg-primary-foreground/10 px-2 py-1 rounded-full">
-              Confirmados
-            </span>
-          </div>
-          <p className="text-sm font-medium text-primary-foreground/80">Pagamentos Concluídos</p>
-          <p className="text-2xl font-bold text-primary-foreground mt-1">
-            {pagamentosPagosCount} {pagamentosPagosCount === 1 ? 'pagamento' : 'pagamentos'}
-          </p>
+        <Card className="border border-border bg-card p-6 shadow-sm">
+          <DollarSign className="mb-4 h-5 w-5 text-primary" />
+          <p className="text-sm font-medium text-muted-foreground">Ticket médio</p>
+          <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">{servicesLoading ? 'Carregando…' : servicesError || !summary.performedCount ? '—' : formatBRL(summary.averageTicket)}</p>
+          <p className="mt-2 text-xs text-muted-foreground">Valor médio por serviço realizado</p>
+        </Card>
+        <Card className="border border-border bg-card p-6 shadow-sm">
+          <ArrowUpRight className="mb-4 h-5 w-5 text-primary" />
+          <p className="text-sm font-medium text-muted-foreground">Pagamentos concluídos</p>
+          <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">{paymentsLoading ? 'Carregando…' : paymentsQuery.isError ? '—' : summary.paidCount}</p>
+          <p className="mt-2 text-xs text-muted-foreground">Todo o histórico</p>
         </Card>
       </div>
 
       <Tabs defaultValue="movimentacao" className="w-full">
-        <TabsList className="bg-muted p-1 mb-8">
-          <TabsTrigger value="movimentacao" className="data-[state=active]:bg-background data-[state=active]:text-foreground text-muted-foreground">Movimentação</TabsTrigger>
-          <TabsTrigger value="analise" className="data-[state=active]:bg-background data-[state=active]:text-foreground text-muted-foreground">Análise Gráfica</TabsTrigger>
+        <TabsList className="mb-6 bg-muted p-1">
+          <TabsTrigger value="movimentacao">Movimentação</TabsTrigger>
+          <TabsTrigger value="analise">Análise gráfica</TabsTrigger>
         </TabsList>
-
-        <TabsContent value="movimentacao" className="space-y-6">
-          <Card className="border border-border shadow-sm bg-card">
-            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <CardTitle className="text-foreground">Histórico de Transações</CardTitle>
+        <TabsContent value="movimentacao">
+          <Card className="border border-border bg-card shadow-sm">
+            <CardHeader className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
+              <div>
+                <CardTitle className="text-foreground">Histórico de transações</CardTitle>
+                <p className="mt-2 text-xs text-muted-foreground">Serviços realizados e pagamentos, sem repetir o mesmo atendimento.</p>
+              </div>
               <div className="flex flex-wrap items-center gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    placeholder="Buscar transação..." 
-                    className="pl-9 w-[220px]"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input placeholder="Buscar transação..." aria-label="Buscar transação por serviço, cliente ou profissional" className="min-w-[180px] pl-9" value={searchTerm} onChange={event => setSearchTerm(event.target.value)} />
                 </div>
-                <div className="flex items-center gap-1 bg-muted/50 border border-border rounded-md px-2 py-1">
-                  <Filter className="h-4 w-4 text-muted-foreground mr-1" />
-                  <select
-                    className="bg-transparent text-xs font-medium text-foreground outline-none cursor-pointer"
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value as StatusFilterOption)}
-                    aria-label="Filtrar por status"
-                  >
-                    <option value="todos" className="bg-background text-foreground">Todos os status</option>
+                <div className="flex items-center gap-2 rounded-md border border-border bg-muted/50 px-2 py-2">
+                  <Filter className="h-4 w-4 text-muted-foreground" />
+                  <select className="cursor-pointer bg-transparent text-xs font-medium text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring" value={statusFilter} onChange={event => setStatusFilter(event.target.value as StatusFilter)} aria-label="Filtrar por status">
+                    <option value="all" className="bg-background text-foreground">Todos os status</option>
+                    <option value="performed" className="bg-background text-foreground">Serviços realizados</option>
                     <option value="pago" className="bg-background text-foreground">Pago</option>
                     <option value="pendente" className="bg-background text-foreground">Pendente</option>
                     <option value="cancelado" className="bg-background text-foreground">Cancelado</option>
@@ -428,182 +134,45 @@ export default function AdminFinanceiroPage() {
               </div>
             </CardHeader>
             <CardContent>
+              {(servicesLoading || paymentsLoading) && <p role="status" className="mb-4 text-sm text-muted-foreground">Carregando movimentações…</p>}
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm text-muted-foreground">
-                  <thead className="bg-muted/50 text-xs uppercase text-muted-foreground font-semibold tracking-wider">
+                  <thead className="bg-muted/50 text-xs font-semibold uppercase tracking-wider">
                     <tr>
-                      <th scope="col" className="px-6 py-3">Descrição</th>
-                      <th scope="col" className="px-6 py-3">Data</th>
-                      <th scope="col" className="px-6 py-3">Status</th>
-                      <th scope="col" className="px-6 py-3 text-right">Valor (R$)</th>
+                      <th scope="col" className="px-4 py-3">Descrição</th>
+                      <th scope="col" className="px-4 py-3">Data</th>
+                      <th scope="col" className="px-4 py-3">Status</th>
+                      <th scope="col" className="px-4 py-3 text-right">Valor</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredTransacoes.length === 0 ? (
-                      <tr>
-                        <td colSpan={4} className="px-6 py-12 text-center text-muted-foreground">
-                          <DollarSign className="mx-auto h-12 w-12 opacity-10 mb-4" />
-                          Nenhuma transação encontrada com os filtros aplicados.
+                    {filteredTransactions.length === 0 ? (
+                      <tr><td colSpan={4} className="px-4 py-12 text-center">
+                        <DollarSign className="mx-auto mb-4 h-10 w-10 opacity-20" />
+                        {servicesLoading || paymentsLoading ? 'Aguarde o carregamento dos dados.' : servicesError || paymentsQuery.isError ? 'Não foi possível carregar todas as movimentações. Tente novamente.' : summary.transactions.length ? 'Nenhuma transação encontrada com os filtros aplicados.' : 'Nenhum serviço realizado ou pagamento registrado ainda.'}
+                      </td></tr>
+                    ) : filteredTransactions.map(transaction => (
+                      <tr key={transaction.key} className="border-b border-border transition-colors hover:bg-muted/30">
+                        <td className="px-4 py-4">
+                          <p className="font-semibold text-foreground">{transaction.serviceName === UNKNOWN_SERVICE_NAME ? transaction.description : transaction.serviceName}</p>
+                          {transaction.clientName && <p className="mt-1 text-xs">Cliente: {transaction.clientName}</p>}
+                          {transaction.professionalName && <p className="mt-1 text-xs">Profissional: {transaction.professionalName}</p>}
+                          {transaction.paymentId && <p className="mt-1 text-xs">Pagamento #{transaction.paymentId}</p>}
+                          <p className="mt-1 text-xs font-medium">Entrada</p>
                         </td>
+                        <td className="whitespace-nowrap px-4 py-4">{financeDate(transaction.date)?.toLocaleDateString('pt-BR') ?? 'Data não informada'}</td>
+                        <td className="px-4 py-4"><span className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_STYLES[transaction.status]}`}>{STATUS_LABELS[transaction.status]}</span></td>
+                        <td className="whitespace-nowrap px-4 py-4 text-right font-bold tabular-nums text-foreground">{formatBRL(transaction.value)}</td>
                       </tr>
-                    ) : (
-                      filteredTransacoes.map((transacao) => (
-                        <tr key={transacao.id || Math.random()} className="border-b border-border bg-transparent hover:bg-muted/30 transition-colors">
-                          <td className="px-6 py-4 font-medium text-foreground">
-                            <div className="flex items-center gap-3">
-                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                                <ArrowUpRight className="h-4 w-4" />
-                              </div>
-                              <div>
-                                <p className="font-semibold text-foreground">{transacao.descricao}</p>
-                                {transacao.id && (
-                                  <p className="text-xs text-muted-foreground">ID: {transacao.id}</p>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <Calendar className="h-4 w-4 text-muted-foreground/70" />
-                              {new Date(transacao.data).toLocaleDateString('pt-BR')}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                              transacao.status === 'pago' ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' : 
-                              transacao.status === 'pendente' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : 
-                              transacao.status === 'reembolsado' ? 'bg-muted text-muted-foreground border border-border' :
-                              'bg-red-500/15 text-red-700 dark:text-red-300'
-                            }`}>
-                              {transacao.status.charAt(0).toUpperCase() + transacao.status.slice(1)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-right font-bold text-emerald-600 dark:text-emerald-400">
-                            + {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(transacao.valor)}
-                          </td>
-                        </tr>
-                      ))
-                    )}
+                    ))}
                   </tbody>
                 </table>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-
-        <TabsContent value="analise" className="space-y-8">
-          <div className="grid gap-8 lg:grid-cols-2">
-            {/* Bar Chart */}
-            <Card className="p-6 border border-border shadow-sm bg-card">
-              <h3 className="text-lg font-bold text-foreground mb-6">Receitas por Mês (Últimos 6 meses)</h3>
-              <div className="h-[300px] w-full flex items-center justify-center">
-                {!hasMonthlyData ? (
-                  <div className="text-center text-muted-foreground">
-                    <BarChart2 className="mx-auto h-12 w-12 opacity-20 mb-2" />
-                    <p className="text-sm font-medium">Nenhum pagamento registrado nos últimos 6 meses.</p>
-                  </div>
-                ) : (
-                  isMounted && (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <BarChart data={monthlyData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.6} />
-                        <XAxis 
-                          dataKey="name" 
-                          axisLine={false} 
-                          tickLine={false} 
-                          stroke="hsl(var(--muted-foreground))"
-                          tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }} 
-                          dy={10}
-                        />
-                        <YAxis 
-                          axisLine={false} 
-                          tickLine={false} 
-                          stroke="hsl(var(--muted-foreground))"
-                          tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                          tickFormatter={(v: number) => `R$ ${v}`}
-                        />
-                        <Tooltip 
-                          cursor={{ fill: 'hsl(var(--muted) / 0.3)' }}
-                          formatter={(value: number) => [
-                            new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value),
-                            'Receita'
-                          ]}
-                          contentStyle={{ 
-                            backgroundColor: 'hsl(var(--background))', 
-                            borderColor: 'hsl(var(--border))', 
-                            borderRadius: '12px', 
-                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                            color: 'hsl(var(--foreground))'
-                          }}
-                          itemStyle={{ color: 'hsl(var(--foreground))' }}
-                          labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
-                        />
-                        <Legend 
-                          iconType="circle" 
-                          wrapperStyle={{ paddingTop: '20px' }} 
-                          formatter={(value) => <span className="text-xs text-foreground font-medium">{value}</span>}
-                        />
-                        <Bar dataKey="receita" name="Receita" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )
-                )}
-              </div>
-            </Card>
-
-            {/* Pie Chart */}
-            <Card className="p-6 border border-border shadow-sm bg-card">
-              <h3 className="text-lg font-bold text-foreground mb-6">Receitas por Forma de Pagamento</h3>
-              <div className="h-[300px] w-full flex items-center justify-center">
-                {!hasPieData ? (
-                  <div className="text-center text-muted-foreground">
-                    <PieChartIcon className="mx-auto h-12 w-12 opacity-20 mb-2" />
-                    <p className="text-sm font-medium">Nenhum pagamento concluído para exibir distribuição.</p>
-                  </div>
-                ) : (
-                  isMounted && (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie
-                          data={pieData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={100}
-                          paddingAngle={5}
-                          dataKey="value"
-                        >
-                          {pieData.map((_, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          formatter={(value: number) => [
-                            new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value),
-                            'Total'
-                          ]}
-                          contentStyle={{ 
-                            backgroundColor: 'hsl(var(--background))', 
-                            borderColor: 'hsl(var(--border))', 
-                            borderRadius: '12px', 
-                            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                            color: 'hsl(var(--foreground))'
-                          }}
-                          itemStyle={{ color: 'hsl(var(--foreground))' }}
-                          labelStyle={{ color: 'hsl(var(--foreground))', fontWeight: 600 }}
-                        />
-                        <Legend 
-                          verticalAlign="bottom" 
-                          height={36} 
-                          formatter={(value) => <span className="text-xs text-foreground font-medium">{value}</span>}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  )
-                )}
-              </div>
-            </Card>
-          </div>
+        <TabsContent value="analise">
+          {servicesLoading || paymentsLoading ? <p role="status" className="py-12 text-center text-muted-foreground">Carregando análise financeira…</p> : <FinanceCharts summary={summary} />}
         </TabsContent>
       </Tabs>
     </div>

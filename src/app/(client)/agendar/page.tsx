@@ -30,11 +30,11 @@ export default function AgendarPage() {
         className="space-y-6"
       >
         {/* Banner com Busca e Filtro de Localização */}
-        <div className="relative rounded-3xl bg-primary/10 p-6 sm:p-8 border border-primary/20 overflow-hidden">
+        <div className="relative z-30 rounded-3xl bg-primary/10 p-6 sm:p-8 border border-primary/20">
           <h1 className="text-2xl sm:text-3xl font-extrabold mb-4 tracking-tight">
             Onde vamos hoje?
           </h1>
-          <div className="flex flex-col sm:flex-row gap-3 max-w-xl relative z-10">
+          <div className="flex flex-col sm:flex-row gap-3 max-w-xl relative z-20">
             <div className="relative flex-1 group">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <input
@@ -62,7 +62,7 @@ export default function AgendarPage() {
         </div>
 
         {/* Lista de Estabelecimentos Agendáveis */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="relative z-0 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {isLoading ? (
             [1, 2, 3, 4, 5, 6].map((i) => (
               <Skeleton key={i} className="h-48 w-full rounded-3xl" />

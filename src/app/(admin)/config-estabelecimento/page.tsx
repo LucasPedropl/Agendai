@@ -77,7 +77,7 @@ export default function AdminEstablishmentConfigPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -85,7 +85,7 @@ export default function AdminEstablishmentConfigPage() {
   // Se for erro no carregamento inicial, exibe o erro mas com um botão de tentar novamente ou layout básico
   if (error && !localConfig && !localBasicInfo) {
     return (
-      <div className="p-4 bg-red-50 text-red-600 rounded-lg flex flex-col items-center">
+      <div className="p-4 bg-destructive/10 text-destructive border border-destructive/20 rounded-lg flex flex-col items-center">
         <span>{error}</span>
         <Button onClick={() => window.location.reload()} className="mt-4" variant="outline">Tentar Novamente</Button>
       </div>
@@ -124,31 +124,31 @@ export default function AdminEstablishmentConfigPage() {
     <div className="space-y-8 max-w-5xl mx-auto pb-12">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Configuração do Estabelecimento</h1>
-          <p className="text-slate-500">Gerencie horários de funcionamento, feriados e bloqueios de agenda.</p>
+          <h1 className="text-2xl font-bold text-foreground">Configuração do Estabelecimento</h1>
+          <p className="text-muted-foreground">Gerencie horários de funcionamento, feriados e bloqueios de agenda.</p>
         </div>
       </div>
 
       {error && (
-        <div role="alert" className="p-4 bg-red-50 text-red-700 border border-red-200 rounded-lg text-sm">
+        <div role="alert" className="p-4 bg-destructive/10 text-destructive border border-destructive/20 rounded-lg text-sm">
           {error}
         </div>
       )}
 
       {configLoadFailed && activeTab === 'horarios' && (
-        <div role="alert" className="p-4 bg-amber-50 text-amber-800 border border-amber-200 rounded-lg text-sm">
+        <div role="alert" className="p-4 bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 rounded-lg text-sm">
           {CONFIG_LOAD_FAILED_MESSAGE}
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex p-1 bg-gray-100 rounded-lg w-fit">
+      <div className="flex p-1 bg-muted rounded-lg w-fit">
         <button
           onClick={() => setActiveTab('horarios')}
           className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
             activeTab === 'horarios' 
-              ? 'bg-white text-slate-900 shadow-sm' 
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'bg-background text-foreground shadow-sm' 
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           Horários e Regras
@@ -157,8 +157,8 @@ export default function AdminEstablishmentConfigPage() {
           onClick={() => setActiveTab('informacoes')}
           className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
             activeTab === 'informacoes' 
-              ? 'bg-white text-slate-900 shadow-sm' 
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'bg-background text-foreground shadow-sm' 
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           Informações Básicas
@@ -167,8 +167,8 @@ export default function AdminEstablishmentConfigPage() {
           onClick={() => setActiveTab('chaves-pix')}
           className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${
             activeTab === 'chaves-pix'
-              ? 'bg-white text-slate-900 shadow-sm'
-              : 'text-slate-600 hover:text-slate-900'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           Chaves PIX
@@ -178,19 +178,19 @@ export default function AdminEstablishmentConfigPage() {
       {activeTab === 'horarios' && (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
           {/* Horário de Funcionamento */}
-          <Card className="p-0 border-gray-200 shadow-sm bg-white overflow-hidden">
-            <div className="p-6 border-b border-gray-100 bg-slate-50/50">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center">
-                <Clock className="h-5 w-5 mr-2 text-slate-700" />
+          <Card className="p-0 border-border shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-border bg-muted/40">
+              <h3 className="text-lg font-bold text-foreground flex items-center">
+                <Clock className="h-5 w-5 mr-2 text-muted-foreground" />
                 Horário de Funcionamento
               </h3>
-              <p className="text-sm text-slate-500 mt-1">Defina os dias e horários em que seu estabelecimento funciona</p>
+              <p className="text-sm text-muted-foreground mt-1">Defina os dias e horários em que seu estabelecimento funciona</p>
             </div>
             
             <div className="p-6 space-y-8">
               {/* Padrão de Funcionamento */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-slate-700">Padrão de Funcionamento</label>
+                <label className="text-sm font-medium text-foreground">Padrão de Funcionamento</label>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div 
                     onClick={() => {
@@ -207,13 +207,13 @@ export default function AdminEstablishmentConfigPage() {
                     }}
                     className={`p-4 rounded-xl border cursor-pointer transition-all text-center flex flex-col items-center justify-center ${
                       activePattern === 'seg-sex' 
-                        ? 'border-slate-900 ring-1 ring-slate-900 bg-slate-50' 
-                        : 'border-gray-200 hover:border-slate-300'
+                        ? 'border-foreground ring-1 ring-foreground bg-muted/60' 
+                        : 'border-border hover:border-foreground/30'
                     }`}
                   >
-                    <Briefcase className="h-6 w-6 text-slate-700 mb-2" />
-                    <p className="font-semibold text-slate-900">Segunda a Sexta</p>
-                    <p className="text-xs text-slate-500 mt-1">Dias úteis</p>
+                    <Briefcase className="h-6 w-6 text-foreground/80 mb-2" />
+                    <p className="font-semibold text-foreground">Segunda a Sexta</p>
+                    <p className="text-xs text-muted-foreground mt-1">Dias úteis</p>
                   </div>
                   <div 
                     onClick={() => {
@@ -230,13 +230,13 @@ export default function AdminEstablishmentConfigPage() {
                     }}
                     className={`p-4 rounded-xl border cursor-pointer transition-all text-center flex flex-col items-center justify-center ${
                       activePattern === 'seg-sab' 
-                        ? 'border-slate-900 ring-1 ring-slate-900 bg-slate-50' 
-                        : 'border-gray-200 hover:border-slate-300'
+                        ? 'border-foreground ring-1 ring-foreground bg-muted/60' 
+                        : 'border-border hover:border-foreground/30'
                     }`}
                   >
-                    <CalendarIcon className="h-6 w-6 text-slate-700 mb-2" />
-                    <p className="font-semibold text-slate-900">Segunda a Sábado</p>
-                    <p className="text-xs text-slate-500 mt-1">Com sábado</p>
+                    <CalendarIcon className="h-6 w-6 text-foreground/80 mb-2" />
+                    <p className="font-semibold text-foreground">Segunda a Sábado</p>
+                    <p className="text-xs text-muted-foreground mt-1">Com sábado</p>
                   </div>
                   <div 
                     onClick={() => {
@@ -253,29 +253,29 @@ export default function AdminEstablishmentConfigPage() {
                     }}
                     className={`p-4 rounded-xl border cursor-pointer transition-all text-center flex flex-col items-center justify-center ${
                       activePattern === 'todos' 
-                        ? 'border-slate-900 ring-1 ring-slate-900 bg-slate-50' 
-                        : 'border-gray-200 hover:border-slate-300'
+                        ? 'border-foreground ring-1 ring-foreground bg-muted/60' 
+                        : 'border-border hover:border-foreground/30'
                     }`}
                   >
-                    <CalendarIcon className="h-6 w-6 text-slate-700 mb-2" />
-                    <p className="font-semibold text-slate-900">Segunda a Domingo</p>
-                    <p className="text-xs text-slate-500 mt-1">Todos os dias</p>
+                    <CalendarIcon className="h-6 w-6 text-foreground/80 mb-2" />
+                    <p className="font-semibold text-foreground">Segunda a Domingo</p>
+                    <p className="text-xs text-muted-foreground mt-1">Todos os dias</p>
                   </div>
                 </div>
               </div>
 
               {/* Dias Personalizados */}
               <div className="space-y-3">
-                <label className="text-sm font-medium text-slate-700">Dias de Funcionamento (Personalizado)</label>
+                <label className="text-sm font-medium text-foreground">Dias de Funcionamento (Personalizado)</label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
                   {days.map(day => (
-                    <label key={day.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
-                      <span className="text-sm text-slate-700">{day.label.substring(0, 3)}</span>
+                    <label key={day.id} className="flex items-center justify-between p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50">
+                      <span className="text-sm text-foreground">{day.label.substring(0, 3)}</span>
                       <input 
                         type="checkbox" 
                         checked={activeDays.includes(day.id)}
                         onChange={() => handleDayToggle(day.id)}
-                        className="h-4 w-4 rounded border-gray-300 text-slate-900 focus:ring-slate-900"
+                        className="h-4 w-4 rounded border-input text-primary accent-primary focus:ring-primary"
                       />
                     </label>
                   ))}
@@ -283,11 +283,11 @@ export default function AdminEstablishmentConfigPage() {
               </div>
 
               {/* Horário Padrão */}
-              <div className="space-y-4 pt-4 border-t border-gray-100">
-                <label className="text-sm font-medium text-slate-700">Horário de Atendimento Padrão</label>
+              <div className="space-y-4 pt-4 border-t border-border">
+                <label className="text-sm font-medium text-foreground">Horário de Atendimento Padrão</label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="space-y-1.5">
-                    <label className="text-xs text-slate-500">Abertura</label>
+                    <label className="text-xs text-muted-foreground">Abertura</label>
                     <div className="relative">
                       <input 
                         type="time" 
@@ -302,13 +302,13 @@ export default function AdminEstablishmentConfigPage() {
                             }
                           });
                         }}
-                        className="w-full h-11 rounded-lg border border-gray-200 px-4 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                        className="w-full h-11 rounded-lg border border-border bg-secondary/30 text-foreground px-4 text-sm focus:ring-2 focus:ring-primary/30 outline-none"
                       />
-                      <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                      <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                     </div>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs text-slate-500">Fechamento</label>
+                    <label className="text-xs text-muted-foreground">Fechamento</label>
                     <div className="relative">
                       <input 
                         type="time" 
@@ -323,9 +323,9 @@ export default function AdminEstablishmentConfigPage() {
                             }
                           });
                         }}
-                        className="w-full h-11 rounded-lg border border-gray-200 px-4 text-sm focus:ring-2 focus:ring-slate-900 outline-none"
+                        className="w-full h-11 rounded-lg border border-border bg-secondary/30 text-foreground px-4 text-sm focus:ring-2 focus:ring-primary/30 outline-none"
                       />
-                      <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                      <Clock className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                     </div>
                   </div>
                 </div>
@@ -345,15 +345,15 @@ export default function AdminEstablishmentConfigPage() {
                           }
                         });
                       }}
-                      className="h-4 w-4 rounded border-gray-300 text-slate-900 focus:ring-slate-900"
+                      className="h-4 w-4 rounded border-input text-primary accent-primary focus:ring-primary"
                     />
-                    <span className="text-sm font-medium text-slate-700">Possui intervalo para almoço</span>
+                    <span className="text-sm font-medium text-foreground">Possui intervalo para almoço</span>
                   </label>
                   
                   {localConfig?.horarioAtendimento?.intervalo && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4 pl-6 border-l-2 border-gray-100 ml-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-4 pl-6 border-l-2 border-border ml-2">
                       <div className="space-y-1.5">
-                        <label className="text-xs text-slate-500">Início do Intervalo</label>
+                        <label className="text-xs text-muted-foreground">Início do Intervalo</label>
                         <input 
                           type="time" 
                           value={localConfig?.horarioAtendimento?.inicioIntervalo?.substring(0, 5) || '12:00'}
@@ -367,11 +367,11 @@ export default function AdminEstablishmentConfigPage() {
                               }
                             });
                           }}
-                          className="w-full h-11 rounded-lg border border-gray-200 px-4 text-sm focus:ring-2 focus:ring-indigo-600 outline-none"
+                          className="w-full h-11 rounded-lg border border-border bg-secondary/30 text-foreground px-4 text-sm focus:ring-2 focus:ring-primary/30 outline-none"
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-xs text-slate-500">Fim do Intervalo</label>
+                        <label className="text-xs text-muted-foreground">Fim do Intervalo</label>
                         <input 
                           type="time" 
                           value={localConfig?.horarioAtendimento?.fimIntervalo?.substring(0, 5) || '13:00'}
@@ -385,7 +385,7 @@ export default function AdminEstablishmentConfigPage() {
                               }
                             });
                           }}
-                          className="w-full h-11 rounded-lg border border-gray-200 px-4 text-sm focus:ring-2 focus:ring-indigo-600 outline-none"
+                          className="w-full h-11 rounded-lg border border-border bg-secondary/30 text-foreground px-4 text-sm focus:ring-2 focus:ring-primary/30 outline-none"
                         />
                       </div>
                     </div>
@@ -396,13 +396,13 @@ export default function AdminEstablishmentConfigPage() {
           </Card>
 
           {/* Horários por Profissional */}
-          <Card className="p-6 border-gray-200 shadow-sm bg-white flex items-center justify-between">
+          <Card className="p-6 border-border shadow-sm flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-bold text-slate-900 flex items-center">
-                <Users className="h-5 w-5 mr-2 text-slate-700" />
+              <h3 className="text-lg font-bold text-foreground flex items-center">
+                <Users className="h-5 w-5 mr-2 text-muted-foreground" />
                 Horários por Profissional
               </h3>
-              <p className="text-sm text-slate-500 mt-1">Configure horários individuais para cada profissional (opcional)</p>
+              <p className="text-sm text-muted-foreground mt-1">Configure horários individuais para cada profissional (opcional)</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input 
@@ -420,25 +420,25 @@ export default function AdminEstablishmentConfigPage() {
                 }}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+              <div className="w-11 h-6 bg-input peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
             </label>
           </Card>
 
           {/* Funcionamento em Feriados */}
-          <Card className="p-0 border-gray-200 shadow-sm bg-white overflow-hidden">
-            <div className="p-6 border-b border-gray-100 bg-slate-50/50">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center">
-                <Umbrella className="h-5 w-5 mr-2 text-slate-700" />
+          <Card className="p-0 border-border shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-border bg-muted/40">
+              <h3 className="text-lg font-bold text-foreground flex items-center">
+                <Umbrella className="h-5 w-5 mr-2 text-muted-foreground" />
                 Funcionamento em Feriados
               </h3>
-              <p className="text-sm text-slate-500 mt-1">Configure o funcionamento do estabelecimento em feriados</p>
+              <p className="text-sm text-muted-foreground mt-1">Configure o funcionamento do estabelecimento em feriados</p>
             </div>
             
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex-1">
-                  <span className="text-sm font-medium text-slate-900 block">Fechar em Feriados Nacionais</span>
-                  <span className="text-xs text-slate-500 mt-1 block">O estabelecimento não aceitará agendamentos em feriados nacionais</span>
+                  <span className="text-sm font-medium text-foreground block">Fechar em Feriados Nacionais</span>
+                  <span className="text-xs text-muted-foreground mt-1 block">O estabelecimento não aceitará agendamentos em feriados nacionais</span>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input 
@@ -456,14 +456,14 @@ export default function AdminEstablishmentConfigPage() {
                     }}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                  <div className="w-11 h-6 bg-input peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
               </div>
 
-              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-border">
                 <div className="flex-1">
-                  <span className="text-sm font-medium text-slate-900 block">Fechar em Feriados Municipais</span>
-                  <span className="text-xs text-slate-500 mt-1 block">O estabelecimento não aceitará agendamentos em feriados locais</span>
+                  <span className="text-sm font-medium text-foreground block">Fechar em Feriados Municipais</span>
+                  <span className="text-xs text-muted-foreground mt-1 block">O estabelecimento não aceitará agendamentos em feriados locais</span>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input 
@@ -481,19 +481,19 @@ export default function AdminEstablishmentConfigPage() {
                     }}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                  <div className="w-11 h-6 bg-input peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
               </div>
 
-              <div className="pt-4 border-t border-gray-100">
-                <label className="text-sm font-medium text-slate-700 block mb-3">Feriados Personalizados</label>
+              <div className="pt-4 border-t border-border">
+                <label className="text-sm font-medium text-foreground block mb-3">Feriados Personalizados</label>
                 
                 {(!localConfig?.configuracao?.diasFechados || localConfig.configuracao.diasFechados.length === 0) ? (
-                  <p className="text-sm text-slate-500 mb-4">Nenhum feriado personalizado cadastrado</p>
+                  <p className="text-sm text-muted-foreground mb-4">Nenhum feriado personalizado cadastrado</p>
                 ) : (
                   <div className="space-y-3 mb-4">
                     {localConfig.configuracao.diasFechados.map((feriado, index) => (
-                      <div key={index} className="flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                      <div key={index} className="flex items-center gap-3 bg-muted/40 p-3 rounded-lg border border-border">
                         <input 
                           type="date" 
                           value={feriado.data.substring(0, 10)}
@@ -509,7 +509,7 @@ export default function AdminEstablishmentConfigPage() {
                               }
                             });
                           }}
-                          className="h-9 rounded-md border border-gray-200 px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-600"
+                          className="h-9 rounded-md border border-border bg-background text-foreground px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
                         />
                         <input 
                           type="text" 
@@ -527,7 +527,7 @@ export default function AdminEstablishmentConfigPage() {
                               }
                             });
                           }}
-                          className="flex-1 h-9 rounded-md border border-gray-200 px-3 text-sm outline-none focus:ring-2 focus:ring-indigo-600"
+                          className="flex-1 h-9 rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground px-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
                         />
                         <button 
                           onClick={() => {
@@ -541,7 +541,7 @@ export default function AdminEstablishmentConfigPage() {
                               }
                             });
                           }}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                          className="p-2 text-destructive hover:bg-destructive/10 rounded-md transition-colors"
                           title="Remover feriado"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
@@ -564,7 +564,7 @@ export default function AdminEstablishmentConfigPage() {
                       }
                     });
                   }}
-                  className="w-full py-3 border-2 border-dashed border-gray-200 rounded-lg text-sm font-medium text-slate-600 hover:border-indigo-300 hover:text-indigo-600 transition-colors"
+                  className="w-full py-3 border-2 border-dashed border-border rounded-lg text-sm font-medium text-muted-foreground hover:border-primary/50 hover:text-primary transition-colors"
                 >
                   Adicionar Feriado Personalizado
                 </button>
@@ -573,53 +573,53 @@ export default function AdminEstablishmentConfigPage() {
           </Card>
 
           {/* Bloqueio de Agenda */}
-          <Card className="p-0 border-gray-200 shadow-sm bg-white overflow-hidden">
-            <div className="p-6 border-b border-gray-100 bg-slate-50/50">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center">
-                <Ban className="h-5 w-5 mr-2 text-slate-700" />
+          <Card className="p-0 border-border shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-border bg-muted/40">
+              <h3 className="text-lg font-bold text-foreground flex items-center">
+                <Ban className="h-5 w-5 mr-2 text-muted-foreground" />
                 Bloqueio de Agenda
               </h3>
-              <p className="text-sm text-slate-500 mt-1">Bloqueie datas específicas para não receber agendamentos</p>
+              <p className="text-sm text-muted-foreground mt-1">Bloqueie datas específicas para não receber agendamentos</p>
             </div>
             
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <h4 className="text-sm font-medium text-slate-700 mb-4">Selecione as datas</h4>
-                <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
-                  <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                <h4 className="text-sm font-medium text-foreground mb-4">Selecione as datas</h4>
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 flex items-start gap-3">
+                  <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="text-sm font-bold text-blue-900">Funcionalidade em Desenvolvimento</h4>
-                    <p className="text-sm text-blue-700 mt-1">Em breve você poderá bloquear datas específicas através de um calendário interativo.</p>
+                    <h4 className="text-sm font-bold text-foreground">Funcionalidade em Desenvolvimento</h4>
+                    <p className="text-sm text-muted-foreground mt-1">Em breve você poderá bloquear datas específicas através de um calendário interativo.</p>
                   </div>
                 </div>
               </div>
               <div>
-                <h4 className="text-sm font-medium text-slate-700 mb-4">Datas Bloqueadas</h4>
+                <h4 className="text-sm font-medium text-foreground mb-4">Datas Bloqueadas</h4>
                 <div className="space-y-3">
-                  <div className="bg-red-50 border border-red-100 p-3 rounded-lg flex items-center justify-between">
+                  <div className="bg-destructive/10 border border-destructive/20 p-3 rounded-lg flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">25 de Dezembro de 2025</p>
-                      <p className="text-xs text-slate-500">Data bloqueada</p>
+                      <p className="text-sm font-semibold text-foreground">25 de Dezembro de 2025</p>
+                      <p className="text-xs text-muted-foreground">Data bloqueada</p>
                     </div>
-                    <button className="text-red-500 hover:text-red-700">
+                    <button className="text-destructive hover:opacity-80">
                       <CalendarX className="h-4 w-4" />
                     </button>
                   </div>
-                  <div className="bg-red-50 border border-red-100 p-3 rounded-lg flex items-center justify-between">
+                  <div className="bg-destructive/10 border border-destructive/20 p-3 rounded-lg flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-slate-900">1 de Janeiro de 2026</p>
-                      <p className="text-xs text-slate-500">Data bloqueada</p>
+                      <p className="text-sm font-semibold text-foreground">1 de Janeiro de 2026</p>
+                      <p className="text-xs text-muted-foreground">Data bloqueada</p>
                     </div>
-                    <button className="text-red-500 hover:text-red-700">
+                    <button className="text-destructive hover:opacity-80">
                       <CalendarX className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
-                <div className="mt-4 bg-blue-50 border border-blue-100 rounded-lg p-4 flex items-start gap-3">
-                  <Info className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
+                <div className="mt-4 bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 flex items-start gap-3">
+                  <Info className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="text-sm font-bold text-blue-900">Como usar:</h4>
-                    <p className="text-sm text-blue-700 mt-1">Clique nos dias do calendário para bloquear ou desbloquear datas. Clientes não poderão agendar serviços nas datas bloqueadas.</p>
+                    <h4 className="text-sm font-bold text-foreground">Como usar:</h4>
+                    <p className="text-sm text-muted-foreground mt-1">Clique nos dias do calendário para bloquear ou desbloquear datas. Clientes não poderão agendar serviços nas datas bloqueadas.</p>
                   </div>
                 </div>
               </div>
@@ -627,10 +627,10 @@ export default function AdminEstablishmentConfigPage() {
           </Card>
 
           {/* Configurações Adicionais */}
-          <Card className="p-0 border-gray-200 shadow-sm bg-white overflow-hidden">
-            <div className="p-6 border-b border-gray-100 bg-slate-50/50">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center">
-                <Settings2 className="h-5 w-5 mr-2 text-slate-700" />
+          <Card className="p-0 border-border shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-border bg-muted/40">
+              <h3 className="text-lg font-bold text-foreground flex items-center">
+                <Settings2 className="h-5 w-5 mr-2 text-muted-foreground" />
                 Configurações Adicionais
               </h3>
             </div>
@@ -638,8 +638,8 @@ export default function AdminEstablishmentConfigPage() {
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex-1">
-                  <span className="text-sm font-medium text-slate-900 block">Antecedência Mínima para Agendamentos</span>
-                  <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
+                  <span className="text-sm font-medium text-foreground block">Antecedência Mínima para Agendamentos</span>
+                  <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                     Clientes devem agendar com pelo menos
                     <select 
                       value={localConfig?.configuracao?.antecedenciaMin || 1}
@@ -653,7 +653,7 @@ export default function AdminEstablishmentConfigPage() {
                           }
                         });
                       }}
-                      className="h-8 rounded-md border border-gray-200 px-2 outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                      className="h-8 rounded-md border border-border bg-background text-foreground px-2 outline-none focus:ring-2 focus:ring-primary/30"
                     >
                       <option value={1}>1 hora</option>
                       <option value={2}>2 horas</option>
@@ -666,10 +666,10 @@ export default function AdminEstablishmentConfigPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-border">
                 <div className="flex-1">
-                  <span className="text-sm font-medium text-slate-900 block">Limite para Agendamentos Futuros</span>
-                  <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
+                  <span className="text-sm font-medium text-foreground block">Limite para Agendamentos Futuros</span>
+                  <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                     Clientes podem agendar com até
                     <select 
                       value={localConfig?.configuracao?.limiteAgendar || 30}
@@ -683,7 +683,7 @@ export default function AdminEstablishmentConfigPage() {
                           }
                         });
                       }}
-                      className="h-8 rounded-md border border-gray-200 px-2 outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                      className="h-8 rounded-md border border-border bg-background text-foreground px-2 outline-none focus:ring-2 focus:ring-primary/30"
                     >
                       <option value={7}>7 dias</option>
                       <option value={15}>15 dias</option>
@@ -696,10 +696,10 @@ export default function AdminEstablishmentConfigPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-border">
                 <div className="flex-1">
-                  <span className="text-sm font-medium text-slate-900 block">Tempo de Duração Padrão dos Serviços</span>
-                  <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
+                  <span className="text-sm font-medium text-foreground block">Tempo de Duração Padrão dos Serviços</span>
+                  <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                     Duração sugerida de
                     <select 
                       value={localConfig?.configuracao?.tempoDuracaoPadrao || 30}
@@ -713,7 +713,7 @@ export default function AdminEstablishmentConfigPage() {
                           }
                         });
                       }}
-                      className="h-8 rounded-md border border-gray-200 px-2 outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                      className="h-8 rounded-md border border-border bg-background text-foreground px-2 outline-none focus:ring-2 focus:ring-primary/30"
                     >
                       <option value={15}>15 minutos</option>
                       <option value={30}>30 minutos</option>
@@ -727,10 +727,10 @@ export default function AdminEstablishmentConfigPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-border">
                 <div className="flex-1">
-                  <span className="text-sm font-medium text-slate-900 block">Limite de Agendamentos Simultâneos</span>
-                  <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
+                  <span className="text-sm font-medium text-foreground block">Limite de Agendamentos Simultâneos</span>
+                  <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                     Permitir no máximo
                     <select 
                       value={localConfig?.configuracao?.agendaSimultanea || 1}
@@ -744,7 +744,7 @@ export default function AdminEstablishmentConfigPage() {
                           }
                         });
                       }}
-                      className="h-8 rounded-md border border-gray-200 px-2 outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                      className="h-8 rounded-md border border-border bg-background text-foreground px-2 outline-none focus:ring-2 focus:ring-primary/30"
                     >
                       <option value={1}>1</option>
                       <option value={2}>2</option>
@@ -760,14 +760,14 @@ export default function AdminEstablishmentConfigPage() {
                     onChange={() => {}}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                  <div className="w-11 h-6 bg-input peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
               </div>
 
-              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-border">
                 <div className="flex-1">
-                  <span className="text-sm font-medium text-slate-900 block">Confirmação Automática de Agendamentos</span>
-                  <span className="text-xs text-slate-500 mt-1 block">Agendamentos serão confirmados automaticamente sem necessidade de aprovação manual</span>
+                  <span className="text-sm font-medium text-foreground block">Confirmação Automática de Agendamentos</span>
+                  <span className="text-xs text-muted-foreground mt-1 block">Agendamentos serão confirmados automaticamente sem necessidade de aprovação manual</span>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input 
@@ -785,14 +785,14 @@ export default function AdminEstablishmentConfigPage() {
                     }}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                  <div className="w-11 h-6 bg-input peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
               </div>
 
-              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-border">
                 <div className="flex-1">
-                  <span className="text-sm font-medium text-slate-900 block">Horários Diferenciados por Profissional</span>
-                  <span className="text-xs text-slate-500 mt-1 block">Permitir que cada profissional tenha seu próprio horário de atendimento</span>
+                  <span className="text-sm font-medium text-foreground block">Horários Diferenciados por Profissional</span>
+                  <span className="text-xs text-muted-foreground mt-1 block">Permitir que cada profissional tenha seu próprio horário de atendimento</span>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input 
@@ -810,30 +810,30 @@ export default function AdminEstablishmentConfigPage() {
                     }}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                  <div className="w-11 h-6 bg-input peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
               </div>
 
           {localConfig?.configuracao?.horarioPorProfissional && localConfig.funcionarios && localConfig.funcionarios.length > 0 && (
-            <Card className="p-0 border-gray-200 shadow-sm bg-white overflow-hidden animate-in zoom-in-95 duration-200">
-              <div className="p-6 border-b border-gray-100 bg-slate-50/50">
-                <h3 className="text-lg font-bold text-slate-900 flex items-center">
-                  <Users className="h-5 w-5 mr-2 text-slate-700" />
+            <Card className="p-0 border-border shadow-sm overflow-hidden animate-in zoom-in-95 duration-200">
+              <div className="p-6 border-b border-border bg-muted/40">
+                <h3 className="text-lg font-bold text-foreground flex items-center">
+                  <Users className="h-5 w-5 mr-2 text-muted-foreground" />
                   Horários por Profissional
                 </h3>
-                <p className="text-sm text-slate-500 mt-1">Configure o horário individual de cada membro da equipe</p>
+                <p className="text-sm text-muted-foreground mt-1">Configure o horário individual de cada membro da equipe</p>
               </div>
-              <div className="p-6 divide-y divide-gray-100">
+              <div className="p-6 divide-y divide-border">
                 {localConfig.funcionarios.map((func, index) => (
                   <div key={func.idFuncionario} className="py-6 first:pt-0 last:pb-0">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+                        <div className="h-10 w-10 rounded-full bg-primary/15 flex items-center justify-center text-primary font-bold">
                           {func.nomeFuncionario?.charAt(0) || 'P'}
                         </div>
                         <div>
-                          <span className="font-bold text-slate-900">{func.nomeFuncionario || 'Profissional'}</span>
-                          <span className="text-xs text-slate-500 block">ID: {func.idFuncionario.substring(0, 8)}...</span>
+                          <span className="font-bold text-foreground">{func.nomeFuncionario || 'Profissional'}</span>
+                          <span className="text-xs text-muted-foreground block">ID: {func.idFuncionario.substring(0, 8)}...</span>
                         </div>
                       </div>
                     </div>
@@ -856,8 +856,8 @@ export default function AdminEstablishmentConfigPage() {
                                 }}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                                   isActive 
-                                    ? 'bg-slate-900 text-white shadow-md' 
-                                    : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+                                    ? 'bg-primary text-primary-foreground shadow-md' 
+                                    : 'bg-muted text-muted-foreground hover:bg-secondary hover:text-foreground'
                                 }`}
                               >
                                 {day.label.substring(0, 3)}
@@ -869,7 +869,7 @@ export default function AdminEstablishmentConfigPage() {
                       
                       <div className="flex items-center gap-4">
                         <div className="flex-1 space-y-1.5">
-                          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Início</label>
+                          <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Início</label>
                           <input 
                             type="time" 
                             value={func.horaInicio.substring(0, 5)}
@@ -878,11 +878,11 @@ export default function AdminEstablishmentConfigPage() {
                               newFuncs[index] = { ...func, horaInicio: e.target.value + ':00' };
                               setLocalConfig({ ...localConfig, funcionarios: newFuncs });
                             }}
-                            className="w-full h-10 rounded-lg border border-gray-200 px-3 text-sm focus:ring-2 focus:ring-slate-900 outline-none transition-all"
+                            className="w-full h-10 rounded-lg border border-border bg-secondary/30 text-foreground px-3 text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
                           />
                         </div>
                         <div className="flex-1 space-y-1.5">
-                          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Fim</label>
+                          <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Fim</label>
                           <input 
                             type="time" 
                             value={func.horaFim.substring(0, 5)}
@@ -891,7 +891,7 @@ export default function AdminEstablishmentConfigPage() {
                               newFuncs[index] = { ...func, horaFim: e.target.value + ':00' };
                               setLocalConfig({ ...localConfig, funcionarios: newFuncs });
                             }}
-                            className="w-full h-10 rounded-lg border border-gray-200 px-3 text-sm focus:ring-2 focus:ring-slate-900 outline-none transition-all"
+                            className="w-full h-10 rounded-lg border border-border bg-secondary/30 text-foreground px-3 text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
                           />
                         </div>
                       </div>
@@ -902,10 +902,10 @@ export default function AdminEstablishmentConfigPage() {
             </Card>
           )}
 
-              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-border">
                 <div className="flex-1">
-                  <span className="text-sm font-medium text-slate-900 block">Buffer entre Serviços</span>
-                  <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
+                  <span className="text-sm font-medium text-foreground block">Buffer entre Serviços</span>
+                  <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                     Adicionar
                     <select 
                       value={localConfig?.configuracao?.tempoIntervalo || 0}
@@ -919,7 +919,7 @@ export default function AdminEstablishmentConfigPage() {
                           }
                         });
                       }}
-                      className="h-8 rounded-md border border-gray-200 px-2 outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                      className="h-8 rounded-md border border-border bg-background text-foreground px-2 outline-none focus:ring-2 focus:ring-primary/30"
                     >
                       <option value={0}>Nenhum</option>
                       <option value={5}>5 minutos</option>
@@ -937,14 +937,14 @@ export default function AdminEstablishmentConfigPage() {
                     onChange={() => {}}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                  <div className="w-11 h-6 bg-input peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
               </div>
 
-              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-border">
                 <div className="flex-1">
-                  <span className="text-sm font-medium text-slate-900 block">Antecedência para Cancelamento</span>
-                  <div className="flex items-center gap-2 mt-1 text-sm text-slate-500">
+                  <span className="text-sm font-medium text-foreground block">Antecedência para Cancelamento</span>
+                  <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                     Clientes podem cancelar com até
                     <select 
                       value={localConfig?.configuracao?.tempoCancelamento || 24}
@@ -958,7 +958,7 @@ export default function AdminEstablishmentConfigPage() {
                           }
                         });
                       }}
-                      className="h-8 rounded-md border border-gray-200 px-2 outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                      className="h-8 rounded-md border border-border bg-background text-foreground px-2 outline-none focus:ring-2 focus:ring-primary/30"
                     >
                       <option value={2}>2 horas</option>
                       <option value={12}>12 horas</option>
@@ -975,14 +975,14 @@ export default function AdminEstablishmentConfigPage() {
                     onChange={() => {}}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                  <div className="w-11 h-6 bg-input peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
               </div>
 
-              <div className="flex items-center justify-between gap-4 pt-4 border-t border-gray-100">
+              <div className="flex items-center justify-between gap-4 pt-4 border-t border-border">
                 <div className="flex-1">
-                  <span className="text-sm font-medium text-slate-900 block">Permitir Reagendamento pelo Cliente</span>
-                  <span className="text-xs text-slate-500 mt-1 block">Clientes podem reagendar seus agendamentos sem aprovação do estabelecimento</span>
+                  <span className="text-sm font-medium text-foreground block">Permitir Reagendamento pelo Cliente</span>
+                  <span className="text-xs text-muted-foreground mt-1 block">Clientes podem reagendar seus agendamentos sem aprovação do estabelecimento</span>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input 
@@ -1000,7 +1000,7 @@ export default function AdminEstablishmentConfigPage() {
                     }}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-slate-900"></div>
+                  <div className="w-11 h-6 bg-input peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
               </div>
             </div>
@@ -1008,11 +1008,10 @@ export default function AdminEstablishmentConfigPage() {
 
           {/* Bottom Bar */}
           <div className="flex items-center justify-end gap-4 pt-4">
-            <Button variant="outline" className="bg-slate-50">Cancelar</Button>
+            <Button variant="outline">Cancelar</Button>
             <Button 
               onClick={handleSaveConfig}
               disabled={isSaving || configLoadFailed}
-              className="bg-slate-900 hover:bg-slate-800 text-white"
             >
               {isSaving ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -1029,106 +1028,106 @@ export default function AdminEstablishmentConfigPage() {
         <div className="grid gap-8 lg:grid-cols-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
           {/* Left Column: Profile & Logo */}
           <div className="space-y-8">
-            <Card className="p-8 border-none shadow-sm bg-white flex flex-col items-center text-center">
+            <Card className="p-8 border-border shadow-sm flex flex-col items-center text-center">
               <div className="relative group cursor-pointer">
-                <div className="h-32 w-32 rounded-2xl bg-slate-100 flex items-center justify-center overflow-hidden border-2 border-dashed border-slate-200 group-hover:border-indigo-400 transition-all">
-                  <Store className="h-12 w-12 text-slate-300 group-hover:text-indigo-400 transition-all" />
+                <div className="h-32 w-32 rounded-2xl bg-muted flex items-center justify-center overflow-hidden border-2 border-dashed border-border group-hover:border-primary transition-all">
+                  <Store className="h-12 w-12 text-muted-foreground/50 group-hover:text-primary transition-all" />
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-all">
                   <Camera className="h-6 w-6 text-white" />
                 </div>
               </div>
-              <h3 className="mt-4 font-bold text-slate-900 text-lg">Logo do Estabelecimento</h3>
-              <p className="text-sm text-slate-500 mt-1">Recomendado: 512x512px (PNG ou JPG)</p>
+              <h3 className="mt-4 font-bold text-foreground text-lg">Logo do Estabelecimento</h3>
+              <p className="text-sm text-muted-foreground mt-1">Recomendado: 512x512px (PNG ou JPG)</p>
               <Button variant="outline" size="sm" className="mt-4 w-full">Alterar Logo</Button>
             </Card>
           </div>
 
           {/* Right Column: Forms */}
           <div className="lg:col-span-2 space-y-8">
-            <Card className="p-8 border-none shadow-sm bg-white">
-              <h3 className="text-lg font-bold text-slate-900 mb-6">Informações Básicas</h3>
+            <Card className="p-8 border-border shadow-sm">
+              <h3 className="text-lg font-bold text-foreground mb-6">Informações Básicas</h3>
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Nome do Estabelecimento*</label>
+                  <label className="text-sm font-semibold text-foreground">Nome do Estabelecimento*</label>
                   <input 
                     type="text" 
                     value={localBasicInfo?.nome || ''}
                     onChange={(e) => setLocalBasicInfo(prev => prev ? { ...prev, nome: e.target.value } : null)}
-                    className="w-full h-11 rounded-xl border border-gray-200 px-4 text-sm focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
+                    className="w-full h-11 rounded-xl border border-border bg-secondary/30 text-foreground placeholder:text-muted-foreground px-4 text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-slate-700">CNPJ (Opcional)</label>
+                  <label className="text-sm font-semibold text-foreground">CNPJ (Opcional)</label>
                   <input 
                     type="text" 
                     placeholder="00.000.000/0000-00"
                     value={localBasicInfo?.cnpj || ''}
                     onChange={(e) => setLocalBasicInfo(prev => prev ? { ...prev, cnpj: e.target.value } : null)}
-                    className="w-full h-11 rounded-xl border border-gray-200 px-4 text-sm focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
+                    className="w-full h-11 rounded-xl border border-border bg-secondary/30 text-foreground placeholder:text-muted-foreground px-4 text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
                   />
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-sm font-semibold text-slate-700">Descrição/Bio</label>
+                  <label className="text-sm font-semibold text-foreground">Descrição/Bio</label>
                   <textarea 
                     rows={3}
                     value={localBasicInfo?.descricao || ''}
                     onChange={(e) => setLocalBasicInfo(prev => prev ? { ...prev, descricao: e.target.value } : null)}
                     placeholder="Fale um pouco sobre o seu estabelecimento..."
-                    className="w-full rounded-xl border border-gray-200 p-4 text-sm focus:ring-2 focus:ring-indigo-600 outline-none transition-all resize-none"
+                    className="w-full rounded-xl border border-border bg-secondary/30 text-foreground placeholder:text-muted-foreground p-4 text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all resize-none"
                   />
                 </div>
               </div>
             </Card>
 
-            <Card className="p-8 border-none shadow-sm bg-white">
-              <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center">
-                <MapPin className="h-5 w-5 mr-2 text-indigo-600" />
+            <Card className="p-8 border-border shadow-sm">
+              <h3 className="text-lg font-bold text-foreground mb-6 flex items-center">
+                <MapPin className="h-5 w-5 mr-2 text-primary" />
                 Localização e Contato
               </h3>
               <div className="grid gap-6 sm:grid-cols-2">
                 <div className="space-y-1.5 sm:col-span-2">
-                  <label className="text-sm font-semibold text-slate-700">Endereço Completo</label>
+                  <label className="text-sm font-semibold text-foreground">Endereço Completo</label>
                   <input 
                     type="text" 
                     value={localBasicInfo?.endereco || ''}
                     onChange={(e) => setLocalBasicInfo(prev => prev ? { ...prev, endereco: e.target.value } : null)}
-                    className="w-full h-11 rounded-xl border border-gray-200 px-4 text-sm focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
+                    className="w-full h-11 rounded-xl border border-border bg-secondary/30 text-foreground placeholder:text-muted-foreground px-4 text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-slate-700">Telefone/WhatsApp</label>
+                  <label className="text-sm font-semibold text-foreground">Telefone/WhatsApp</label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input 
                       type="text" 
                       value={localBasicInfo?.telefone || ''}
                       onChange={(e) => setLocalBasicInfo(prev => prev ? { ...prev, telefone: e.target.value } : null)}
-                      className="w-full h-11 rounded-xl border border-gray-200 pl-10 pr-4 text-sm focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
+                      className="w-full h-11 rounded-xl border border-border bg-secondary/30 text-foreground placeholder:text-muted-foreground pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
                     />
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-semibold text-slate-700">E-mail de Contato</label>
+                  <label className="text-sm font-semibold text-foreground">E-mail de Contato</label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <input 
                       type="email" 
                       value={localBasicInfo?.email || ''}
                       onChange={(e) => setLocalBasicInfo(prev => prev ? { ...prev, email: e.target.value } : null)}
                       placeholder="contato@estabelecimento.com"
-                      className="w-full h-11 rounded-xl border border-gray-200 pl-10 pr-4 text-sm focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
+                      className="w-full h-11 rounded-xl border border-border bg-secondary/30 text-foreground placeholder:text-muted-foreground pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
                     />
                   </div>
                 </div>
               </div>
             </Card>
 
-            <Card className="p-8 border-none shadow-sm bg-white">
-              <h3 className="text-lg font-bold text-slate-900 mb-6">Redes Sociais</h3>
+            <Card className="p-8 border-border shadow-sm">
+              <h3 className="text-lg font-bold text-foreground mb-6">Redes Sociais</h3>
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <div className="h-11 w-11 rounded-xl bg-pink-50 text-pink-600 flex items-center justify-center shrink-0">
+                  <div className="h-11 w-11 rounded-xl bg-pink-500/10 text-pink-500 flex items-center justify-center shrink-0">
                     <Instagram className="h-5 w-5" />
                   </div>
                   <input 
@@ -1136,11 +1135,11 @@ export default function AdminEstablishmentConfigPage() {
                     placeholder="@seu_instagram"
                     value={localBasicInfo?.instagram || ''}
                     onChange={(e) => setLocalBasicInfo(prev => prev ? { ...prev, instagram: e.target.value } : null)}
-                    className="flex-1 h-11 rounded-xl border border-gray-200 px-4 text-sm focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
+                    className="flex-1 h-11 rounded-xl border border-border bg-secondary/30 text-foreground placeholder:text-muted-foreground px-4 text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
                   />
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="h-11 w-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <div className="h-11 w-11 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
                     <Facebook className="h-5 w-5" />
                   </div>
                   <input 
@@ -1148,11 +1147,11 @@ export default function AdminEstablishmentConfigPage() {
                     placeholder="facebook.com/seu_negocio"
                     value={localBasicInfo?.facebook || ''}
                     onChange={(e) => setLocalBasicInfo(prev => prev ? { ...prev, facebook: e.target.value } : null)}
-                    className="flex-1 h-11 rounded-xl border border-gray-200 px-4 text-sm focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
+                    className="flex-1 h-11 rounded-xl border border-border bg-secondary/30 text-foreground placeholder:text-muted-foreground px-4 text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
                   />
                 </div>
                 <div className="flex items-center gap-4">
-                  <div className="h-11 w-11 rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center shrink-0">
+                  <div className="h-11 w-11 rounded-xl bg-muted text-muted-foreground flex items-center justify-center shrink-0">
                     <Globe className="h-5 w-5" />
                   </div>
                   <input 
@@ -1160,15 +1159,15 @@ export default function AdminEstablishmentConfigPage() {
                     placeholder="www.seusite.com.br"
                     value={localBasicInfo?.site || ''}
                     onChange={(e) => setLocalBasicInfo(prev => prev ? { ...prev, site: e.target.value } : null)}
-                    className="flex-1 h-11 rounded-xl border border-gray-200 px-4 text-sm focus:ring-2 focus:ring-indigo-600 outline-none transition-all"
+                    className="flex-1 h-11 rounded-xl border border-border bg-secondary/30 text-foreground placeholder:text-muted-foreground px-4 text-sm focus:ring-2 focus:ring-primary/30 outline-none transition-all"
                   />
                 </div>
               </div>
             </Card>
 
-            <Card className="p-8 border-none shadow-sm bg-white">
-              <h3 className="text-lg font-bold text-slate-900 mb-6 flex items-center">
-                <Bell className="h-5 w-5 mr-2 text-indigo-600" />
+            <Card className="p-8 border-border shadow-sm">
+              <h3 className="text-lg font-bold text-foreground mb-6 flex items-center">
+                <Bell className="h-5 w-5 mr-2 text-primary" />
                 Notificações e Lembretes
               </h3>
               <div className="space-y-6">
@@ -1177,11 +1176,11 @@ export default function AdminEstablishmentConfigPage() {
                     type="checkbox" 
                     checked={localBasicInfo?.notificarAgendamento || false}
                     onChange={(e) => setLocalBasicInfo(prev => prev ? { ...prev, notificarAgendamento: e.target.checked } : null)}
-                    className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mt-0.5"
+                    className="h-5 w-5 rounded border-input text-primary accent-primary focus:ring-primary mt-0.5"
                   />
                   <div>
-                    <span className="text-sm font-medium text-slate-900 block">Notificar Novos Agendamentos</span>
-                    <span className="text-xs text-slate-500">Receber notificações quando um cliente realizar um novo agendamento</span>
+                    <span className="text-sm font-medium text-foreground block">Notificar Novos Agendamentos</span>
+                    <span className="text-xs text-muted-foreground">Receber notificações quando um cliente realizar um novo agendamento</span>
                   </div>
                 </label>
 
@@ -1190,11 +1189,11 @@ export default function AdminEstablishmentConfigPage() {
                     type="checkbox" 
                     checked={localBasicInfo?.lembrarAgendamento || false}
                     onChange={(e) => setLocalBasicInfo(prev => prev ? { ...prev, lembrarAgendamento: e.target.checked } : null)}
-                    className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mt-0.5"
+                    className="h-5 w-5 rounded border-input text-primary accent-primary focus:ring-primary mt-0.5"
                   />
                   <div>
-                    <span className="text-sm font-medium text-slate-900 block">Lembretes para Clientes</span>
-                    <span className="text-xs text-slate-500">Enviar lembretes automáticos para os clientes antes do horário agendado</span>
+                    <span className="text-sm font-medium text-foreground block">Lembretes para Clientes</span>
+                    <span className="text-xs text-muted-foreground">Enviar lembretes automáticos para os clientes antes do horário agendado</span>
                   </div>
                 </label>
 
@@ -1203,11 +1202,11 @@ export default function AdminEstablishmentConfigPage() {
                     type="checkbox" 
                     checked={localBasicInfo?.resumoDiario || false}
                     onChange={(e) => setLocalBasicInfo(prev => prev ? { ...prev, resumoDiario: e.target.checked } : null)}
-                    className="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mt-0.5"
+                    className="h-5 w-5 rounded border-input text-primary accent-primary focus:ring-primary mt-0.5"
                   />
                   <div>
-                    <span className="text-sm font-medium text-slate-900 block">Resumo Diário</span>
-                    <span className="text-xs text-slate-500">Receber um e-mail com o resumo de todos os agendamentos do dia</span>
+                    <span className="text-sm font-medium text-foreground block">Resumo Diário</span>
+                    <span className="text-xs text-muted-foreground">Receber um e-mail com o resumo de todos os agendamentos do dia</span>
                   </div>
                 </label>
               </div>
@@ -1215,13 +1214,13 @@ export default function AdminEstablishmentConfigPage() {
 
             <div className="flex justify-end pt-4">
               <Button 
-                className="w-full h-12 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 lg:w-64"
+                className="w-full h-12 rounded-xl font-bold transition-all lg:w-64"
                 onClick={handleSaveBasicInfo}
                 disabled={isSaving}
               >
                 {isSaving ? (
                   <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+                    <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-current"></div>
                     Salvando...
                   </div>
                 ) : (

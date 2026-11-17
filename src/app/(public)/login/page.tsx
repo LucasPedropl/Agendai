@@ -46,17 +46,80 @@ declare global {
   }
 }
 
-const REMEMBER_ME_KEY = 'agendai_remember_me';
-const REMEMBER_EMAIL_KEY = 'agendai_remember_email';
+type LoginUserType = 'cliente' | 'estabelecimento' | 'profissional';
+
+const LEGACY_REMEMBER_ME_KEY = 'agendai_remember_me';
+const LEGACY_REMEMBER_EMAIL_KEY = 'agendai_remember_email';
 const OLD_REMEMBER_PASSWORD_KEY = 'agendai_remember_password';
 
-const typeLabels: Record<string, string> = {
+const getRememberMeKey = (userType: LoginUserType) => `agendai_remember_me:${userType}`;
+const getRememberEmailKey = (userType: LoginUserType) => `agendai_remember_email:${userType}`;
+
+function safeStorageGet(key: string): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeStorageSet(key: string, value: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Ignore storage access errors (private mode / quota)
+  }
+}
+
+function safeStorageRemove(key: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Ignore storage access errors
+  }
+}
+
+function migrateLegacyRememberKeys(currentType: LoginUserType): void {
+  safeStorageRemove(OLD_REMEMBER_PASSWORD_KEY);
+  const legacyRemember = safeStorageGet(LEGACY_REMEMBER_ME_KEY);
+  const legacyEmail = safeStorageGet(LEGACY_REMEMBER_EMAIL_KEY);
+  if (legacyRemember === null && legacyEmail === null) return;
+
+  if (legacyRemember === 'true' && legacyEmail) {
+    const targetMeKey = getRememberMeKey(currentType);
+    const targetEmailKey = getRememberEmailKey(currentType);
+    if (safeStorageGet(targetMeKey) === null) {
+      safeStorageSet(targetMeKey, 'true');
+    }
+    if (safeStorageGet(targetEmailKey) === null) {
+      safeStorageSet(targetEmailKey, legacyEmail);
+    }
+  }
+
+  safeStorageRemove(LEGACY_REMEMBER_ME_KEY);
+  safeStorageRemove(LEGACY_REMEMBER_EMAIL_KEY);
+}
+
+function readRememberedCredentials(userType: LoginUserType): {
+  rememberMe: boolean;
+  savedEmail: string | null;
+} {
+  migrateLegacyRememberKeys(userType);
+  const rememberMe = safeStorageGet(getRememberMeKey(userType)) === 'true';
+  const savedEmail = rememberMe ? safeStorageGet(getRememberEmailKey(userType)) : null;
+  return { rememberMe, savedEmail };
+}
+
+const typeLabels: Record<LoginUserType, string> = {
   cliente: 'Cliente',
   profissional: 'Profissional',
   estabelecimento: 'Estabelecimento',
 };
 
-const QA_CREDENTIALS: Record<string, { email: string; password: string }> = {
+const QA_CREDENTIALS: Record<LoginUserType, { email: string; password: string }> = {
   cliente: { email: 'cliente@agendai.dev', password: 'Senha@123' },
   profissional: { email: 'profissional@agendai.dev', password: 'Senha@123' },
   estabelecimento: { email: 'novo_estab@agendai.dev', password: 'Senha@123' },
@@ -64,27 +127,24 @@ const QA_CREDENTIALS: Record<string, { email: string; password: string }> = {
 
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
-  const type = (searchParams.get('type') as 'cliente' | 'estabelecimento' | 'profissional') || 'cliente';
+  const rawType = searchParams.get('type');
+  const type: LoginUserType =
+    rawType === 'estabelecimento' || rawType === 'profissional' ? rawType : 'cliente';
   const navigate = useNavigate();
   const { login } = useAuth();
   const toast = useToast();
 
   const isDev = import.meta.env.DEV;
-  const defaults = isDev ? (QA_CREDENTIALS[type] ?? QA_CREDENTIALS.cliente) : { email: '', password: '' };
-  const [rememberMe, setRememberMe] = useState(() => {
-    return typeof window !== 'undefined' && localStorage.getItem(REMEMBER_ME_KEY) === 'true';
-  });
+  const defaults = isDev ? QA_CREDENTIALS[type] : { email: '', password: '' };
+  const [rememberMe, setRememberMe] = useState(() => readRememberedCredentials(type).rememberMe);
   const [email, setEmail] = useState(() => {
-    if (typeof window !== 'undefined' && localStorage.getItem(REMEMBER_ME_KEY) === 'true') {
-      const saved = localStorage.getItem(REMEMBER_EMAIL_KEY);
-      if (saved) return saved;
-    }
+    const { rememberMe: isRemembered, savedEmail } = readRememberedCredentials(type);
+    if (isRemembered && savedEmail) return savedEmail;
     return defaults.email;
   });
   const [password, setPassword] = useState(() => {
-    if (typeof window !== 'undefined' && localStorage.getItem(REMEMBER_ME_KEY) === 'true') {
-      return '';
-    }
+    const { rememberMe: isRemembered } = readRememberedCredentials(type);
+    if (isRemembered) return '';
     return defaults.password;
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -129,22 +189,22 @@ export default function LoginPage() {
   }, []);
 
   useEffect(() => {
-    // Purge any forbidden plaintext password
-    localStorage.removeItem(OLD_REMEMBER_PASSWORD_KEY);
-
-    const isRemembered = localStorage.getItem(REMEMBER_ME_KEY) === 'true';
+    let cancelled = false;
+    const { rememberMe: isRemembered, savedEmail } = readRememberedCredentials(type);
     if (isRemembered) {
-      const savedEmail = localStorage.getItem(REMEMBER_EMAIL_KEY);
-      if (savedEmail) setEmail(savedEmail);
+      setEmail(savedEmail || (import.meta.env.DEV ? QA_CREDENTIALS[type].email : ''));
+      setPassword('');
       setRememberMe(true);
 
+      const expectedEmail = savedEmail?.trim().toLowerCase();
       // Attempt to prefill password via Credential Management API (Chromium)
-      if (typeof window !== 'undefined' && 'credentials' in navigator) {
+      if (expectedEmail && typeof window !== 'undefined' && 'credentials' in navigator) {
         navigator.credentials
           .get({ password: true, mediation: 'optional' })
           .then((cred) => {
+            if (cancelled) return;
             const pwCred = cred as PasswordCredentialInstance | null;
-            if (pwCred && pwCred.password) {
+            if (pwCred?.password && pwCred.id?.trim().toLowerCase() === expectedEmail) {
               setPassword(pwCred.password);
             }
           })
@@ -154,7 +214,7 @@ export default function LoginPage() {
       }
     } else {
       if (import.meta.env.DEV) {
-        const creds = QA_CREDENTIALS[type] ?? QA_CREDENTIALS.cliente;
+        const creds = QA_CREDENTIALS[type];
         setEmail(creds.email);
         setPassword(creds.password);
       } else {
@@ -164,6 +224,10 @@ export default function LoginPage() {
       setRememberMe(false);
     }
     setError('');
+
+    return () => {
+      cancelled = true;
+    };
   }, [type]);
 
   const buildUser = (realId: string | number, resolvedType: AppUserType, response: Record<string, unknown>): User => {
@@ -261,8 +325,8 @@ export default function LoginPage() {
 
       // Gerenciamento de credenciais e flag "Lembrar meu e-mail e senha"
       if (rememberMe) {
-        localStorage.setItem(REMEMBER_ME_KEY, 'true');
-        localStorage.setItem(REMEMBER_EMAIL_KEY, email);
+        safeStorageSet(getRememberMeKey(type), 'true');
+        safeStorageSet(getRememberEmailKey(type), email);
         if (typeof window !== 'undefined' && 'PasswordCredential' in window && 'credentials' in navigator) {
           try {
             await navigator.credentials.store(
@@ -273,10 +337,10 @@ export default function LoginPage() {
           }
         }
       } else {
-        localStorage.removeItem(REMEMBER_ME_KEY);
-        localStorage.removeItem(REMEMBER_EMAIL_KEY);
+        safeStorageRemove(getRememberMeKey(type));
+        safeStorageRemove(getRememberEmailKey(type));
       }
-      localStorage.removeItem(OLD_REMEMBER_PASSWORD_KEY);
+      safeStorageRemove(OLD_REMEMBER_PASSWORD_KEY);
 
       handleAuthSuccess(token, response);
     } catch (err: unknown) {
