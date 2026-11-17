@@ -1,234 +1,60 @@
-import { useMemo } from 'react';
-import { 
-  DollarSign, 
-  TrendingUp, 
-  Calendar as CalendarIcon, 
-  CreditCard, 
-  ArrowUpRight, 
-  ArrowDownRight, 
-  Wallet,
-  Receipt,
-  PieChart,
-  ChevronRight,
-} from 'lucide-react';
-import { formatBRL } from '@/lib/utils';
-import { Pagamento } from '@/hooks/useFinance';
-import { useClientePagamentos } from '@/hooks/useClienteQueries';
+import { useMemo, useState } from 'react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { motion, AnimatePresence } from 'motion/react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import {
-  PAYMENT_METHOD,
-  PAYMENT_STATUS,
-  getPaymentStatusLabel,
-} from '@/lib/paymentEnums';
+import { useAuth } from '@/contexts/AuthContext';
+import { useClienteAgendamentos, useClienteHistorico } from '@/hooks/useClienteQueries';
+import { ClientSpendingCharts } from '@/features/financeiro/components/ClientSpendingCharts';
+import { ClientSpendingHistory } from '@/features/financeiro/components/ClientSpendingHistory';
+import { ClientSpendingOverview } from '@/features/financeiro/components/ClientSpendingOverview';
+import { buildClientSpendingSummary, buildPerformedServices, filterClientSpendingHistory } from '@/features/financeiro/lib/financeAggregations';
 
 export default function ClientFinancasPage() {
-  const { data: pagamentos = [], isPending: isLoading } = useClientePagamentos();
-  const pagamentosList = pagamentos as Pagamento[];
+  const { user } = useAuth();
+  const userId = user?.id ? String(user.id) : undefined;
+  const historyQuery = useClienteHistorico(userId);
+  const agendaQuery = useClienteAgendamentos(userId);
+  const [search, setSearch] = useState('');
 
-  const stats = useMemo(() => {
-    const valorDe = (p: Pagamento) => (Number.isFinite(Number(p.valor)) ? Number(p.valor) : 0);
-    const pagos = pagamentosList.filter((p) => p.statusPagamento === PAYMENT_STATUS.Pago);
-    const total = pagos.reduce((acc, curr) => acc + valorDe(curr), 0);
-    // Média só sobre os meses em que houve pagamento (antes dividia sempre por 12).
-    const meses = new Set(
-      pagos
-        .map((p) => new Date(p.dataCriacao))
-        .filter((d) => !Number.isNaN(d.getTime()))
-        .map((d) => `${d.getFullYear()}-${d.getMonth()}`),
-    );
-    const agora = new Date();
-    const pendenteDoMes = pagamentosList
-      .filter((p) => p.statusPagamento === PAYMENT_STATUS.Pendente)
-      .filter((p) => {
-        const d = new Date(p.dataCriacao);
-        return d.getFullYear() === agora.getFullYear() && d.getMonth() === agora.getMonth();
-      })
-      .reduce((acc, curr) => acc + valorDe(curr), 0);
-    return {
-      totalGasto: total,
-      servicosRealizados: pagos.length,
-      mediaMensal: meses.size > 0 ? total / meses.size : 0,
-      faturaAtual: pendenteDoMes,
-    };
-  }, [pagamentosList]);
+  const summary = useMemo(() => {
+    const now = new Date();
+    const performed = buildPerformedServices(historyQuery.data ?? [], agendaQuery.data ?? [], [], now);
+    return buildClientSpendingSummary(performed, now);
+  }, [historyQuery.data, agendaQuery.data, historyQuery.dataUpdatedAt, agendaQuery.dataUpdatedAt]);
+  const filteredHistory = useMemo(() => filterClientSpendingHistory(summary.history, search), [summary.history, search]);
+  const isLoading = Boolean(userId) && (historyQuery.isPending || agendaQuery.isPending);
+  const hasError = historyQuery.isError || agendaQuery.isError;
+  const isRetrying = historyQuery.isFetching || agendaQuery.isFetching;
 
-  const scrollToHistorico = () => {
-    document.getElementById('historico-pagamentos')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const retryQueries = () => {
+    void historyQuery.refetch();
+    void agendaQuery.refetch();
   };
-
-  const getStatusBadge = (status: number) => {
-    const label = getPaymentStatusLabel(status);
-    switch (status) {
-      case PAYMENT_STATUS.Pago:
-        return <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">{label}</span>;
-      case PAYMENT_STATUS.Cancelado:
-        return <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-600 border border-red-500/20">{label}</span>;
-      case PAYMENT_STATUS.Reembolsado:
-        return <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-500/10 text-slate-600 border border-slate-500/20">{label}</span>;
-      default:
-        return <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-600 border border-amber-500/20">{label}</span>;
-    }
-  };
-
-  const getMetodoIcon = (metodo: number) => {
-    if (
-      metodo === PAYMENT_METHOD.CartaoCredito ||
-      metodo === PAYMENT_METHOD.CartaoDebito
-    ) {
-      return <CreditCard className="h-4 w-4" />;
-    }
-    if (
-      metodo === PAYMENT_METHOD.Boleto ||
-      metodo === PAYMENT_METHOD.Pix ||
-      metodo === PAYMENT_METHOD.PixCaixa ||
-      metodo === PAYMENT_METHOD.TransferenciaBancaria
-    ) {
-      return <Receipt className="h-4 w-4" />;
-    }
-    return <Wallet className="h-4 w-4" />;
+  const scrollToHistory = () => {
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.getElementById('historico-gastos')?.scrollIntoView({ behavior: reducedMotion ? 'instant' : 'smooth', block: 'start' });
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8 animate-in fade-in duration-700">
-      {/* Header & Balance Card */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-slate-900 to-slate-800 p-10 text-white shadow-2xl border border-white/5">
-          <div className="relative z-10 flex flex-col h-full justify-between gap-8">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">Saldo Total Gasto</p>
-                <h1 className="text-5xl font-black tracking-tight">
-                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(stats.totalGasto)}
-                </h1>
-              </div>
-              <div className="bg-white/10 p-4 rounded-[1.5rem] backdrop-blur-md">
-                <PieChart className="h-8 w-8 text-white/80" />
-              </div>
-            </div>
-            
-            <div className="flex flex-wrap gap-6 pt-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center text-emerald-400">
-                  <ArrowUpRight className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase text-slate-500">Média Mensal</p>
-                  <p className="text-sm font-bold">{formatBRL(stats.mediaMensal)}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center text-blue-400">
-                  <Receipt className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-bold uppercase text-slate-500">Total Serviços</p>
-                  <p className="text-sm font-bold">{stats.servicosRealizados}</p>
-                </div>
-              </div>
-            </div>
+    <div className="mx-auto min-w-0 max-w-6xl space-y-8 px-4 py-8">
+      {hasError && (
+        <div role="alert" className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-background p-4 text-foreground">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <AlertCircle className="h-5 w-5 shrink-0 text-destructive" aria-hidden="true" />
+            <p className="text-sm">Não foi possível carregar todos os agendamentos. Os dados e valores exibidos podem estar incompletos.</p>
           </div>
-          <DollarSign className="absolute right-[-40px] top-[-40px] w-64 h-64 text-white/5 -rotate-12 pointer-events-none" />
-        </div>
-
-        <div className="bg-primary p-10 rounded-[2.5rem] text-primary-foreground shadow-xl flex flex-col justify-between relative overflow-hidden group">
-          <div className="relative z-10 space-y-4">
-            <h3 className="text-xl font-bold">Fatura Atual</h3>
-            <p className="text-3xl font-black">{formatBRL(stats.faturaAtual)}</p>
-            <p className="text-xs opacity-70">
-              {stats.faturaAtual > 0
-                ? 'Pagamentos pendentes neste mês.'
-                : 'Nenhum pagamento pendente para este mês.'}
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            onClick={scrollToHistorico}
-            className="relative z-10 w-full rounded-2xl font-bold h-12 shadow-lg group-hover:scale-[1.02] transition-transform text-foreground"
-          >
-            Ver Faturas <ChevronRight className="h-4 w-4 ml-1" />
+          <Button variant="outline" onClick={retryQueries} disabled={isRetrying} className="h-11">
+            <RefreshCw className={`mr-2 h-4 w-4 ${isRetrying ? 'animate-spin' : ''}`} aria-hidden="true" />Tentar novamente
           </Button>
-          <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
-      </div>
-
-      {/* Transactions Section */}
-      <div id="historico-pagamentos" className="space-y-6 scroll-mt-6">
-        <div className="flex items-center justify-between px-2">
-          <h2 className="text-2xl font-extrabold flex items-center gap-3">
-            <TrendingUp className="h-6 w-6 text-primary" />
-            Histórico de Pagamentos
-          </h2>
-        </div>
-
-        <div className="bg-card border border-border rounded-[2.5rem] overflow-hidden shadow-sm">
-          <div className="divide-y divide-border">
-            {isLoading ? (
-              [1, 2, 3, 4].map((i) => (
-                <div key={i} className="p-8 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Skeleton className="h-12 w-12 rounded-2xl" />
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-20" />
-                    </div>
-                  </div>
-                  <Skeleton className="h-6 w-24 rounded-full" />
-                </div>
-              ))
-            ) : pagamentosList.length === 0 ? (
-              <div className="p-20 text-center space-y-4">
-                <Receipt className="h-12 w-12 text-muted-foreground mx-auto opacity-20" />
-                <p className="text-muted-foreground">Nenhuma transação registrada até o momento.</p>
-              </div>
-            ) : (
-              pagamentosList.map((pagamento) => (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true }}
-                  key={pagamento.id} 
-                  className="p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-accent/30 transition-colors group"
-                >
-                  <div className="flex items-center gap-6">
-                    <div className="w-14 h-14 bg-accent rounded-2xl flex items-center justify-center text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                      {getMetodoIcon(pagamento.metodoPagamento)}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-foreground text-lg">
-                        {pagamento.descricao || `Pagamento #${pagamento.id}`}
-                      </h4>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground font-medium mt-1">
-                        <span className="flex items-center gap-1">
-                          <CalendarIcon className="h-3 w-3" />
-                          {format(new Date(pagamento.dataCriacao), "dd 'de' MMM, yyyy", { locale: ptBR })}
-                        </span>
-                        <span className="w-1 h-1 rounded-full bg-border" />
-                        <span>ID: {pagamento.agendamentoId}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between md:justify-end gap-10 border-t md:border-t-0 pt-4 md:pt-0 border-border/50">
-                    <div className="text-right">
-                      <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest mb-1">Valor</p>
-                      <p className="text-xl font-black text-foreground">
-                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pagamento.valor)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      {getStatusBadge(pagamento.statusPagamento)}
-                    </div>
-                  </div>
-                </motion.div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
+      )}
+      <ClientSpendingOverview summary={summary} isLoading={isLoading} hasError={hasError} onViewHistory={scrollToHistory} />
+      <p className="text-sm text-muted-foreground">Valores calculados pelo preço atual de cada serviço.</p>
+      {isLoading ? (
+        <p role="status" className="py-12 text-center text-muted-foreground">Carregando seus gastos…</p>
+      ) : (
+        <ClientSpendingCharts summary={summary} />
+      )}
+      <ClientSpendingHistory items={filteredHistory} hasHistory={summary.history.length > 0} search={search} onSearchChange={setSearch} isLoading={isLoading} hasError={hasError} />
     </div>
   );
 }

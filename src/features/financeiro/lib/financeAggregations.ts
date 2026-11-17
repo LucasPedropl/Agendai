@@ -38,7 +38,10 @@ export interface PerformedService {
   clientName?: string;
   professionalId?: string;
   professionalName?: string;
+  establishmentId?: string;
+  establishmentName?: string;
   date?: string;
+  time?: string;
   value: number;
 }
 
@@ -60,6 +63,12 @@ export interface RevenueRanking {
   count: number;
 }
 
+export interface MonthlyTotal {
+  key: string;
+  name: string;
+  value: number;
+}
+
 export const UNKNOWN_SERVICE_NAME = 'Serviço não informado';
 
 function text(value: unknown): string | undefined {
@@ -72,7 +81,7 @@ function amount(value: unknown): number {
   return Number.isFinite(number) && number > 0 ? number : 0;
 }
 
-function normalized(value: unknown): string {
+export function normalized(value: unknown): string {
   return String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f\s_-]/g, '').toLowerCase();
 }
 
@@ -85,6 +94,34 @@ export function financeDate(value: string | undefined): Date | undefined {
 
 function monthKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function appointmentTime(value: unknown): string | undefined {
+  const match = /^(\d{1,2}):(\d{2})/.exec(String(value ?? ''));
+  if (!match || Number(match[1]) > 23 || Number(match[2]) > 59) return undefined;
+  return `${match[1].padStart(2, '0')}:${match[2]}`;
+}
+
+function performedTimestamp(entry: PerformedService): number {
+  const date = financeDate(entry.date);
+  if (date && entry.time) {
+    const [hours, minutes] = entry.time.split(':').map(Number);
+    date.setHours(hours, minutes, 0, 0);
+  }
+  return date?.getTime() ?? 0;
+}
+
+function buildMonthlyTotals(entries: readonly PerformedService[], now: Date): MonthlyTotal[] {
+  const months = Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(now.getFullYear(), now.getMonth() - 5 + index, 1);
+    return { key: monthKey(date), name: date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''), value: 0 };
+  });
+  for (const entry of entries) {
+    const date = financeDate(entry.date);
+    const month = date ? months.find(item => item.key === monthKey(date)) : undefined;
+    if (month) month.value += entry.value;
+  }
+  return months;
 }
 
 export function buildPerformedServices(
@@ -114,14 +151,17 @@ export function buildPerformedServices(
       clientName: text(item.usuarioNome ?? item.UsuarioNome ?? item.clienteNome ?? item.ClienteNome),
       professionalId: text(item.profissionalId ?? item.ProfissionalId),
       professionalName: text(item.profissionalNome ?? item.ProfissionalNome),
+      establishmentId: text(item.comercioId ?? item.ComercioId),
+      establishmentName: text(item.comercioNome) ?? text(item.ComercioNome) ?? text(item.estabelecimento) ?? text(item.Estabelecimento),
       date: text(item.dataAgendamento ?? item.DataAgendamento),
+      time: appointmentTime(item.horaAgendamento ?? item.HoraAgendamento),
       value: amount(item.valor ?? item.Valor) || amount(service?.preco ?? service?.Preco),
     });
   };
 
   const isExcluded = (item: Record<string, unknown>) => {
     const status = normalized(item.status ?? item.Status);
-    return status.includes('cancel') || status.includes('naocompareceu');
+    return status === 'pendente' || status.includes('cancel') || status.includes('naocompareceu');
   };
   history.forEach((item, index) => {
     if (!isExcluded(item)) add(item, 'history', index);
@@ -129,23 +169,22 @@ export function buildPerformedServices(
   agenda.forEach((item, index) => {
     if (isExcluded(item)) return;
     const day = text(item.dataAgendamento ?? item.DataAgendamento)?.slice(0, 10);
-    const time = /^(\d{1,2}):(\d{2})/.exec(String(item.horaAgendamento ?? item.HoraAgendamento ?? ''));
+    const time = appointmentTime(item.horaAgendamento ?? item.HoraAgendamento);
     if (day !== today || !time) return;
-    const hours = Number(time[1]);
-    const minutes = Number(time[2]);
-    if (hours > 23 || minutes > 59 || hours * 60 + minutes > now.getHours() * 60 + now.getMinutes()) return;
+    const [hours, minutes] = time.split(':').map(Number);
+    if (hours * 60 + minutes > now.getHours() * 60 + now.getMinutes()) return;
     add(item, 'agenda', index);
   });
   return result;
 }
 
-function rankRevenue(entries: readonly PerformedService[], by: 'service' | 'professional'): RevenueRanking[] {
+function rankRevenue(entries: readonly PerformedService[], by: 'service' | 'professional' | 'establishment', groupByName = false): RevenueRanking[] {
   const groups = new Map<string, RevenueRanking>();
   for (const entry of entries) {
-    const name = by === 'service' ? entry.serviceName : entry.professionalName;
-    if (!name || (by === 'service' && name === UNKNOWN_SERVICE_NAME)) continue;
-    const id = by === 'service' ? entry.serviceId : entry.professionalId;
-    const key = id ? `id-${id}` : `name-${normalized(name)}`;
+    const name = text(by === 'service' ? entry.serviceName : by === 'professional' ? entry.professionalName : entry.establishmentName);
+    if (!name || (by === 'service' && normalized(name) === normalized(UNKNOWN_SERVICE_NAME))) continue;
+    const id = by === 'service' ? entry.serviceId : by === 'professional' ? entry.professionalId : entry.establishmentId;
+    const key = !groupByName && id ? `id-${id}` : `name-${normalized(name)}`;
     const group = groups.get(key) ?? { key, name, value: 0, count: 0 };
     group.value += entry.value;
     group.count += 1;
@@ -204,15 +243,7 @@ export function buildFinanceSummary(
   }
   transactions.sort((a, b) => (financeDate(b.date)?.getTime() ?? 0) - (financeDate(a.date)?.getTime() ?? 0));
 
-  const monthlyRevenue = Array.from({ length: 6 }, (_, index) => {
-    const date = new Date(now.getFullYear(), now.getMonth() - 5 + index, 1);
-    return { key: monthKey(date), name: date.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''), value: 0 };
-  });
-  for (const entry of revenueEntries) {
-    const date = financeDate(entry.date);
-    const month = date ? monthlyRevenue.find(item => item.key === monthKey(date)) : undefined;
-    if (month) month.value += entry.value;
-  }
+  const monthlyRevenue = buildMonthlyTotals(revenueEntries, now);
   const performedTotal = performed.reduce((total, service) => total + service.value, 0);
   return {
     transactions,
@@ -226,6 +257,33 @@ export function buildFinanceSummary(
     performedCount: performed.length,
     averageTicket: performed.length ? performedTotal / performed.length : 0,
   };
+}
+
+export function buildClientSpendingSummary(performed: readonly PerformedService[], now: Date) {
+  const history = [...performed].sort((a, b) => performedTimestamp(b) - performedTimestamp(a));
+  const totalSpent = performed.reduce((total, entry) => total + entry.value, 0);
+  const currentMonth = performed.filter(entry => {
+    const date = financeDate(entry.date);
+    return date && monthKey(date) === monthKey(now);
+  });
+  return {
+    history,
+    totalSpent,
+    servicesCount: performed.length,
+    averagePerService: performed.length ? totalSpent / performed.length : 0,
+    currentMonthSpent: currentMonth.reduce((total, entry) => total + entry.value, 0),
+    currentMonthCount: currentMonth.length,
+    monthlySpending: buildMonthlyTotals(performed, now),
+    serviceRanking: rankRevenue(performed, 'service', true),
+    establishmentRanking: rankRevenue(performed, 'establishment'),
+  };
+}
+
+export type ClientSpendingSummary = ReturnType<typeof buildClientSpendingSummary>;
+
+export function filterClientSpendingHistory(history: readonly PerformedService[], search: string): PerformedService[] {
+  const term = normalized(search);
+  return history.filter(entry => !term || normalized([entry.serviceName, entry.establishmentName, entry.professionalName].join(' ')).includes(term));
 }
 
 export function filterFinanceTransactions(transactions: readonly FinanceTransaction[], search: string, status: StatusFilter): FinanceTransaction[] {
